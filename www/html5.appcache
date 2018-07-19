@@ -585,6 +585,7 @@ js/themes/dark-ucust.js
 js/ui-bootstrap.min.js
 js/wow.min.js
 js/ZeroClipboard.js
+app/thermostat.js
 ozwcp/cp.js
 secpanel/js/ion.sound.min.js
 

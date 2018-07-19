@@ -279,6 +279,8 @@ typedef   std::vector<std::string> TSqlRowQuery;
 // result for an sql query : Vector of TSqlRowQuery
 typedef   std::vector<TSqlRowQuery> TSqlQueryResult;
 
+typedef   std::map<std::string, std::string> TOptionMap;
+
 class CSQLHelper
 {
 public:
@@ -394,6 +396,8 @@ public:
 
 	bool GetPreferencesVar(const std::string &Key, double &Value);
 	void UpdatePreferencesVar(const std::string &Key, const double Value);
+	float getHumidityFromSValue(const char * sValue);
+	bool GetLastValue(  const char* DeviceID, int &nValue, std::string &sValue, struct tm &LastUpdateTime);
 	void DeletePreferencesVar(const std::string &Key);
 	void AllowNewHardwareTimer(const int iTotMinutes);
 
@@ -401,9 +405,10 @@ public:
 	bool InsertCustomIconFromZipFile(const std::string & szZipFile, std::string & ErrorMessage);
 
 	std::map<std::string, std::string> BuildDeviceOptions(const std::string & options, const bool decode = true);
-	std::map<std::string, std::string> GetDeviceOptions(const std::string & idx);
-	std::string FormatDeviceOptions(const std::map<std::string, std::string> & optionsMap);
-	bool SetDeviceOptions(const uint64_t idx, const std::map<std::string, std::string> & options);
+	std::map<std::string, std::string> GetDeviceOptions(const std::string & idx, const bool decode = true);
+	std::string FormatDeviceOptions(const std::map<std::string, std::string> & optionsMap, const bool decode = true );
+	bool SetDeviceOptions(const uint64_t idx, const std::map<std::string, std::string> & options, const bool decode = true);
+  bool UpdateDeviceOptions(const uint64_t idx, std::string options , const bool decode ) ;
 public:
 	std::string m_LastSwitchID;	//for learning command
 	uint64_t m_LastSwitchRowID;

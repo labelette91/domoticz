@@ -167,6 +167,7 @@
 #include <iostream>
 #include <fstream>
 #endif
+#include "../hardware/VirtualThermostat.h"
 
 #define round(a) ( int ) ( a + .5 )
 
@@ -433,6 +434,22 @@ CDomoticzHardwareBase* MainWorker::GetHardware(int HwdId)
 			return itt;
 	}
 	return NULL;
+}
+
+//get DomoticzHardwareBase object from device Idx :deviceidx in device status table
+CDomoticzHardwareBase* MainWorker::GetDeviceHardware(const std::string & deviceidx)
+{
+
+	//get device hardware ID from device ID
+	std::vector<std::vector<std::string> > result;
+	result = m_sql.safe_query("SELECT HardwareID FROM DeviceStatus WHERE (ID == '%q')", deviceidx.c_str());
+	if (result.size() < 1)
+		return NULL;
+	int HardwareID = atoi(result[0][0].c_str());
+
+	//get CDomoticzHardwareBase 
+	CDomoticzHardwareBase *pHardware = GetHardware(HardwareID);
+		return pHardware;
 }
 
 CDomoticzHardwareBase* MainWorker::GetHardwareByIDType(const std::string &HwdId, const _eHardwareTypes HWType)
@@ -892,6 +909,9 @@ bool MainWorker::AddHardwareFromParams(
 #endif
 	case HTYPE_RaspberryBMP085:
 		pHardware = new I2C(ID, I2C::I2CTYPE_BMP085, Address, SerialPort, Mode1);
+		break;
+	case HTYPE_VirtualThermostat:
+		pHardware = new VirtualThermostat(ID);
 		break;
 	case HTYPE_RaspberryHTU21D:
 		pHardware = new I2C(ID, I2C::I2CTYPE_HTU21D, Address, SerialPort, Mode1);
@@ -2134,7 +2154,18 @@ void MainWorker::ProcessRXMessage(const CDomoticzHardwareBase *pHardware, const 
 	uint64_t DeviceRowIdx = (uint64_t )-1;
 	std::string DeviceName = "";
 	tcp::server::CTCPClient *pClient2Ignore = NULL;
-
+	//dump received message in HEXA
+	if (_log.IsDebugLevelEnabled(DEBUG_RECEIVED))
+	{
+		char  mes[sizeof(tRBUF) * 2 + 2];
+		char * ptmes = mes;
+		for (size_t i = 0; i < Len; i++) {
+			sprintf(ptmes, "%02X", pRXCommand[i]);
+			ptmes += 2;
+		}
+		*ptmes = 0;
+		_log.Debug(DEBUG_NORM, "MAIN ProcessRX Msg %s", mes);
+	}
 	if (pHardware->HwdType == HTYPE_Domoticz)
 	{
 		if (pHardware->m_HwdID == 8765) //did we receive it from our master?
@@ -5998,6 +6029,7 @@ void MainWorker::decode_UNDECODED(const int HwdID, const _eHardwareTypes HwdType
 {
 	char szTmp[100];
 
+	WriteMessageStart();
 	WriteMessage("UNDECODED ", false);
 
 	switch (pResponse->UNDECODED.subtype)
@@ -6064,7 +6096,7 @@ void MainWorker::decode_UNDECODED(const int HwdID, const _eHardwareTypes HwdType
 		break;
 	default:
 		sprintf(szTmp, "ERROR: Unknown Sub type for Packet type= %02X:%02X", pResponse->UNDECODED.packettype, pResponse->UNDECODED.subtype);
-		WriteMessage(szTmp);
+		WriteMessage(szTmp,false);
 		break;
 	}
 	std::stringstream sHexDump;
@@ -6074,6 +6106,7 @@ void MainWorker::decode_UNDECODED(const int HwdID, const _eHardwareTypes HwdType
 		sHexDump << HEX(pRXBytes[i]);
 	}
 	WriteMessage(sHexDump.str().c_str());
+	WriteMessageEnd();
 	procResult.DeviceRowIdx = -1;
 }
 
@@ -12326,6 +12359,11 @@ bool MainWorker::SetThermostatState(const std::string &idx, const int newState)
 		CToonThermostat *pGateway = reinterpret_cast<CToonThermostat*>(pHardware);
 		pGateway->SetProgramState(newState);
 		return true;
+	}
+	else if (pHardware->HwdType == HTYPE_VirtualThermostat)
+	//virtual thermostat set state confor/eco/off/frozen
+	{
+		return m_VirtualThermostat->SetThermostatState(idx,newState);
 	}
 	if (pHardware->HwdType == HTYPE_AtagOne)
 	{

@@ -64,6 +64,7 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+#include "../hardware/VirtualThermostat.h"
 #define round(a) ( int ) ( a + .5 )
 
 extern std::string szUserDataFolder;
@@ -1169,6 +1170,9 @@ namespace http {
 			else if (htype == HTYPE_RaspberryBMP085) {
 				//all fine here!
 			}
+			else if (htype == HTYPE_VirtualThermostat) {
+				//all fine here!
+			}
 			else if (htype == HTYPE_RaspberryHTU21D) {
 				//all fine here!
 			}
@@ -1540,6 +1544,8 @@ namespace http {
 			}
 			else if (htype == HTYPE_RaspberryBMP085) {
 				//All fine here
+			else if (htype == HTYPE_VirtualThermostat) {
+				//all fine here!
 			}
 			else if (htype == HTYPE_RaspberryHTU21D) {
 				//All fine here
@@ -2962,6 +2968,7 @@ namespace http {
 			std::string sstate = request::findValue(&req, "state");
 			std::string idx = request::findValue(&req, "idx");
 			std::string name = request::findValue(&req, "name");
+			_log.Debug(DEBUG_WEBSERVER, "WEBS SetThermostatState  State cmd Id:%s Name:%s State:%s", idx.c_str(), name.c_str(), sstate.c_str());
 
 			if (
 				(idx.empty()) ||
@@ -8888,6 +8895,7 @@ namespace http {
 						GetLightStatus(dType, dSubType, switchtype, nValue, sValue, lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
 
 						root["result"][ii]["Status"] = lstatus;
+						root["result"][ii]["nValue"] = nValue;
 						root["result"][ii]["StrParam1"] = strParam1;
 						root["result"][ii]["StrParam2"] = strParam2;
 
@@ -10356,6 +10364,24 @@ namespace http {
 							root["result"][ii]["SetPoint"] = szTmp;
 							root["result"][ii]["HaveTimeout"] = bHaveTimeout;
 							root["result"][ii]["TypeImg"] = "override_mini";
+							if (_hardwareNames[hardwareID].HardwareTypeVal == HTYPE_VirtualThermostat)
+							{
+
+                TOptionMap optionsMap   = m_sql.BuildDeviceOptions( sOptions, false ) ;
+
+								root["result"][ii]["isVirtualThermostat"] = "yes";
+
+                //build option values
+		            for (const auto & itt : optionsMap)
+		            {
+			            std::string optionName  = itt.first.c_str();
+			            std::string optionValue = itt.second;  
+                  root["result"][ii][optionName.c_str()]  = optionValue.c_str() ;
+		            }
+
+
+								root["result"][ii]["nValue"]	  = nValue;
+              }
 						}
 					}
 					else if (dType == pTypeRadiator1)
@@ -13373,6 +13399,14 @@ namespace http {
 							{
 								double tvalue = ConvertTemperature(atof(sd[0].c_str()), tempsign);
 								root["result"][ii]["te"] = tvalue;
+							}
+							//chill == romm temperature
+              //humidity = ppower
+							if ((dType == pTypeThermostat) && (dSubType == sTypeThermSetpoint))
+							{
+								double tvalue = ConvertTemperature(atof(sd[1].c_str()), tempsign);
+								root["result"][ii]["ch"] = tvalue;
+								root["result"][ii]["hu"] = sd[2];
 							}
 							if (
 								((dType == pTypeWIND) && (dSubType == sTypeWIND4)) ||
