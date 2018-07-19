@@ -828,6 +828,7 @@
     <ClCompile Include="..\hardware\ToonThermostat.cpp" />
     <ClCompile Include="..\hardware\USBtin.cpp" />
     <ClCompile Include="..\hardware\USBtin_MultiblocV8.cpp" />
+    <ClCompile Include="..\hardware\VirtualThermostat.cpp" />
     <ClCompile Include="..\hardware\VolcraftCO20.cpp" />
     <ClCompile Include="..\hardware\Winddelen.cpp" />
     <ClCompile Include="..\hardware\WOL.cpp" />

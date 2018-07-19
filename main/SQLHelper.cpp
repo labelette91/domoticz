@@ -22,6 +22,7 @@
 #ifdef ENABLE_PYTHON
 #include "../hardware/plugins/Plugins.h"
 #endif
+#include "../hardware/VirtualThermostat.h"
 
 #ifndef WIN32
 #include <sys/stat.h>
@@ -5017,7 +5018,6 @@ void CSQLHelper::UpdateTemperatureLog()
 				humidity = atoi(VirtualThermostatGetOption("Power",sd[6] ).c_str() ); 
 				//record room temp 
 				temp = (float)atof(VirtualThermostatGetOption("RoomTemp",sd[6] ).c_str());
-				ToRecord = TempLog.AsChanged((int)ID, temp,0.2); //record if room temperature change 
 				break;
 			case pTypeThermostat1:
 				temp = static_cast<float>(atof(splitresults[0].c_str()));

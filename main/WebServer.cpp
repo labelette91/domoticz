@@ -1544,6 +1544,7 @@ namespace http {
 			}
 			else if (htype == HTYPE_RaspberryBMP085) {
 				//All fine here
+			}
 			else if (htype == HTYPE_VirtualThermostat) {
 				//all fine here!
 			}

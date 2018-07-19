@@ -492,6 +492,9 @@
     <Filter Include="Devices\Tado">
       <UniqueIdentifier>{5905109f-f97e-4e18-a1dd-8baf541d6f13}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Devices\VirtualThermostat">
+      <UniqueIdentifier>{52f3092a-ce7c-40ff-8382-1b7083a45a5b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\CMakeLists.txt">
@@ -2867,6 +2870,9 @@
     </ClCompile>
     <ClCompile Include="..\zip\unzip.c">
       <Filter>zip\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hardware\VirtualThermostat.cpp">
+      <Filter>Devices\VirtualThermostat</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
