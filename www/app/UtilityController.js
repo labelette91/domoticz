@@ -636,7 +636,7 @@ define(['app'], function (app) {
 								xhtm += item.Data;
 							}
 							else if (item.Type == "Thermostat") {
-								xhtm += item.Data + '\u00B0 ' + $scope.config.TempSign;
+				                        	xhtm += GetThermostatBigTest(item);
 							}
 							else if (item.SubType == "Waterflow") {
 								xhtm += item.Data;

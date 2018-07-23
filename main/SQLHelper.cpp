@@ -3670,7 +3670,7 @@ uint64_t CSQLHelper::CreateDevice(const int HardwareID, const int SensorType, co
 		//set coefficient for PID for virtual Thermostat
 		std::string uidstr = boost::to_string(DeviceRowIdx);
 
-		UpdateVirtualThermostatOption(DeviceRowIdx, 0, 20, -1, -1, 16.0, 100, 20.0, 1.0, std::string("On"), std::string("Off"));
+		UpdateVirtualThermostatOption(DeviceRowIdx, 0, 20, -1, -1, 16.0, 100, 20.0, 20.0, std::string("On"), std::string("Off"));
 		break;
 	}
 
@@ -4950,7 +4950,7 @@ void CSQLHelper::UpdateTemperatureLog()
 	GetPreferencesVar("SensorTimeout", SensorTimeOut);
 
 	std::vector<std::vector<std::string> > result;
-	result = safe_query("SELECT ID,Type,SubType,nValue,sValue,LastUpdate FROM DeviceStatus WHERE (Type=%d OR Type=%d OR Type=%d OR Type=%d OR Type=%d OR Type=%d OR Type=%d OR Type=%d OR Type=%d OR Type=%d OR Type=%d OR Type=%d OR Type=%d OR (Type=%d AND SubType=%d) OR (Type=%d AND SubType=%d) OR (Type=%d AND SubType=%d))",
+	result = safe_query("SELECT ID,Type,SubType,nValue,sValue,LastUpdate,Options FROM DeviceStatus WHERE (Type=%d OR Type=%d OR Type=%d OR Type=%d OR Type=%d OR Type=%d OR Type=%d OR Type=%d OR Type=%d OR Type=%d OR Type=%d OR Type=%d OR Type=%d OR (Type=%d AND SubType=%d) OR (Type=%d AND SubType=%d) OR (Type=%d AND SubType=%d))",
 		pTypeTEMP,
 		pTypeHUM,
 		pTypeTEMP_HUM,
@@ -5011,6 +5011,8 @@ void CSQLHelper::UpdateTemperatureLog()
 			{
 			case pTypeRego6XXTemp:
 			case pTypeTEMP:
+				temp = static_cast<float>(atof(splitresults[0].c_str()));
+				break;
 			case pTypeThermostat:
 				//set point temperature record as chill
 				chill = static_cast<float>(atof(splitresults[0].c_str()));
