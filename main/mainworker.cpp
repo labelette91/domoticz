@@ -12179,7 +12179,7 @@ bool MainWorker::SetSetPointInt(const std::vector<std::string> &sd, const float 
 			tmeter.temp = tempDest;
 			if (!WriteToHardware(HardwareID, (const char*)&tmeter, sizeof(_tThermostat)))
 				return false;
-			if (pHardware->HwdType == HTYPE_Dummy)
+			if ( (pHardware->HwdType == HTYPE_Dummy)|| (pHardware->HwdType == HTYPE_VirtualThermostat) )
 			{
 				//Also put it in the database, as this devices does not send updates
 				PushAndWaitRxMessage(pHardware, (const unsigned char*)&tmeter, NULL, -1);
