@@ -12,7 +12,14 @@ define(['app'], function (app) {
 	            bigtext += $scope.config.TempSign;
 	            return bigtext;
 	        }
-		$.strPad = function (i, l, s) {
+	        GetThermostatStatus = function (item) {
+	            var status;
+	            if (typeof item.Power != 'undefined') {
+	                status = "Power:"+item.Power + '%';
+	            }
+	            return status;
+	        }
+	        $.strPad = function (i, l, s) {
 			var o = i.toString();
 			if (!s) { s = '0'; }
 			while (o.length < l) {
@@ -425,7 +432,7 @@ define(['app'], function (app) {
 								}
 								else if ((item.Type == "Thermostat") && (item.SubType == "SetPoint")) {
 									bigtext = GetThermostatBigTest(item);
-									status = "";
+									status = GetThermostatStatus(item);
 								}
 								else if (item.Type == "Radiator 1") {
 									status = item.Data + '\u00B0 ' + $scope.config.TempSign;
@@ -576,6 +583,7 @@ define(['app'], function (app) {
 							}
 							var backgroundClass = $rootScope.GetItemBackgroundStatus(item);
 							var graphLogLink = '#/Devices/' + item.idx + '/GraphLog';
+							var status = "";
 
 							var xhtm =
 								'\t<div class="item span4 ' + backgroundClass + '" id="' + item.idx + '">\n' +
@@ -636,14 +644,14 @@ define(['app'], function (app) {
 								xhtm += item.Data;
 							}
 							else if (item.Type == "Thermostat") {
-				                        	xhtm += GetThermostatBigTest(item);
+							    xhtm += GetThermostatBigTest(item);
+							    status = GetThermostatStatus(item);
 							}
 							else if (item.SubType == "Waterflow") {
 								xhtm += item.Data;
 							}
 							xhtm += '</td>\n';
 							xhtm += '\t      <td id="img">';
-							var status = "";
 							if (typeof item.Counter != 'undefined') {
 								if ((item.Type == "RFXMeter") || (item.Type == "YouLess Meter") || (item.SubType == "Counter Incremental") || (item.SubType == "Managed Counter")) {
 									if (item.SwitchTypeVal == 1) {
@@ -754,7 +762,6 @@ define(['app'], function (app) {
 							}
 							else if (((item.Type == "Thermostat") && (item.SubType == "SetPoint")) || (item.Type == "Radiator 1")) {
 								xhtm += '<img src="images/override.png" class="lcursor" onclick="ShowSetpointPopup(event, ' + item.idx + ', RefreshUtilities, ' + item.Protected + ', ' + item.Data + ');" height="48" width="48" ></td>\n';
-								status = "";
 							}
 							else if (item.SubType == "Thermostat Clock") {
 								xhtm += '<img src="images/clock48.png" height="48" width="48"></td>\n';
