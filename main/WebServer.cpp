@@ -8896,7 +8896,6 @@ namespace http {
 						GetLightStatus(dType, dSubType, switchtype, nValue, sValue, lstatus, llevel, bHaveDimmer, maxDimLevel, bHaveGroupCmd);
 
 						root["result"][ii]["Status"] = lstatus;
-						root["result"][ii]["nValue"] = nValue;
 						root["result"][ii]["StrParam1"] = strParam1;
 						root["result"][ii]["StrParam2"] = strParam2;
 

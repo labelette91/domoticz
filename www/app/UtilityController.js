@@ -3,7 +3,48 @@ define(['app'], function (app) {
 
 		$scope.HasInitializedEditCustomSensorDialog = false;
 
-	        GetThermostatBigTest = function(item){
+		    function isVirtualThermostat(item) {
+		    return (item.isVirtualThermostat == 'yes');
+		}
+
+		    function RefreshDeviceCombo(ComboName, filter, clear) {
+		    //get list
+
+		    $.List = [];
+		    $.ajax({
+		        url: "json.htm?type=devices&filter=" + filter + "&used=true&order=Name",
+		        async: false,
+		        dataType: 'json',
+		        success: function (data) {
+		            if (typeof data.result != 'undefined') {
+		                $.each(data.result, function (i, item) {
+		                    $.List.push({
+		                        idx: item.idx,
+		                        name: item.Name
+		                    });
+		                });
+		            }
+		        }
+		    });
+
+
+		    var Combo = $(ComboName);
+
+		    if (clear) Combo.find('option').remove().end();
+
+		    $.each($.List, function (i, item) {
+		        var option = $('<option />');
+		        option.attr('value', item.idx).text(item.name);
+		        Combo.append(option);
+		    });
+
+		    var option = $('<option />');
+		    option.attr('value', '0').text('');
+		    //    Combo.append(option);
+
+		}
+
+		    GetThermostatBigTest = function (item) {
 	            var bigtext;
 	            bigtext = item.Data + '\u00B0';
 	            if (typeof item.RoomTemp != 'undefined') {
@@ -18,6 +59,19 @@ define(['app'], function (app) {
 	                status = "Power:"+item.Power + '%';
 	            }
 	            return status;
+	        }
+
+	        getThermostatImage = function (item) {
+	            var image = '"images/override.png"';
+	            if (isVirtualThermostat(item)) {
+	                if (item.nValue == 1)
+	                    image = '"images/override.png"';
+	                else
+	                    image = '"images/nodemand.png"';
+	            }
+	            var xhtm = '<img src='+ image+' class="lcursor" onclick="ShowSetpointPopup(event, ' + item.idx + ', RefreshUtilities, ' + item.Protected + ', ' + item.Data + ');" height="48" width="48" ></td>\n';
+
+	            return xhtm;
 	        }
 	        $.strPad = function (i, l, s) {
 			var o = i.toString();
@@ -433,6 +487,7 @@ define(['app'], function (app) {
 								else if ((item.Type == "Thermostat") && (item.SubType == "SetPoint")) {
 									bigtext = GetThermostatBigTest(item);
 									status = GetThermostatStatus(item);
+									img = getThermostatImage(item);
 								}
 								else if (item.Type == "Radiator 1") {
 									status = item.Data + '\u00B0 ' + $scope.config.TempSign;
@@ -761,7 +816,8 @@ define(['app'], function (app) {
 								status = "";
 							}
 							else if (((item.Type == "Thermostat") && (item.SubType == "SetPoint")) || (item.Type == "Radiator 1")) {
-								xhtm += '<img src="images/override.png" class="lcursor" onclick="ShowSetpointPopup(event, ' + item.idx + ', RefreshUtilities, ' + item.Protected + ', ' + item.Data + ');" height="48" width="48" ></td>\n';
+							    //								xhtm += '<img src="images/override.png" class="lcursor" onclick="ShowSetpointPopup(event, ' + item.idx + ', RefreshUtilities, ' + item.Protected + ', ' + item.Data + ');" height="48" width="48" ></td>\n';
+							    xhtm+=getThermostatImage(item);
 							}
 							else if (item.SubType == "Thermostat Clock") {
 								xhtm += '<img src="images/clock48.png" height="48" width="48"></td>\n';
