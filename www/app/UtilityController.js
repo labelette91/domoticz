@@ -67,7 +67,7 @@ define(['app'], function (app) {
 	                if (item.nValue == 1)
 	                    image = '"images/override.png"';
 	                else
-	                    image = '"images/nodemand.png"';
+	                    image = '"images/override_off.png"';
 	            }
 	            var xhtm = '<img src='+ image+' class="lcursor" onclick="ShowSetpointPopup(event, ' + item.idx + ', RefreshUtilities, ' + item.Protected + ', ' + item.Data + ');" height="48" width="48" ></td>\n';
 
