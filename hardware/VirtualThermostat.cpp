@@ -11,6 +11,77 @@
 
 #include <map>
 
+
+void CircularBuffer::Clear()
+{
+	for (int i = 0; i<Size; i++)Value[i] = 0;
+	index = 0;
+	Sum = 0;
+}
+CircularBuffer::CircularBuffer(int pSize)
+{
+	Value = new double[pSize];
+	Size = pSize;
+	Clear();
+}
+CircularBuffer::~CircularBuffer()
+{
+	delete[] Value;
+}
+int CircularBuffer::GetNext()
+{
+	if (index >= (Size - 1))
+		return 0;
+	else
+		return index + 1;
+}
+double CircularBuffer::Put(double val)
+{
+	double lastv = Value[index];
+	Value[index] = val;
+	index = GetNext();
+	Sum -= lastv;
+	Sum += val;
+	return lastv;
+}
+double CircularBuffer::GetLast()
+{
+	//return last recorded value
+	return Value[index];
+}
+
+double CircularBuffer::GetSum()
+{
+	return Sum;
+}
+
+LastValue::LastValue(float pdelta)
+{
+	Delta = pdelta;
+}
+double LastValue::Get(int index)
+{
+	return LastValues[index];
+}
+void   LastValue::Put(int index, double value)
+{
+	LastValues[index] = value;
+}
+bool LastValue::AsChanged(int index, double value)
+{
+	return AsChanged(index, value, Delta);
+}
+bool LastValue::AsChanged(int index, double value, double delta)
+{
+	if (fabs(LastValues[index] - value)  > delta)
+	{
+		LastValues[index] = value;
+		return true;
+	}
+	return false;
+}
+
+
 VirtualThermostat * m_VirtualThermostat;
 
 VirtualThermostat::VirtualThermostat(const int ID)

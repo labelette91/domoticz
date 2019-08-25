@@ -43,39 +43,6 @@ double ConvertTemperature(const double tValue, const unsigned char tSign);
 
 std::vector<std::string> ExecuteCommandAndReturn(const std::string &szCommand, int &returncode);
 
-class CircularBuffer {
-public:
-  double * Value;
-  int Size; //size of buffer'
-  int index; //current record index
-  double Sum;
-
-  CircularBuffer (int pSize);
-  ~CircularBuffer ();
-  int GetNext();
-  //store value and return last
-  double Put(double val);
-  //get last value
-  double GetLast();      
-  void Clear();
-  double GetSum();
-};
-
-//
-class LastValue{
-  typedef std::map<int,  double > T_Map_Double_Values;
-
-  T_Map_Double_Values LastValues ;
-  double Delta ;
-public:
-
-  LastValue(float delta=0);
-  double Get(int index);
-  void   Put(int index , double value);
-  bool AsChanged(int index , double value  );
-  bool AsChanged(int index , double value  , double delta );
-
-};
 std::string TimeToString(const time_t *ltime, const _eTimeFormat format);
 std::string GenerateMD5Hash(const std::string &InputString, const std::string &Salt="");
 
