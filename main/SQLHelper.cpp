@@ -8555,6 +8555,26 @@ bool CSQLHelper::InsertCustomIconFromZipFile(const std::string &szZipFile, std::
 	m_webservers.ReloadCustomSwitchIcons();
 	return true;
 }
+bool CSQLHelper::UpdateDeviceOptions(const uint64_t idx, std::string options , const bool decode ) {
+
+    //get current option values
+    TOptionMap dbOptionMap = GetDeviceOptions( std::to_string(idx), decode ) ;
+
+		TOptionMap optionsMap  = BuildDeviceOptions(options);
+
+    //update all  option values
+    for (const auto & itt : optionsMap)
+    {
+      std::string optionName  = itt.first.c_str();
+      std::string optionValue = itt.second;  
+      dbOptionMap[optionName.c_str()]  = optionValue.c_str() ;
+    }
+
+    SetDeviceOptions( idx,dbOptionMap, decode ) ;
+
+
+    return true;
+}
 
 std::map<std::string, std::string> CSQLHelper::BuildDeviceOptions(const std::string & options, const bool decode) {
 	std::map<std::string, std::string> optionsMap;
@@ -8590,9 +8610,7 @@ std::map<std::string, std::string> CSQLHelper::GetDeviceOptions(const std::strin
 		return optionsMap;
 	}
 
-	uint64_t ulID;
-	std::stringstream s_str(idx);
-	s_str >> ulID;
+	uint64_t ulID = std::strtoull(idx.c_str(), nullptr, 10);
 	std::vector<std::vector<std::string> > result;
 	result = safe_query("SELECT Options FROM DeviceStatus WHERE (ID==%" PRIu64 ")", ulID);
 	if (!result.empty()) {
@@ -8645,24 +8663,4 @@ bool CSQLHelper::SetDeviceOptions(const uint64_t idx, const std::map<std::string
 		safe_query("UPDATE DeviceStatus SET Options = '%q' WHERE (ID==%" PRIu64 ")", options.c_str(), idx);
 	}
 	return true;
-}
-bool CSQLHelper::UpdateDeviceOptions(const uint64_t idx, std::string options , const bool decode ) {
-
-    //get current option values
-    TOptionMap dbOptionMap = GetDeviceOptions( std::to_string(idx), decode ) ;
-
-		TOptionMap optionsMap  = BuildDeviceOptions(options);
-
-    //update all  option values
-    for (const auto & itt : optionsMap)
-    {
-      std::string optionName  = itt.first.c_str();
-      std::string optionValue = itt.second;  
-      dbOptionMap[optionName.c_str()]  = optionValue.c_str() ;
-    }
-
-    SetDeviceOptions( idx,dbOptionMap, decode ) ;
-
-
-    return true;
 }
