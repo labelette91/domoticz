@@ -36,11 +36,9 @@ datum;DISCONNECT;ConnectionID;dauerInSekunden;
 */
 
 FritzboxTCP::FritzboxTCP(const int ID, const std::string &IPAddress, const unsigned short usIPPort) :
-m_szIPAddress(IPAddress)
+	m_szIPAddress(IPAddress)
 {
 	m_HwdID=ID;
-	m_bDoRestart=false;
-	m_stoprequested=false;
 	m_usIPPort=usIPPort;
 	m_retrycntr = RETRY_DELAY;
 	m_bufferpos = 0;
@@ -52,8 +50,7 @@ FritzboxTCP::~FritzboxTCP(void)
 
 bool FritzboxTCP::StartHardware()
 {
-	m_stoprequested=false;
-	m_bDoRestart=false;
+	RequestStart();
 
 	//force connect the next first time
 	m_retrycntr=RETRY_DELAY;
@@ -61,33 +58,18 @@ bool FritzboxTCP::StartHardware()
 
 	//Start worker thread
 	m_thread = std::make_shared<std::thread>(&FritzboxTCP::Do_Work, this);
+	SetThreadNameInt(m_thread->native_handle());
 	return (m_thread != nullptr);
 }
 
 bool FritzboxTCP::StopHardware()
 {
-	m_stoprequested=true;
-	try {
-		if (m_thread)
-		{
-			m_thread->join();
-			m_thread.reset();
-		}
-	}
-	catch (...)
+	if (m_thread)
 	{
-		//Don't throw from a Stop command
+		RequestStop();
+		m_thread->join();
+		m_thread.reset();
 	}
-	if (isConnected())
-	{
-		try {
-			disconnect();
-		} catch(...)
-		{
-			//Don't throw from a Stop command
-		}
-	}
-
 	m_bIsStarted=false;
 	return true;
 }
@@ -95,7 +77,6 @@ bool FritzboxTCP::StopHardware()
 void FritzboxTCP::OnConnect()
 {
 	_log.Log(LOG_STATUS,"Fritzbox: connected to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
-	m_bDoRestart=false;
 	m_bIsStarted=true;
 	m_bufferpos=0;
 
@@ -109,37 +90,23 @@ void FritzboxTCP::OnDisconnect()
 
 void FritzboxTCP::Do_Work()
 {
-	bool bFirstTime=true;
 	int sec_counter = 0;
-	while (!m_stoprequested)
+	connect(m_szIPAddress,m_usIPPort);
+	while (!IsStopRequested(1000))
 	{
-		sleep_seconds(1);
 		sec_counter++;
 
 		if (sec_counter  % 12 == 0) {
-			m_LastHeartbeat=mytime(NULL);
-		}
-
-		if (bFirstTime)
-		{
-			bFirstTime=false;
-			connect(m_szIPAddress,m_usIPPort);
-		}
-		else
-		{
-			if ((m_bDoRestart) && (sec_counter % 30 == 0))
-			{
-				connect(m_szIPAddress,m_usIPPort);
-			}
-			update();
+			m_LastHeartbeat = mytime(NULL);
 		}
 	}
+	terminate();
+
 	_log.Log(LOG_STATUS,"Fritzbox: TCP/IP Worker stopped...");
 }
 
 void FritzboxTCP::OnData(const unsigned char *pData, size_t length)
 {
-	std::lock_guard<std::mutex> l(readQueueMutex);
 	ParseData(pData,length);
 }
 
@@ -173,7 +140,7 @@ void FritzboxTCP::OnError(const boost::system::error_code& error)
 
 bool FritzboxTCP::WriteToHardware(const char *pdata, const unsigned char length)
 {
-	if (!mIsConnected)
+	if (!isConnected())
 	{
 		return false;
 	}
@@ -183,7 +150,7 @@ bool FritzboxTCP::WriteToHardware(const char *pdata, const unsigned char length)
 
 void FritzboxTCP::WriteInt(const std::string &sendStr)
 {
-	if (!mIsConnected)
+	if (!isConnected())
 	{
 		return;
 	}
@@ -290,7 +257,7 @@ void FritzboxTCP::ParseLine()
 		if (results.size() < 6)
 			return;
 		sstr << "Call From: " << results[4] << " to: " << results[5];
-		m_sql.UpdateValue(m_HwdID, "1", 1, pTypeGeneral, sTypeTextStatus, 12, 255, 0, sstr.str().c_str(), devname);
+		SendTextSensor(1, 1, 255, sstr.str(), devname);
 	}
 	else if (Cmd == "RING")
 	{
@@ -299,7 +266,7 @@ void FritzboxTCP::ParseLine()
 		if (results.size() < 5)
 			return;
 		sstr << "Received From: " << results[3] << " to: " << results[4];
-		m_sql.UpdateValue(m_HwdID, "1", 1, pTypeGeneral, sTypeTextStatus, 12, 255, 0, sstr.str().c_str(), devname);
+		SendTextSensor(1, 1, 255, sstr.str(), devname);
 	}
 	else if (Cmd == "CONNECT")
 	{
@@ -311,7 +278,7 @@ void FritzboxTCP::ParseLine()
 		UpdateSwitch(1, 1, true, 100, "Call");
 
 		sstr << "Connected ID: " << results[2] << " Number: " << results[4];
-		m_sql.UpdateValue(m_HwdID, "1", 1, pTypeGeneral, sTypeTextStatus, 12, 255, 0, sstr.str().c_str(), devname);
+		SendTextSensor(1, 1, 255, sstr.str(), devname);
 		//result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID==%d) AND (Type==%d) AND (Subtype==%d)", m_HwdID, int(pTypeGeneral), int(sTypeTextStatus));
 		//if (!result.empty())
 		//{
@@ -329,7 +296,7 @@ void FritzboxTCP::ParseLine()
 		UpdateSwitch(1, 1, false, 100, "Call");
 
 		sstr << "Disconnect ID: " << results[2] << " Duration: " << results[3] << " seconds";
-		m_sql.UpdateValue(m_HwdID, "1", 1, pTypeGeneral, sTypeTextStatus, 12, 255, 0, sstr.str().c_str(), devname);
+		SendTextSensor(1, 1, 255, sstr.str(), devname);
 		//result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID==%d) AND (Type==%d) AND (Subtype==%d)", m_HwdID, int(pTypeGeneral), int(sTypeTextStatus));
 		//if (!result.empty())
 		//{

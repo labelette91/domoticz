@@ -42,9 +42,10 @@ EnphaseAPI::EnphaseAPI(const int ID, const std::string &IPAddress, const unsigne
 	m_szIPAddress(IPAddress)
 {
 	m_p1power.ID = 1;
+	m_c1power.ID = 2;
+	m_c2power.ID = 3;
 
 	m_HwdID = ID;
-	m_stoprequested = false;
 }
 
 EnphaseAPI::~EnphaseAPI(void)
@@ -53,8 +54,11 @@ EnphaseAPI::~EnphaseAPI(void)
 
 bool EnphaseAPI::StartHardware()
 {
+	RequestStart();
+
 	//Start worker thread
 	m_thread = std::make_shared<std::thread>(&EnphaseAPI::Do_Work, this);
+	SetThreadNameInt(m_thread->native_handle());
 	m_bIsStarted = true;
 	sOnConnected(this);
 	return (m_thread != nullptr);
@@ -64,7 +68,7 @@ bool EnphaseAPI::StopHardware()
 {
 	if (m_thread)
 	{
-		m_stoprequested = true;
+		RequestStop();
 		m_thread->join();
 		m_thread.reset();
 	}
@@ -77,9 +81,8 @@ void EnphaseAPI::Do_Work()
 	_log.Log(LOG_STATUS, "EnphaseAPI Worker started...");
 	int sec_counter = Enphase_request_INTERVAL - 5;
 
-	while (!m_stoprequested)
+	while (!IsStopRequested(1000))
 	{
-		sleep_seconds(1);
 		sec_counter++;
 
 		if (sec_counter % 12 == 0) {
@@ -89,6 +92,8 @@ void EnphaseAPI::Do_Work()
 		if (sec_counter % Enphase_request_INTERVAL == 0)
 		{
 			getProduction();
+			getConsumption();
+			getNetConsumption();
 		}
 	}
 	_log.Log(LOG_STATUS, "EnphaseAPI Worker stopped...");
@@ -194,4 +199,120 @@ void EnphaseAPI::getProductionDetail()
 	m_p1power.powerusage2 = 0;
 	m_p1power.usagecurrent = musage;
 	sDecodeRXMessage(this, (const unsigned char *)&m_p1power, "Enphase Production kWh Total", 255);
+}
+
+void EnphaseAPI::getConsumption()
+{
+	getConsumptionDetail();
+}
+
+void EnphaseAPI::getConsumptionDetail()
+{
+	std::string sResult;
+
+#ifdef DEBUG_EnphaseAPI
+	sResult = ReadFile("C:\\TEMP\\EnphaseAPI_get_production.txt");
+#else
+	std::stringstream sURL;
+	sURL << "http://" << m_szIPAddress << "/production.json";
+
+	bool bret;
+	std::string szURL = sURL.str();
+	bret = HTTPClient::GET(szURL, sResult);
+	if (!bret)
+	{
+		_log.Log(LOG_ERROR, "EnphaseAPI: Error getting http data!");
+		return;
+	}
+
+#endif
+
+	Json::Value root;
+	Json::Reader jReader;
+
+	bool ret = jReader.parse(sResult, root);
+	if ((!ret) || (!root.isObject()))
+	{
+		_log.Log(LOG_ERROR, "EnphaseAPI: Invalid data received!");
+		return;
+	}
+	if (root["consumption"].empty() == true)
+	{
+		return;
+	}
+	if (root["consumption"][0].empty() == true)
+	{
+		_log.Log(LOG_ERROR, "EnphaseAPI: Invalid data received");
+		return;
+	}
+
+	Json::Value reading = root["consumption"][0];
+
+	int musage = reading["wNow"].asInt();
+	int mtotal = reading["whLifetime"].asInt();
+
+	SendKwhMeter(m_HwdID, 2, 255, musage, mtotal / 1000.0, "Enphase kWh Consumption");
+
+	m_c1power.powerusage1 = mtotal;
+	m_c1power.powerusage2 = 0;
+	m_c1power.usagecurrent = musage;
+	sDecodeRXMessage(this, (const unsigned char *)&m_c1power, "Enphase Consumption kWh Total", 255);
+}
+
+void EnphaseAPI::getNetConsumption()
+{
+	getNetConsumptionDetail();
+}
+
+void EnphaseAPI::getNetConsumptionDetail()
+{
+	std::string sResult;
+
+#ifdef DEBUG_EnphaseAPI
+	sResult = ReadFile("C:\\TEMP\\EnphaseAPI_get_production.txt");
+#else
+	std::stringstream sURL;
+	sURL << "http://" << m_szIPAddress << "/production.json";
+
+	bool bret;
+	std::string szURL = sURL.str();
+	bret = HTTPClient::GET(szURL, sResult);
+	if (!bret)
+	{
+		_log.Log(LOG_ERROR, "EnphaseAPI: Error getting http data!");
+		return;
+	}
+
+#endif
+
+	Json::Value root;
+	Json::Reader jReader;
+
+	bool ret = jReader.parse(sResult, root);
+	if ((!ret) || (!root.isObject()))
+	{
+		_log.Log(LOG_ERROR, "EnphaseAPI: Invalid data received!");
+		return;
+	}
+	if (root["consumption"].empty() == true)
+	{
+		return;
+	}
+	if (root["consumption"][0].empty() == true)
+	{
+		_log.Log(LOG_ERROR, "EnphaseAPI: Invalid data received");
+		return;
+	}
+
+	Json::Value reading = root["consumption"][0];
+
+	int musage = reading["wNow"].asInt();
+	int mtotal = reading["whLifetime"].asInt();
+
+	SendKwhMeter(m_HwdID, 3, 255, musage, mtotal / 1000.0, "Enphase kWh Net Consumption");
+
+	m_c2power.powerusage1 = mtotal;
+	m_c2power.powerusage2 = 0;
+	m_c2power.usagecurrent = musage;
+	sDecodeRXMessage(this, (const unsigned char *)&m_c2power, "Enphase Net Consumption kWh Total", 255);
 }

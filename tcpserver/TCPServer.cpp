@@ -4,6 +4,7 @@
 #include "TCPClient.h"
 #include "../main/RFXNames.h"
 #include "../main/RFXtrx.h"
+#include "../main/Helper.h"
 #include "../main/Logger.h"
 #include "../hardware/DomoticzTCP.h"
 #include "../main/mainworker.h"
@@ -262,7 +263,7 @@ CTCPServerInt::~CTCPServerInt(void)
 
 #ifndef NOCLOUD
 // our proxied server
-CTCPServerProxied::CTCPServerProxied(CTCPServer *pRoot, std::shared_ptr<http::server::CProxyClient> proxy) : CTCPServerIntBase(pRoot)
+CTCPServerProxied::CTCPServerProxied(CTCPServer *pRoot, http::server::CProxyClient *proxy) : CTCPServerIntBase(pRoot)
 {
 	m_pProxyClient = proxy;
 }
@@ -405,11 +406,12 @@ bool CTCPServer::StartServer(const std::string &address, const std::string &port
 	_log.Log(LOG_NORM, "Starting shared server on: %s:%s", listen_address.c_str(), port.c_str());
 	//Start worker thread
 	m_thread = std::make_shared<std::thread>(&CTCPServer::Do_Work, this);
+	SetThreadName(m_thread->native_handle(), "TCPServer");
 	return (m_thread != nullptr);
 }
 
 #ifndef NOCLOUD
-bool CTCPServer::StartServer(std::shared_ptr<http::server::CProxyClient> proxy)
+bool CTCPServer::StartServer(http::server::CProxyClient *proxy)
 {
 	_log.Log(LOG_NORM, "Accepting shared server connections via MyDomotiz (see settings menu).");
 	m_pProxyServer = new CTCPServerProxied(this, proxy);

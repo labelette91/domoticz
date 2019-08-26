@@ -2,6 +2,7 @@
 #include "Yeelight.h"
 #include "../main/Logger.h"
 #include "../main/Helper.h"
+#include "../main/HTMLSanitizer.h"
 #include "../main/SQLHelper.h"
 #include "../main/localtime_r.h"
 #include "../hardware/hardwaretypes.h"
@@ -55,7 +56,6 @@ Yeelight::Yeelight(const int ID)
 {
 	m_HwdID = ID;
 	m_bDoRestart = false;
-	m_stoprequested = false;
 }
 
 Yeelight::~Yeelight(void)
@@ -64,7 +64,8 @@ Yeelight::~Yeelight(void)
 
 bool Yeelight::StartHardware()
 {
-	m_stoprequested = false;
+	RequestStart();
+
 	m_bDoRestart = false;
 
 	//force connect the next first time
@@ -72,23 +73,18 @@ bool Yeelight::StartHardware()
 
 	//Start worker thread
 	m_thread = std::make_shared<std::thread>(&Yeelight::Do_Work, this);
+	SetThreadNameInt(m_thread->native_handle());
 
 	return (m_thread != nullptr);
 }
 
 bool Yeelight::StopHardware()
 {
-	m_stoprequested = true;
-	try {
-		if (m_thread)
-		{
-			m_thread->join();
-			m_thread.reset();
-		}
-	}
-	catch (...)
+	if (m_thread)
 	{
-		//Don't throw from a Stop command
+		RequestStop();
+		m_thread->join();
+		m_thread.reset();
 	}
 	m_bIsStarted = false;
 	return true;
@@ -100,31 +96,27 @@ void Yeelight::Do_Work()
 {
 	_log.Log(LOG_STATUS, "YeeLight Worker started...");
 
-	while (!m_stoprequested)
+	try
 	{
-		try
+		boost::asio::io_service io_service;
+		udp_server server(io_service, m_HwdID);
+		int sec_counter = YEELIGHT_POLL_INTERVAL - 5;
+		while (!IsStopRequested(1000))
 		{
-			boost::asio::io_service io_service;
-			udp_server server(io_service, m_HwdID);
-			int sec_counter = YEELIGHT_POLL_INTERVAL - 5;
-			while (!m_stoprequested)
+			sec_counter++;
+			if (sec_counter % 12 == 0) {
+				m_LastHeartbeat = mytime(NULL);
+			}
+			if (sec_counter % 60 == 0) //poll YeeLights every minute
 			{
-				sleep_seconds(1);
-				sec_counter++;
-				if (sec_counter % 12 == 0) {
-					m_LastHeartbeat = mytime(NULL);
-				}
-				if (sec_counter % 60 == 0) //poll YeeLights every minute
-				{
-					server.start_send();
-					io_service.run();
-				}
+				server.start_send();
+				io_service.run();
 			}
 		}
-		catch (const std::exception &e)
-		{
-			_log.Log(LOG_ERROR, "YeeLight: Exception: %s", e.what());
-		}
+	}
+	catch (const std::exception &e)
+	{
+		_log.Log(LOG_ERROR, "YeeLight: Exception: %s", e.what());
 	}
 
 	_log.Log(LOG_STATUS, "YeeLight stopped");
@@ -325,7 +317,7 @@ bool Yeelight::WriteToHardware(const char *pdata, const unsigned char length)
 			}
 			else
 			{
-				_log.Log(LOG_STATUS, "YeeLight: SetRGBColour - Color mode %d is unhandled, if you have a suggestion for what it should do, please post on the Domoticz forum", pLed->color.mode);
+				_log.Log(LOG_STATUS, "YeeLight: SetRGBColour - Color mode %d is unhandled, if you have a suggestion for what it should do, please post on the Domoticz forum (IP: %s)", pLed->color.mode, szTmp);
 			}
 			// Send brigthness command
 			ss.str("");
@@ -364,16 +356,16 @@ bool Yeelight::WriteToHardware(const char *pdata, const unsigned char length)
 		case Color_DiscoMode:
 			sendOnFirst = true;
 			// simulate strobe effect - at time of writing, minimum timing allowed by Yeelight is 50ms
-			_log.Log(LOG_STATUS, "Yeelight: Disco Mode - simulate strobe effect, if you have a suggestion for what it should do, please post on the Domoticz forum");
+			_log.Log(LOG_STATUS, "Yeelight: Disco Mode - simulate strobe effect, if you have a suggestion for what it should do, please post on the Domoticz forum (IP: %s)", szTmp);
 			message = "{\"id\":1,\"method\":\"start_cf\",\"params\":[ 50, 0, \"";
 			message += "50, 2, 5000, 100, ";
 			message += "50, 2, 5000, 1\"]}\r\n";
 			break;
 		case Color_DiscoSpeedFasterLong:
-			_log.Log(LOG_STATUS, "Yeelight: Exclude Lamp - This command is unhandled, if you have a suggestion for what it should do, please post on the Domoticz forum");
+			_log.Log(LOG_STATUS, "Yeelight: Exclude Lamp - This command is unhandled, if you have a suggestion for what it should do, please post on the Domoticz forum (IP: %s)", szTmp);
 			break;
 		default:
-			_log.Log(LOG_STATUS, "YeeLight: Unhandled WriteToHardware command: %d - if you have a suggestion for what it should do, please post on the Domoticz forum", command);
+			_log.Log(LOG_STATUS, "YeeLight: Unhandled WriteToHardware command: %d - if you have a suggestion for what it should do, please post on the Domoticz forum (IP: %s)", command, szTmp);
 			break;
 		}
 
@@ -407,7 +399,7 @@ bool Yeelight::WriteToHardware(const char *pdata, const unsigned char length)
 	}
 	catch (const std::exception &e)
 	{
-		_log.Log(LOG_ERROR, "YeeLight: Exception: %s", e.what());
+		_log.Log(LOG_ERROR, "YeeLight: Exception: %s (IP: %s)", e.what(), szTmp);
 		return false;
 	}
 
@@ -610,8 +602,8 @@ namespace http {
 			root["title"] = "AddYeeLight";
 
 			std::string idx = request::findValue(&req, "idx");
-			std::string sname = request::findValue(&req, "name");
-			std::string sipaddress = request::findValue(&req, "ipaddress");
+			std::string sname = HTMLSanitizer::Sanitize(request::findValue(&req, "name"));
+			std::string sipaddress = HTMLSanitizer::Sanitize(request::findValue(&req, "ipaddress"));
 			std::string stype = request::findValue(&req, "stype");
 			if (
 				(idx.empty()) ||

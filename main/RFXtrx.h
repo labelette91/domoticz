@@ -9,7 +9,7 @@
 
 /*
                                                                    
-Copyright 2011-2018, RFXCOM
+Copyright 2011-2019, RFXCOM
 
 ALL RIGHTS RESERVED. This code is owned by RFXCOM, and is protected under
 Netherlands Copyright Laws and Treaties and shall be subject to the 
@@ -27,42 +27,73 @@ portions of this file.
 */
 
 /*
-SDK version 9.21
+SDK version 9.27	August 12, 2019
+	Hunter fan added
+	Novy fan added
+	BlindsT6 Light added
+
+SDK version 9.26	March 28, 2019
+	sTypeBlindsT15 = Motostar
+
+SDK version 9.25	March 18, 2019
+	no change in .h
+
+SDK version 9.24	March 16, 2019
+	Chime Alfawise, dBell added
+	SelectPlus3 changed to ByronBY
+	Async Get Settings added
+	868 protocol selection bits updated and changed
+	WEATHER & SOLAR structures added
+	ACH2010 moved to WEATHER
+	WS5500 added
+
+SDK version 9.23	Oct 10, 2018
+	Async data subtypes changed
+
+SDK version 9.22	Aug 18, 2018
+	Falmec added
+	Fan LucciAir DCII added
+	Zemismart blinds added
+	Async port added
+	Firmware types added
+	Livolo 1-10 device changed 
+
+SDK version 9.21	June 18, 2018
 	Fan LucciAir DC added
 	Casafan added
 	FT1211R fan controller added
 	Hualite blind added
 	Lighting1 Oase added
 
-SDK version 9.20
+SDK version 9.20	May 29, 2018
 	Lighting6 Cuveo added
 
-SDK version 9.19a
+SDK version 9.19a	May 27, 2018
 	FS20 commands added
 
-SDK version 9.19
+SDK version 9.19	May 26, 2018
 	IRESPONSE868 added
 	IRESPONSE updated
 	433 & 868 config bits updated
 
-SDK version 9.18
+SDK version 9.18	May 11, 2018
 	RAW transmit/receive added
 	BlindsT6 intermediate position added
 
-SDK version 9.17
+SDK version 9.17	April 30, 2018
 	868 config bits added (changed)
 	Interface Control Freq commands removed (use freqsel instead)
 	FunkBus (Gira, Jung, Berker, Insta) added
 
-SDK version 9.16
+SDK version 9.16	July 30, 2017
 	RAIN8 and RAIN9 added
 	WIND8 added
 	Cartelectronic - Linky added
 
-SDK version 9.15
+SDK version 9.15	March 29, 2017
 	BlindsT13 - Screenline angle change added
 
-SDK version 9.14
+SDK version 9.14	Jan 12, 2017
 	Lighting5 - Kangtai added
 
 SDK version 9.13
@@ -385,6 +416,14 @@ SDK version 4.9
 #define trxType43392 0x53
 #define trxType868 0x55
 
+#define FWtyperec 0x0
+#define FWtype1 0x1
+#define FWtype2 0x2
+#define FWtypeExt 0x3
+#define FWtypeExt2 0x4
+#define FWtypePro1 0x5
+#define FWtypePro2 0x6
+#define FWtypeProXL1 0x10
 
 //433 config bits
 #define msg3_AE 0x01			//AE Blyss
@@ -428,17 +467,17 @@ SDK version 4.9
 #define msg3_868_DAVISAU 0x02	//Davis AU
 #define msg3_868_DAVISUS 0x04	//Davis US
 #define msg3_868_DAVISEU 0x08	//Davis EU
-#define msg3_868_RFU4 0x10		//RFU
-#define msg3_868_LACROSSE 0x20	//LaCrosse
+#define msg3_868_LACROSSE 0x10  //LACROSSE
+#define msg3_868_ALECTO5500 0x20	//Alecto WS5500
 #define msg3_868_ALECTO 0x40	//Alecto ACH2010
 #define msg3_868_UNDEC 0x80		//Enable undecoded
 
-#define msg4_868_EDISIO 0x01	//Edisio
-#define msg4_868_RFU1 0x02		//RFU
-#define msg4_868_RFU2 0x04		//RFU
+#define msg4_868_EDISIO 0x01	//EDISIO
+#define msg4_868_LWRF 0x02		//LightwaveRF
+#define msg4_868_FS20 0x04		//FS20
 #define msg4_868_RFU3 0x08		//RFU
-#define msg4_868_FS20 0x10		//FS20
-#define msg4_868_PROGUARD 0x20	//Proguard
+#define msg4_868_RFU4 0x10		//RFU
+#define msg4_868_RFU5 0x20		//RFU
 #define msg4_868_RFU6 0x40		//RFU
 #define msg4_868_RFU7 0x80		//RFU
 
@@ -446,19 +485,19 @@ SDK version 4.9
 #define msg5_868_RFU1 0x02		//RFU
 #define msg5_868_RFU2 0x04		//RFU
 #define msg5_868_RFU3 0x08		//RFU
-#define msg5_868_RFU4 0x10		//RFU
-#define msg5_868_RFU5 0x20		//RFU
-#define msg5_868_MEI 0x40		//Meiantech,Atlantic
+#define msg5_868_PROGUARD  0x10 //Proguard
+#define msg5_868_KEELOQ 0x20    //KEELOQ
+#define msg5_868_MEIANTECH 0x40	//Meiantech,Atlantic
 #define msg5_868_VISONIC 0x80	//Visonic
 
-#define msg6_868_KEELOQ 0x01	//Keeloq
+#define msg6_868_RFU0 0x01		//RFU
 #define msg6_868_RFU1 0x02		//RFU
 #define msg6_868_RFU2 0x04		//RFU
 #define msg6_868_RFU3 0x08		//RFU
 #define msg6_868_RFU4 0x10		//RFU
-#define msg6_868_RFU5 0x20		//RFU
-#define msg6_868_RFU6 0x40		//RFU
-#define msg6_868_RFU7 0x80		//RFU
+#define msg6_868_HONCHIME 0x20	//Honeywell Chime
+#define msg6_868_ITHOECO 0x40	//Itho CVE ECO RFT
+#define msg6_868_ITHO 0x80		//Itho CVE RFT
 
 #define pTypeRecXmitMessage 0x02
 #define sTypeReceiverLockError 0x00
@@ -489,6 +528,7 @@ SDK version 4.9
 #define sTypeUrfy 0x14
 #define sTypeUselectplus 0x15
 #define sTypeUhomeconfort 0x16
+#define sTypeURFXtrx868 0x17
 #define sTypeUfunkbus 0x19
 
 //types for Lighting
@@ -560,7 +600,7 @@ SDK version 4.9
 #define sTypeAoke 0x07
 #define sTypeTRC02_2 0x08
 #define sTypeEurodomest 0x09
-#define sTypeLivoloAppliance 0x0A
+#define sTypeLivolo1to10 0x0A
 #define sTypeRGB432W 0x0B
 #define sTypeMDREMOTE107 0x0C
 #define sTypeLegrandCAD 0x0D
@@ -600,18 +640,41 @@ SDK version 4.9
 #define light5_sSpeedMin 0x8
 #define light5_sSpeedPlus 0x9
 #define light5_sModeMin 0xA
+
+//Livolo All off, used for all types
 #define light5_sLivoloAllOff 0x00
+
+//Livolo 1-3 appliance modules
 #define light5_sLivoloGang1Toggle 0x01
 #define light5_sLivoloGang2Toggle 0x02
-#define light5_sLivoloDimR1plus 0x02
 #define light5_sLivoloGang3Toggle 0x03
-#define light5_sLivoloDimR1min 0x03
-#define light5_sLivoloScene1R1 0x04
-#define light5_sLivoloScene2R1 0x05
-#define light5_sLivoloDimR2plus 0x06
-#define light5_sLivoloDimR2min 0x07
-#define light5_sLivoloScene1R2 0x08
-#define light5_sLivoloScene2R2 0x09
+
+//Livolo dimmer
+//#define light5_sLivoloToggle1 0x01
+#define light5_sLivoloBright1 0x02
+#define light5_sLivoloDim1 0x03
+
+//Livolo 1-10 appliance modules, 7 and 9 is a dimmer
+#define light5_sLivoloToggle1 0x01
+#define light5_sLivoloToggle2 0x02
+#define light5_sLivoloToggle3 0x03
+#define light5_sLivoloToggle4 0x04
+#define light5_sLivoloToggle5 0x05
+#define light5_sLivoloToggle6 0x06
+#define light5_sLivoloToggle7 0x07
+#define light5_sLivoloBright7 0x08
+#define light5_sLivoloDim7 0x09
+#define light5_sLivoloToggle8 0x0A
+#define light5_sLivoloToggle9 0x0B
+#define light5_sLivoloBright9 0x0C
+#define light5_sLivoloDim9 0x0D
+#define light5_sLivoloToggle10 0x0E
+#define light5_sLivoloScene1 0x0F
+#define light5_sLivoloScene2 0x10
+#define light5_sLivoloScene3 0x11
+#define light5_sLivoloScene4 0x12
+#define light5_sLivoloOkSet 0x13
+
 #define light5_sRGBoff 0x00
 #define light5_sRGBon 0x01
 #define light5_sRGBbright 0x02
@@ -641,8 +704,9 @@ SDK version 4.9
 #define sTypeByronSX 0x0
 #define sTypeByronMP001 0x1
 #define sTypeSelectPlus 0x2
-#define sTypeSelectPlus3 0x3
+#define sTypeByronBY 0x3
 #define sTypeEnvivo 0x4
+#define sTypeAlfawise 0x5
 #define chime_sound0 0x1
 #define chime_sound1 0x3
 #define chime_sound2 0x5
@@ -661,6 +725,10 @@ SDK version 4.9
 #define sTypeLucciAirDC 0x5
 #define sTypeCasafan 0x6
 #define sTypeFT1211R 0x7
+#define sTypeFalmec 0x8
+#define sTypeLucciAirDCII 0x9
+#define sTypeIthoECO 0xA
+#define sTypeNovy 0xB
 
 #define fan_sTimer 0x1
 #define fan_sMin 0x2
@@ -712,6 +780,31 @@ SDK version 4.9
 #define fan_FT1211R1H 0x9
 #define fan_FT1211R4H 0xA
 #define fan_FT1211R8H 0xB
+#define fan_FalmecPower 0x1
+#define fan_FalmecSpeed1 0x2
+#define fan_FalmecSpeed2 0x3
+#define fan_FalmecSpeed3 0x4
+#define fan_FalmecSpeed4 0x5
+#define fan_FalmecTimer1 0x6
+#define fan_FalmecTimer2 0x7
+#define fan_FalmecTimer3 0x8
+#define fan_FalmecTimer4 0x9
+#define fan_FalmecLightOn 0xA
+#define fan_FalmecLightOff 0xB
+#define fan_LucciDCIIOff 0x1
+#define fan_LucciDCII1 0x2
+#define fan_LucciDCII2 0x3
+#define fan_LucciDCII3 0x4
+#define fan_LucciDCII4 0x5
+#define fan_LucciDCII5 0x6
+#define fan_LucciDCII6 0x7
+#define fan_LucciDCIILight 0x8
+#define fan_LucciDCIIReverse 0x9
+#define fan_NovyPower 0x1
+#define fan_NovyPlus 0x2
+#define fan_NovyMin 0x3
+#define fan_NovyLight 0x4
+#define fan_NovyLearn 0x5
 
 //types for Curtain
 #define pTypeCurtain 0x18
@@ -738,6 +831,8 @@ SDK version 4.9
 #define sTypeBlindsT12 0xC	//Confexx
 #define sTypeBlindsT13 0xD	//Screenline
 #define sTypeBlindsT14 0xE	//Hualite
+#define sTypeBlindsT15 0xF	//Motostar
+#define sTypeBlindsT16 0x10	//Zemismart
 
 #define blinds_sOpen 0x0
 #define blinds_sClose 0x1
@@ -750,6 +845,7 @@ SDK version 4.9
 #define blinds_sLeft 0x8
 #define blinds_sRight 0x9
 #define blinds_s6Im 0x4
+#define blinds_s6Light 0x5
 #define blinds_s9ChangeDirection 0x6
 #define blinds_s9ImA 0x7
 #define blinds_s9ImCenter 0x8
@@ -761,6 +857,8 @@ SDK version 4.9
 #define blinds_s10ChangeDirection 0x6
 #define blinds_s13anglePlus 0x4
 #define blinds_s13angleMinus 0x5
+#define blinds_s16EraseCurrentCh 0x4
+#define blinds_s16ChangeDirection 0x5
 
 //types for RFY
 #define pTypeRFY 0x1A
@@ -808,6 +906,16 @@ SDK version 4.9
 #define Funkbus_sScene 0x04
 #define Funkbus_sMasterMin 0x05
 #define Funkbus_sMasterPlus 0x06
+
+//types for Hunter Fan
+#define pTypeHunter 0x1F
+#define sTypeHunterfan 0x00
+#define HunterOff 0x1
+#define HunterLight 0x2
+#define HunterSpeed1 0x3
+#define HunterSpeed2 0x4
+#define HunterSpeed3 0x5
+#define HunterProgram 0x6
 
 //types for Security1
 #define pTypeSecurity1 0x20
@@ -1007,7 +1115,6 @@ SDK version 4.9
 #define sTypeRAIN6 0x6   //TX5
 #define sTypeRAIN7 0x7   //Alecto
 #define sTypeRAIN8 0x8   //Davis
-#define sTypeRAIN9 0x9   //Alecto WCH2010
 
 //types for wind
 #define pTypeWIND 0x56
@@ -1018,7 +1125,6 @@ SDK version 4.9
 #define sTypeWIND5 0x5   //UPM, Davis
 #define sTypeWIND6 0x6   //WS2300
 #define sTypeWIND7 0x7   //Alecto WS4500
-#define sTypeWIND8 0x8   //Alecto ACH2010
 
 //types for uv
 #define pTypeUV 0x57
@@ -1063,6 +1169,43 @@ SDK version 4.9
 #define sTypeTIC 0x1
 #define sTypeCEencoder 0x2
 #define sTypeLinky 0x3
+
+//types for Async port configuration
+#define pTypeASYNCPORT 0x61
+#define sTypeASYNCconfig 0x01
+#define asyncdisable 0x0
+#define asyncreceiveP1 0x1
+#define asyncreceiveTeleinfo 0x2
+#define asyncreceiveRAW 0xFE //not yet implemented
+#define asyncreceiveGetSettings 0xFF
+#define asyncbaud110 0x0
+#define asyncbaud300 0x1
+#define asyncbaud600 0x2
+#define asyncbaud1200 0x3
+#define asyncbaud2400 0x4
+#define asyncbaud4800 0x5
+#define asyncbaud9600 0x6
+#define asyncbaud14400 0x7
+#define asyncbaud19200 0x8
+#define asyncbaud38400 0x9
+#define asyncbaud57600 0xA
+#define asyncbaud115200 0xB
+#define asyncParityNo 0x0
+#define asyncParityOdd 0x1
+#define asyncParityEven 0x2
+#define asyncDatabits7 0x7
+#define asyncDatabits8 0x8
+#define asyncStopbits1 0x1
+#define asyncStopbits2 0x2
+#define asyncPolarityNormal 0x0
+#define asyncPolarityInvers 0x1
+
+//types for Async data
+#define pTypeASYNCDATA 0x62
+#define sTypeASYNCoverrun 0xFF
+#define sTypeASYNCp1 0x01
+#define sTypeASYNCteleinfo 0x02
+#define sTypeASYNCraw 0x03
 
 //RFXSensor
 #define pTypeRFXSensor 0x70
@@ -1117,6 +1260,15 @@ SDK version 4.9
 #define fs20_sOn_100_for_time_period 0x19 
 #define fs20_sOn_last_dim_level_period 0x1A 
 #define fs20_sReset 0x1B
+
+//WEATHER STATIONS
+#define pTypeWEATHER 0x76
+#define sTypeWEATHER1 0x1   //Alecto ACH2010
+#define sTypeWEATHER2 0x2   //Alecto WS5500
+
+//types for Solar
+#define pTypeSOLAR 0x77
+#define sTypeSOLAR1 0x1   //Davis
 
 //RAW transit/receive
 #define pTypeRAW 0x7F
@@ -1259,8 +1411,8 @@ typedef union tRBUF {
 		//BYTE	msg3;
 		BYTE	UNDECODEDenabled : 1;
 		BYTE	ALECTOenabled : 1;
-		BYTE	MSG3Reserved5 : 1;
-		BYTE	MSG3Reserved4 : 1;
+		BYTE	ALECTO5500enabled : 1;
+		BYTE	LACROSSEenabled : 1;
 		BYTE	DAVISEUenabled : 1;
 		BYTE	DAVISUSenabled : 1;
 		BYTE	DAVISAUenabled : 1;
@@ -1269,50 +1421,50 @@ typedef union tRBUF {
 		//BYTE	msg4;
 		BYTE	MSG4Reserved7 : 1;
 		BYTE	MSG4Reserved6 : 1;
-		BYTE	PROGUARDenabled : 1;
-		BYTE	FS20enabled : 1;
+		BYTE	MSG4Reserved5 : 1;
+		BYTE	MSG4Reserved4 : 1;
 		BYTE	MSG4Reserved3 : 1;
-		BYTE	MSG4Reserved2 : 1;
-		BYTE	MSG4Reserved1 : 1;
+		BYTE	FS20enabled : 1;
+		BYTE	LWRFenabled : 1;
 		BYTE	EDISIOenabled : 1;
 
 		//BYTE	msg5;
 		BYTE	VISONICenabled : 1;
-		BYTE	MSG5Reserved6 : 1;
-		BYTE	MSG5Reserved5 : 1;
-		BYTE	MSG5Reserved4 : 1;
+		BYTE	MEIANTECHenabled : 1;
+		BYTE	KEELOQenabled : 1;
+		BYTE	PROGUARDenabled : 1;
 		BYTE	MSG5Reserved3 : 1;
 		BYTE	MSG5Reserved2 : 1;
 		BYTE	MSG5Reserved1 : 1;
 		BYTE	MSG5Reserved0 : 1; //note: keep this order
 
-								//BYTE    msg6;
-		BYTE    MSG6Reserved7 : 1;
-		BYTE    MSG6Reserved6 : 1;
-		BYTE    MSG6Reserved5 : 1;
+		//BYTE    msg6;
+		BYTE    ITHOenabled : 1;
+		BYTE    ITHOecoenabled : 1;
+		BYTE    HONEYWELLenabled : 1;
 		BYTE    MSG6Reserved4 : 1;
 		BYTE    MSG6Reserved3 : 1;
 		BYTE    MSG6Reserved2 : 1;
 		BYTE    MSG6Reserved1 : 1;
-		BYTE    KEELOQenabled : 1;
+		BYTE    MSG6Reserved0 : 1;
 #else
 		//BYTE	msg3;
 		BYTE	MSG3Reserved0 : 1;
 		BYTE	DAVISAUenabled : 1;
 		BYTE	DAVISUSenabled : 1;
 		BYTE	DAVISEUenabled : 1;
-		BYTE	MSG3Reserved4 : 1;
-		BYTE	MSG3Reserved5 : 1;
+		BYTE	LACROSSEenabled : 1;
+		BYTE	ALECTO5500enabled : 1;
 		BYTE	ALECTOenabled : 1;
 		BYTE	UNDECODEDenabled : 1;
 
 		//BYTE	msg4;
 		BYTE	EDISIOenabled : 1;
-		BYTE	MSG4Reserved1 : 1;
-		BYTE	MSG4Reserved2 : 1;
-		BYTE	MSG4Reserved3 : 1;
+		BYTE	LWRFenabled : 1;
 		BYTE	FS20enabled : 1;
-		BYTE	PROGUARDenabled : 1;
+		BYTE	MSG4Reserved3 : 1;
+		BYTE	MSG4Reserved4 : 1;
+		BYTE	MSG4Reserved5 : 1;
 		BYTE	MSG4Reserved6 : 1;
 		BYTE	MSG4Reserved7 : 1;
 
@@ -1321,20 +1473,20 @@ typedef union tRBUF {
 		BYTE	MSG5Reserved1 : 1;
 		BYTE	MSG5Reserved2 : 1;
 		BYTE	MSG5Reserved3 : 1;
-		BYTE	MSG5Reserved4 : 1;
-		BYTE	MSG5Reserved5 : 1;
-		BYTE	MSG5Reserved6 : 1;
+		BYTE	PROGUARDenabled : 1;
+		BYTE    KEELOQenabled : 1;
+		BYTE	MEIANTECHenabled : 1;
 		BYTE	VISONICenabled : 1;
 
 		//BYTE	msg6;
-		BYTE    KEELOQenabled : 1;
+		BYTE    MSG6Reserved0 : 1;
 		BYTE    MSG6Reserved1 : 1;
 		BYTE    MSG6Reserved2 : 1;
 		BYTE    MSG6Reserved3 : 1;
 		BYTE    MSG6Reserved4 : 1;
-		BYTE    MSG6Reserved5 : 1;
-		BYTE    MSG6Reserved6 : 1;
-		BYTE    MSG6Reserved7 : 1;
+		BYTE    HONEYWELLenabled : 1;
+		BYTE    ITHOecoenabled : 1;
+		BYTE    ITHOenabled : 1;
 #endif
 
 		BYTE	msg7;
@@ -1652,6 +1804,27 @@ typedef union tRBUF {
 		BYTE	rssi : 4;
 #endif
 	} FUNKBUS;
+
+	struct {
+		BYTE	packetlength;
+		BYTE	packettype;
+		BYTE	subtype;
+		BYTE	seqnbr;
+		BYTE	id1;
+		BYTE	id2;
+		BYTE	id3;
+		BYTE	id4;
+		BYTE	id5;
+		BYTE	id6;
+		BYTE	cmnd;
+#ifdef IS_BIG_ENDIAN
+		BYTE	rssi : 4;
+		BYTE	filler : 4;
+#else
+		BYTE	filler : 4;
+		BYTE	rssi : 4;
+#endif
+	} HUNTER;
 
 	struct {
 		BYTE	packetlength;
@@ -2356,6 +2529,29 @@ typedef union tRBUF {
 	} LINKY;
 
 	struct {
+		BYTE packetlength;
+		BYTE packettype;
+		BYTE subtype;
+		BYTE seqnbr;
+		BYTE cmnd;
+		BYTE baudrate;
+		BYTE parity;
+		BYTE databits;
+		BYTE stopbits;
+		BYTE polarity;
+		BYTE filler1;
+		BYTE filler2;
+	} ASYNCPORT;
+
+	struct {
+		BYTE packetlength;
+		BYTE packettype;
+		BYTE subtype;
+		BYTE seqnbr;
+		BYTE datachar[252];
+	} ASYNCDATA;
+
+	struct {
 		BYTE	packetlength;
 		BYTE	packettype;
 		BYTE	subtype;
@@ -2410,6 +2606,79 @@ typedef union tRBUF {
 	BYTE	rssi : 4;
 #endif
     } FS20;
+
+	struct {
+		BYTE packetlength;
+		BYTE packettype;
+		BYTE subtype;
+		BYTE seqnbr;
+		BYTE id1;
+		BYTE id2;
+		BYTE directionhigh;
+		BYTE directionlow;
+		BYTE av_speedhigh;
+		BYTE av_speedlow;
+		BYTE gusthigh;
+		BYTE gustlow;
+#ifdef IS_BIG_ENDIAN
+		BYTE	temperaturesign : 1;
+		BYTE	temperaturehigh : 7;
+#else
+		BYTE	temperaturehigh : 7;
+		BYTE	temperaturesign : 1;
+#endif
+		BYTE temperaturelow;
+#ifdef IS_BIG_ENDIAN
+		BYTE	chillsign : 1;
+		BYTE	chillhigh : 7;
+#else
+		BYTE	chillhigh : 7;
+		BYTE	chillsign : 1;
+#endif
+		BYTE chilllow;
+		BYTE humidity;
+		BYTE humidity_status;
+		BYTE rainratehigh;
+		BYTE rainratelow;
+		BYTE raintotal1; //high byte
+		BYTE raintotal2;
+		BYTE raintotal3; //low byte
+		BYTE uv;
+		BYTE solarhigh;
+		BYTE solarlow;
+		BYTE barohigh;
+		BYTE barolow;
+		BYTE forecast;
+		BYTE rfu1;
+		BYTE rfu2;
+#ifdef IS_BIG_ENDIAN
+		BYTE	rssi : 4;
+		BYTE	battery_level : 4;
+#else
+		BYTE battery_level : 4;
+		BYTE rssi : 4;
+#endif
+	} WEATHER;
+
+	struct {
+		BYTE	packetlength;
+		BYTE	packettype;
+		BYTE	subtype;
+		BYTE	seqnbr;
+		BYTE	id1;
+		BYTE	id2;
+		BYTE	solarhigh;
+		BYTE	solarlow;
+		BYTE	rfu1;
+		BYTE	rfu2;
+#ifdef IS_BIG_ENDIAN
+		BYTE	rssi : 4;
+		BYTE	battery_level : 4;
+#else
+		BYTE battery_level : 4;
+		BYTE rssi : 4;
+#endif
+	} SOLAR;
 
 	struct {
 	BYTE	packetlength;

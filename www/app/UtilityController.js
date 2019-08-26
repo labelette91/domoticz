@@ -1,6 +1,7 @@
 define(['app'], function (app) {
-	app.controller('UtilityController', ['$scope', '$rootScope', '$location', '$http', '$interval', 'permissions', function ($scope, $rootScope, $location, $http, $interval, permissions) {
-
+	app.controller('UtilityController', function ($scope, $rootScope, $location, $http, $interval, $route, $routeParams, permissions) {
+		var $element = $('#main-view #utilitycontent').last();
+		
 		$scope.HasInitializedEditCustomSensorDialog = false;
 
 		    function isVirtualThermostat(item) {
@@ -198,7 +199,7 @@ define(['app'], function (app) {
 			$("#dialog-editdistancedevice").dialog("open");
 		}
 
-		EditMeterDevice = function (idx, name, description, switchtype, meteroffset, valuequantity, valueunits) {
+		EditMeterDevice = function (idx, name, description, switchtype, meteroffset, meterdivider, valuequantity, valueunits) {
 			if (typeof $scope.mytimer != 'undefined') {
 				$interval.cancel($scope.mytimer);
 				$scope.mytimer = undefined;
@@ -207,6 +208,7 @@ define(['app'], function (app) {
 			$("#dialog-editmeterdevice #devicename").val(unescape(name));
 			$("#dialog-editmeterdevice #devicedescription").val(unescape(description));
 			$("#dialog-editmeterdevice #combometertype").val(switchtype);
+			$("#dialog-editmeterdevice #meterdivider").val(meterdivider);
 			$("#dialog-editmeterdevice #meteroffset").val(meteroffset);
 			$("#dialog-editmeterdevice #valuequantity").val(unescape(valuequantity));
 			$("#dialog-editmeterdevice #valueunits").val(unescape(valueunits));
@@ -231,7 +233,7 @@ define(['app'], function (app) {
 			$("#dialog-editmeterdevice").dialog("open");
 		}
 
-		EditEnergyDevice = function (idx, name, description, switchtype, devoptions) {
+		EditEnergyDevice = function (idx, name, description, switchtype, EnergyMeterMode) {
 			if (typeof $scope.mytimer != 'undefined') {
 				$interval.cancel($scope.mytimer);
 				$scope.mytimer = undefined;
@@ -241,9 +243,9 @@ define(['app'], function (app) {
 			$("#dialog-editenergydevice #devicedescription").val(unescape(description));
 			$("#dialog-editenergydevice #combometertype").val(switchtype);
 
-			$('#dialog-editenergydevice input:radio[name=devoptions][value="' + devoptions + '"]').attr('checked', true);
-			$('#dialog-editenergydevice input:radio[name=devoptions][value="' + devoptions + '"]').prop('checked', true);
-			$('#dialog-editenergydevice input:radio[name=devoptions][value="' + devoptions + '"]').trigger('change');
+			$('#dialog-editenergydevice input:radio[name=EnergyMeterMode][value="' + EnergyMeterMode + '"]').attr('checked', true);
+			$('#dialog-editenergydevice input:radio[name=EnergyMeterMode][value="' + EnergyMeterMode + '"]').prop('checked', true);
+			$('#dialog-editenergydevice input:radio[name=EnergyMeterMode][value="' + EnergyMeterMode + '"]').trigger('change');
 			$("#dialog-editenergydevice").i18n();
 			$("#dialog-editenergydevice").dialog("open");
 		}
@@ -439,7 +441,7 @@ define(['app'], function (app) {
 									status = "";
 									bigtext = item.Data;
 								}
-								else if (item.Type == "Fan") {
+								else if (item.SubType == "Fan") {
 									status = "";
 									bigtext = item.Data;
 								}
@@ -617,8 +619,10 @@ define(['app'], function (app) {
 			}
 
 			var i = 0;
+			var roomPlanId = $routeParams.room || window.myglobals.LastPlanSelected;
+
 			$.ajax({
-				url: "json.htm?type=devices&filter=utility&used=true&order=[Order]&plan=" + window.myglobals.LastPlanSelected,
+				url: "json.htm?type=devices&filter=utility&used=true&order=[Order]&plan=" + roomPlanId,
 				async: false,
 				dataType: 'json',
 				success: function (data) {
@@ -637,7 +641,7 @@ define(['app'], function (app) {
 								bHaveAddedDevider = true;
 							}
 							var backgroundClass = $rootScope.GetItemBackgroundStatus(item);
-							var graphLogLink = '#/Devices/' + item.idx + '/GraphLog';
+							var graphLogLink = '#/Devices/' + item.idx + '/Log';
 							var status = "";
 
 							var xhtm =
@@ -677,7 +681,7 @@ define(['app'], function (app) {
 							else if (item.SubType == "Percentage") {
 								xhtm += item.Data;
 							}
-							else if (item.Type == "Fan") {
+							else if (item.SubType == "Fan") {
 								xhtm += item.Data;
 							}
 							else if (item.SubType == "Soil Moisture") {
@@ -832,7 +836,7 @@ define(['app'], function (app) {
 								status = "";
 							}
 							else if (item.SubType == "Sound Level") {
-								xhtm += '<a href="#/Devices/' + item.idx + '/GraphLog"><img src="images/Speaker48_On.png" class="lcursor" height="48" width="48"></a></td>\n';
+								xhtm += '<a href="#/Devices/' + item.idx + '/Log"><img src="images/Speaker48_On.png" class="lcursor" height="48" width="48"></a></td>\n';
 								status = "";
 							}
 							else if (item.SubType == "Waterflow") {
@@ -859,21 +863,14 @@ define(['app'], function (app) {
 							}
 
 							if (typeof item.Counter != 'undefined') {
-								if ((item.Type == "P1 Smart Meter") && (item.SubType == "Energy")) {
-									xhtm += '<a class="btnsmall" onclick="ShowSmartLog(\'#utilitycontent\',\'ShowUtilities\',' + item.idx + ',\'' + escape(item.Name) + '\', ' + item.SwitchTypeVal + ');" data-i18n="Log">Log</a> ';
-								}
-								else if ((item.Type == "YouLess Meter") && (item.SwitchTypeVal == 0 || item.SwitchTypeVal == 4)) {
-									xhtm += '<a class="btnsmall" onclick="ShowCounterLogSpline(\'#utilitycontent\',\'ShowUtilities\',' + item.idx + ',\'' + escape(item.Name) + '\', ' + item.SwitchTypeVal + ');" data-i18n="Log">Log</a> ';
-								}
-								else {
-									xhtm += '<a class="btnsmall" onclick="ShowCounterLog(\'#utilitycontent\',\'ShowUtilities\',' + item.idx + ',\'' + escape(item.Name) + '\', ' + item.SwitchTypeVal + ');" data-i18n="Log">Log</a> ';
-								}
+								xhtm += '<a class="btnsmall" href="' + graphLogLink + '" data-i18n="Log">Log</a> ';
+
 								if (permissions.hasPermission("Admin")) {
 									if (item.Type == "P1 Smart Meter") {
 										xhtm += '<a class="btnsmall" onclick="EditUtilityDevice(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\');" data-i18n="Edit">Edit</a> ';
 									}
 									else {
-										xhtm += '<a class="btnsmall" onclick="EditMeterDevice(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', ' + item.SwitchTypeVal + ',' + item.AddjValue + ',\'' + escape(item.ValueQuantity) + '\',\'' + escape(item.ValueUnits) + '\');" data-i18n="Edit">Edit</a> ';
+										xhtm += '<a class="btnsmall" onclick="EditMeterDevice(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', ' + item.SwitchTypeVal + ',' + item.AddjValue + ',' + item.AddjValue2 + ',\'' + escape(item.ValueQuantity) + '\',\'' + escape(item.ValueUnits) + '\');" data-i18n="Edit">Edit</a> ';
 									}
 								}
 							}
@@ -895,7 +892,7 @@ define(['app'], function (app) {
 									xhtm += '<a class="btnsmall" onclick="EditUtilityDevice(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\');" data-i18n="Edit">Edit</a> ';
 								}
 							}
-							else if (item.Type == "Fan") {
+							else if (item.SubType == "Fan") {
 								xhtm += '<a class="btnsmall" onclick="ShowFanLog(\'#utilitycontent\',\'ShowUtilities\',' + item.idx + ',\'' + escape(item.Name) + '\');" data-i18n="Log">Log</a> ';
 								if (permissions.hasPermission("Admin")) {
 									xhtm += '<a class="btnsmall" onclick="EditUtilityDevice(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\');" data-i18n="Edit">Edit</a> ';
@@ -926,12 +923,13 @@ define(['app'], function (app) {
 								}
 							}
 							else if ((item.Type == "Energy") || (item.SubType == "kWh") || (item.Type == "Power")) {
-								xhtm += '<a class="btnsmall" onclick="ShowCounterLogSpline(\'#utilitycontent\',\'ShowUtilities\',' + item.idx + ',\'' + escape(item.Name) + '\', ' + item.SwitchTypeVal + ');" data-i18n="Log">Log</a> ';
+								xhtm += '<a class="btnsmall" href="' + graphLogLink + '" data-i18n="Log">Log</a> ';
+
 								if (permissions.hasPermission("Admin")) {
 									if ((item.Type == "Energy") || (item.SubType == "kWh")) {
-										if (item.Options == "") { item.Options = "0" }
+										if (item.EnergyMeterMode == "") { item.EnergyMeterMode = "0" }
 										xhtm += '<a class="btnsmall" onclick="EditEnergyDevice(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', '
-										xhtm += item.SwitchTypeVal + ',' + item.Options + ');" data-i18n="Edit">Edit</a> ';
+										xhtm += item.SwitchTypeVal + ',' + item.EnergyMeterMode + ');" data-i18n="Edit">Edit</a> ';
 									} else {
 										xhtm += '<a class="btnsmall" onclick="EditUtilityDevice(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\');" data-i18n="Edit">Edit</a> ';
 									}
@@ -946,7 +944,7 @@ define(['app'], function (app) {
 							else if ((item.Type == "Thermostat") && (item.SubType == "SetPoint")) {
 								if (permissions.hasPermission("Admin")) {
 									var timerLink = '#/Devices/'+item.idx+'/Timers';
-									var logLink = '#/Devices/'+item.idx+'/TemperatureLog';
+									var logLink = '#/Devices/'+item.idx+'/Log';
 
 									xhtm += '<a class="btnsmall" href="' + logLink +'" data-i18n="Log">Log</a> ';
 									xhtm += '<a class="btnsmall" onclick="EditSetPoint(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', ' + item.SetPoint + ',' + item.Protected + ');" data-i18n="Edit">Edit</a> ';
@@ -961,7 +959,7 @@ define(['app'], function (app) {
 							else if (item.Type == "Radiator 1") {
 								if (permissions.hasPermission("Admin")) {
 									var timerLink = '#/Devices/'+item.idx+'/Timers';
-									var logLink = '#/Devices/'+item.idx+'/TemperatureLog';
+									var logLink = '#/Devices/'+item.idx+'/Log';
 
 									xhtm += '<a class="btnsmall" href="' + logLink +'" data-i18n="Log">Log</a> ';
 									xhtm += '<a class="btnsmall" onclick="EditSetPoint(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', ' + item.SetPoint + ',' + item.Protected + ');" data-i18n="Edit">Edit</a> ';
@@ -974,7 +972,7 @@ define(['app'], function (app) {
 								}
 							}
 							else if (item.SubType == "Text") {
-                                var logLink = '#/Devices/'+item.idx+'/TextLog';
+                                var logLink = '#/Devices/'+item.idx+'/Log';
 
 								xhtm += '<a class="btnsmall" href="' + logLink + '" data-i18n="Log">Log</a> ';
 								if (permissions.hasPermission("Admin")) {
@@ -1033,7 +1031,7 @@ define(['app'], function (app) {
 								}
 							}
 							else if ((item.Type == "General") && (item.SubType == "Alert")) {
-                                var logLink = '#/Devices/'+item.idx+'/TextLog';
+                                var logLink = '#/Devices/'+item.idx+'/Log';
 
 								xhtm += '<a class="btnsmall" href="' + logLink + '" data-i18n="Log">Log</a> ';
 								if (permissions.hasPermission("Admin")) {
@@ -1074,27 +1072,33 @@ define(['app'], function (app) {
 				htmlcontent = '<h2>' + $.t('No Utility sensors found or added in the system...') + '</h2>';
 			}
 			$('#modal').hide();
-			$('#utilitycontent').html(tophtm + htmlcontent);
-			$('#utilitycontent').i18n();
+			$element.html(tophtm + htmlcontent);
+			$element.i18n();
+
 			if (bShowRoomplan == true) {
 				$.each($.RoomPlans, function (i, item) {
 					var option = $('<option />');
 					option.attr('value', item.idx).text(item.name);
-					$("#utilitycontent #comboroom").append(option);
+					$element.find("#comboroom").append(option);
 				});
-				if (typeof window.myglobals.LastPlanSelected != 'undefined') {
-					$("#utilitycontent #comboroom").val(window.myglobals.LastPlanSelected);
+				if (typeof roomPlanId != 'undefined') {
+					$element.find("#comboroom").val(roomPlanId);
 				}
-				$("#utilitycontent #comboroom").change(function () {
-					var idx = $("#utilitycontent #comboroom option:selected").val();
+				$element.find("#comboroom").change(function () {
+					var idx = $element.find("#comboroom option:selected").val();
 					window.myglobals.LastPlanSelected = idx;
-					ShowUtilities();
+					
+					$route.updateParams({
+						room: idx > 0 ? idx : undefined
+					});
+					$location.replace();
+					$scope.$apply();
 				});
 			}
 			if ($scope.config.AllowWidgetOrdering == true) {
 				if (permissions.hasPermission("Admin")) {
 					if (window.myglobals.ismobileint == false) {
-						$("#utilitycontent .span4").draggable({
+						$element.find(".span4").draggable({
 							drag: function () {
 								if (typeof $scope.mytimer != 'undefined') {
 									$interval.cancel($scope.mytimer);
@@ -1105,10 +1109,10 @@ define(['app'], function (app) {
 							},
 							revert: true
 						});
-						$("#utilitycontent .span4").droppable({
+						$element.find(".span4").droppable({
 							drop: function () {
 								var myid = $(this).attr("id");
-								var roomid = $("#utilitycontent #comboroom option:selected").val();
+								var roomid = $element.find("#comboroom option:selected").val();
 								if (typeof roomid == 'undefined') {
 									roomid = 0;
 								}
@@ -1355,6 +1359,7 @@ define(['app'], function (app) {
 				bValid = bValid && checkLength($("#dialog-editmeterdevice #devicename"), 2, 100);
 				if (bValid) {
 					var meteroffset = $("#dialog-editmeterdevice #meteroffset").val();
+					var meterdivider = $("#dialog-editmeterdevice #meterdivider").val();
 					if (meterType == 3) //Counter
 					{
 						devOptions.push("ValueQuantity:");
@@ -1372,6 +1377,7 @@ define(['app'], function (app) {
 						'&description=' + encodeURIComponent($("#dialog-editmeterdevice #devicedescription").val()) +
 						'&switchtype=' + meterType +
 						'&addjvalue=' + meteroffset +
+						'&addjvalue2=' + meterdivider +
 						'&used=true' +
 						'&options=' + b64EncodeUnicode(devOptionsParam.join('')),
 						async: false,
@@ -1432,7 +1438,7 @@ define(['app'], function (app) {
 						url: "json.htm?type=setused&idx=" + $.devIdx +
 						'&name=' + encodeURIComponent($("#dialog-editenergydevice #devicename").val()) +
 						'&description=' + encodeURIComponent($("#dialog-editenergydevice #devicedescription").val()) +
-						'&switchtype=' + $("#dialog-editenergydevice #combometertype").val() + '&devoptions=' + $("#dialog-editenergydevice input:radio[name=devoptions]:checked").val() +
+						'&switchtype=' + $("#dialog-editenergydevice #combometertype").val() + '&EnergyMeterMode=' + $("#dialog-editenergydevice input:radio[name=EnergyMeterMode]:checked").val() +
 						'&used=true',
 						async: false,
 						dataType: 'json',
@@ -1709,5 +1715,5 @@ define(['app'], function (app) {
 				popup.hide();
 			}
 		});
-	}]);
+	});
 });

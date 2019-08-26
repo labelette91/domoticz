@@ -256,14 +256,15 @@ void bt_openwebnet::Set_who_what_where_when()
 		{
 			if (sup[0] != '*')
 				where = FirstToken(sup, "*");
-				// when
-				sup = frame_open.substr(1 + who.length() + 1 + what.length() + 1 + where.length() + 1);
-				if (sup.find("*") == std::string::npos) {
-					when = sup.substr(0, sup.length() - 2);
-				}
-				else
-					if (sup[0] != '*')
-						when = FirstToken(sup, "*");
+
+			// when
+			sup = frame_open.substr(1 + who.length() + 1 + what.length() + 1 + where.length() + 1);
+			if (sup.find("*") == std::string::npos) {
+				when = sup.substr(0, sup.length() - 2);
+			}
+			else
+				if (sup[0] != '*')
+					when = FirstToken(sup, "*");
 		}
 	}
 
@@ -677,7 +678,7 @@ std::string bt_openwebnet::DeleteControlCharacters(const std::string& in_frame)
 	std::string out_frame = in_frame;
 
 	// delete control characters ....
-	while ((out_frame.at(out_frame.length() - 1) == '\n') || ((out_frame.at(out_frame.length() - 1) == '\r')))
+	while (out_frame.length() && ((out_frame.at(out_frame.length() - 1) == '\n') || ((out_frame.at(out_frame.length() - 1) == '\r'))))
 	{
 		out_frame.erase(out_frame.length() - 1, 1);
 	}

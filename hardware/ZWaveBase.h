@@ -49,14 +49,13 @@ class ZWaveBase : public CDomoticzHardwareBase
 	struct _tZWaveDevice
 	{
 		int nodeID;
-		int commandClassID;
 		int instanceID;
 		int indexID;
 		int orgInstanceID;
 		int orgIndexID;
+		int commandClassID;
 		_eZWaveDeviceType devType;
-		int scaleID;
-		int scaleMultiply;
+		float scaleMultiply;
 		int basicType;
 		int genericType;
 		int specificType;
@@ -96,14 +95,12 @@ class ZWaveBase : public CDomoticzHardwareBase
 		{
 			sequence_number=1;
 			nodeID=-1;
-			scaleID=1;
-			scaleMultiply=1;
+			scaleMultiply=1.0f;
 			isListening=false;
 			sensor250=false;
 			sensor1000=false;
 			isFLiRS=false;
 			hasWakeup=false;
-			hasBattery=false;
 			batValue = 255;
 			floatValue=0;
 			intvalue=0;
@@ -149,15 +146,11 @@ private:
 	_tZWaveDevice* FindDevice(const int nodeID, const int instanceID, const int indexID, const int CommandClassID, const _eZWaveDeviceType devType);
 	_tZWaveDevice* FindDeviceEx(const int nodeID, const int instanceID, const _eZWaveDeviceType devType);
 
-	void ForceUpdateForNodeDevices(const unsigned int homeID, const int nodeID);
-	bool IsNodeRGBW(const unsigned int homeID, const int nodeID);
-
 	std::string GenerateDeviceStringID(const _tZWaveDevice *pDevice);
 	void InsertDevice(_tZWaveDevice device);
-	void UpdateDeviceBatteryStatus(const int nodeID, const int value);
 	unsigned char Convert_Battery_To_PercInt(const unsigned char level);
-	virtual bool SwitchLight(const int nodeID, const int instanceID, const int commandClass, const int value)=0;
-	virtual bool SwitchColor(const int nodeID, const int instanceID, const int commandClass, const std::string &ColorStr) = 0;
+	virtual bool SwitchLight(_tZWaveDevice* pDevice, const int instanceID, const int value)=0;
+	virtual bool SwitchColor(const int nodeID, const int instanceID, const std::string &ColorStr) = 0;
 	virtual void SetThermostatSetPoint(const int nodeID, const int instanceID, const int commandClass, const float value)=0;
 	virtual void SetClock(const int nodeID, const int instanceID, const int commandClass, const int day, const int hour, const int minute)=0;
 	virtual void SetThermostatMode(const int nodeID, const int instanceID, const int commandClass, const int tMode) = 0;
@@ -179,7 +172,6 @@ private:
 	bool m_bInitState;
 	std::map<std::string,_tZWaveDevice> m_devices;
 	std::shared_ptr<std::thread> m_thread;
-	bool m_stoprequested;
 };
 
 

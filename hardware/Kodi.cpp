@@ -4,6 +4,7 @@
 #include "../json/json.h"
 #include "../main/EventSystem.h"
 #include "../main/Helper.h"
+#include "../main/HTMLSanitizer.h"
 #include "../main/Logger.h"
 #include "../main/mainworker.h"
 #include "../main/SQLHelper.h"
@@ -145,7 +146,6 @@ _eNotificationTypes	CKodiNode::CKodiStatus::NotificationType()
 CKodiNode::CKodiNode(boost::asio::io_service *pIos, const int pHwdID, const int PollIntervalsec, const int pTimeoutMs,
 	const std::string& pID, const std::string& pName, const std::string& pIP, const std::string& pPort)
 {
-	m_stoprequested = false;
 	m_Busy = false;
 	m_Stoppable = false;
 	m_PlaylistPosition = 0;
@@ -191,7 +191,7 @@ void CKodiNode::handleMessage(std::string& pMessage)
 		std::string	sMessage;
 		std::stringstream ssMessage;
 
-		_log.Log(LOG_NORM, "Kodi: (%s) Handling message: '%s'.", m_Name.c_str(), pMessage.c_str());
+		_log.Debug(DEBUG_HARDWARE, "Kodi: (%s) Handling message: '%s'.", m_Name.c_str(), pMessage.c_str());
 		bool bRet = jReader.parse(pMessage, root);
 		if ((!bRet) || (!root.isObject()))
 		{
@@ -232,7 +232,7 @@ void CKodiNode::handleMessage(std::string& pMessage)
 								m_CurrentStatus.Status(MSTAT_ON);
 								UpdateStatus();
 							}
-							else if (root["method"] == "Player.OnPlay")
+							else if ((root["method"] == "Player.OnPlay") || (root["method"] == "Player.OnResume"))
 							{
 								m_CurrentStatus.Clear();
 								m_CurrentStatus.PlayerID(root["params"]["data"]["player"]["playerid"].asInt());
@@ -250,7 +250,7 @@ void CKodiNode::handleMessage(std::string& pMessage)
 									m_CurrentStatus.Status(MSTAT_VIDEO);
 								else
 								{
-									_log.Log(LOG_ERROR, "Kodi: (%s) Message error, unknown type in OnPlay message: '%s' from '%s'", m_Name.c_str(), root["params"]["data"]["item"]["type"].asCString(), pMessage.c_str());
+									_log.Log(LOG_ERROR, "Kodi: (%s) Message error, unknown type in OnPlay/OnResume message: '%s' from '%s'", m_Name.c_str(), root["params"]["data"]["item"]["type"].asCString(), pMessage.c_str());
 								}
 
 								if (m_CurrentStatus.PlayerID() != "")  // if we now have a player id then request more details
@@ -568,7 +568,7 @@ void CKodiNode::handleConnect()
 {
 	try
 	{
-		if (!m_stoprequested && !m_Socket)
+		if (!IsStopRequested(0) && !m_Socket)
 		{
 			m_iMissedPongs = 0;
 			boost::system::error_code ec;
@@ -647,7 +647,7 @@ void CKodiNode::handleRead(const boost::system::error_code& e, std::size_t bytes
 		m_RetainedData = sData;
 
 		//ready for next read
-		if (!m_stoprequested && m_Socket)
+		if (!IsStopRequested(0) && m_Socket)
 			m_Socket->async_read_some(	boost::asio::buffer(m_Buffer, sizeof m_Buffer),
 										boost::bind(&CKodiNode::handleRead,
 										shared_from_this(),
@@ -670,7 +670,7 @@ void CKodiNode::handleRead(const boost::system::error_code& e, std::size_t bytes
 
 void CKodiNode::handleWrite(std::string pMessage)
 {
-	if (!m_stoprequested) {
+	if (!IsStopRequested(0)) {
 		if (m_Socket)
 		{
 			_log.Debug(DEBUG_HARDWARE, "Kodi: (%s) Sending data: '%s'", m_Name.c_str(), pMessage.c_str());
@@ -705,7 +705,7 @@ void CKodiNode::Do_Work()
 
 	try
 	{
-		while (!m_stoprequested)
+		while (!IsStopRequested(1000))
 		{
 			if (!m_Socket)
 			{
@@ -737,7 +737,6 @@ void CKodiNode::Do_Work()
 				}
 				handleWrite(sMessage);
 			}
-			sleep_milliseconds(1000);
 		}
 	}
 	catch (std::exception& e)
@@ -890,13 +889,13 @@ void CKodiNode::SetExecuteCommand(const std::string& command)
 
 std::vector<std::shared_ptr<CKodiNode> > CKodi::m_pNodes;
 
-CKodi::CKodi(const int ID, const int PollIntervalsec, const int PingTimeoutms) : m_stoprequested(false)
+CKodi::CKodi(const int ID, const int PollIntervalsec, const int PingTimeoutms)
 {
 	m_HwdID = ID;
 	SetSettings(PollIntervalsec, PingTimeoutms);
 }
 
-CKodi::CKodi(const int ID) : m_stoprequested(false)
+CKodi::CKodi(const int ID)
 {
 	m_HwdID = ID;
 	SetSettings(10, 3000);
@@ -910,14 +909,17 @@ CKodi::~CKodi(void)
 bool CKodi::StartHardware()
 {
 	StopHardware();
+
+	RequestStart();
+
 	m_bIsStarted = true;
 	sOnConnected(this);
 
 	StartHeartbeatThread();
 
 	//Start worker thread
-	m_stoprequested = false;
 	m_thread = std::make_shared<std::thread>(&CKodi::Do_Work, this);
+	SetThreadNameInt(m_thread->native_handle());
 	_log.Log(LOG_STATUS, "Kodi: Started");
 
 	return true;
@@ -928,16 +930,17 @@ bool CKodi::StopHardware()
 	StopHeartbeatThread();
 
 	try {
+		//needs to be tested by the author if we can remove the try/catch here
 		if (m_thread)
 		{
-			m_stoprequested = true;
+			RequestStop();
 			m_thread->join();
 			m_thread.reset();
 		}
 	}
 	catch (...)
 	{
-		//Don't throw from a Stop command
+
 	}
 	m_bIsStarted = false;
 	return true;
@@ -949,7 +952,7 @@ void CKodi::Do_Work()
 
 	ReloadNodes();
 
-	while (!m_stoprequested)
+	while (!IsStopRequested(500))
 	{
 		if (scounter++ >= (m_iPollInterval*2))
 		{
@@ -964,6 +967,7 @@ void CKodi::Do_Work()
 				{
 					_log.Log(LOG_NORM, "Kodi: (%s) - Restarting thread.", (*itt)->m_Name.c_str());
 					boost::thread* tAsync = new boost::thread(&CKodiNode::Do_Work, (*itt));
+					SetThreadName(tAsync->native_handle(), "KodiNode");
 					m_ios.stop();
 				}
 				if ((*itt)->IsOn()) bWorkToDo = true;
@@ -976,11 +980,10 @@ void CKodi::Do_Work()
 				// need to worry about locking or concurrency issues when processing messages
 				_log.Log(LOG_NORM, "Kodi: Restarting I/O service thread.");
 				boost::thread bt(boost::bind(&boost::asio::io_service::run, &m_ios));
+				SetThreadName(bt.native_handle(), "KodiIO");
 			}
 		}
-		sleep_milliseconds(500);
 	}
-
 	UnloadNodes();
 
 	_log.Log(LOG_STATUS, "Kodi: Worker stopped...");
@@ -996,12 +999,6 @@ void CKodi::SetSettings(const int PollIntervalsec, const int PingTimeoutms)
 		m_iPollInterval = PollIntervalsec;
 	if ((PingTimeoutms / 1000 < m_iPollInterval) && (PingTimeoutms != 0))
 		m_iPingTimeoutms = PingTimeoutms;
-}
-
-void CKodi::Restart()
-{
-	StopHardware();
-	StartHardware();
 }
 
 bool CKodi::WriteToHardware(const char *pdata, const unsigned char length)
@@ -1153,23 +1150,23 @@ void CKodi::ReloadNodes()
 		{
 			_log.Log(LOG_NORM, "Kodi: (%s) Starting thread.", (*itt)->m_Name.c_str());
 			boost::thread* tAsync = new boost::thread(&CKodiNode::Do_Work, (*itt));
+			SetThreadName(tAsync->native_handle(), "KodiNode");
 		}
 		sleep_milliseconds(100);
 		_log.Log(LOG_NORM, "Kodi: Starting I/O service thread.");
 		boost::thread bt(boost::bind(&boost::asio::io_service::run, &m_ios));
+		SetThreadName(bt.native_handle(), "KodiIO");
 	}
 }
 
 void CKodi::UnloadNodes()
 {
-	int iRetryCounter = 0;
-
 	std::lock_guard<std::mutex> l(m_mutex);
 
 	m_ios.stop();	// stop the service if it is running
 	sleep_milliseconds(100);
 
-	while (((!m_pNodes.empty()) || (!m_ios.stopped())) && (iRetryCounter < 15))
+	while (((!m_pNodes.empty()) || (!m_ios.stopped())))
 	{
 		std::vector<std::shared_ptr<CKodiNode> >::iterator itt;
 		for (itt = m_pNodes.begin(); itt != m_pNodes.end(); ++itt)
@@ -1182,8 +1179,7 @@ void CKodi::UnloadNodes()
 				break;
 			}
 		}
-		iRetryCounter++;
-		sleep_milliseconds(500);
+		sleep_milliseconds(150);
 	}
 	m_pNodes.clear();
 }
@@ -1317,8 +1313,8 @@ namespace http {
 			}
 
 			std::string hwid = request::findValue(&req, "idx");
-			std::string name = request::findValue(&req, "name");
-			std::string ip = request::findValue(&req, "ip");
+			std::string name = HTMLSanitizer::Sanitize(request::findValue(&req, "name"));
+			std::string ip = HTMLSanitizer::Sanitize(request::findValue(&req, "ip"));
 			int Port = atoi(request::findValue(&req, "port").c_str());
 			if (
 				(hwid == "") ||
@@ -1350,8 +1346,8 @@ namespace http {
 
 			std::string hwid = request::findValue(&req, "idx");
 			std::string nodeid = request::findValue(&req, "nodeid");
-			std::string name = request::findValue(&req, "name");
-			std::string ip = request::findValue(&req, "ip");
+			std::string name = HTMLSanitizer::Sanitize(request::findValue(&req, "name"));
+			std::string ip = HTMLSanitizer::Sanitize(request::findValue(&req, "ip"));
 			int Port = atoi(request::findValue(&req, "port").c_str());
 			if (
 				(hwid == "") ||

@@ -1,11 +1,27 @@
-#set to minimum version that supports clean build on cygwin
-cmake_minimum_required(VERSION 2.8.4)
+#set to minimum version that supports clean build
+cmake_minimum_required(VERSION 3.14.0)
 
 project(domoticz)
 
 ## required min. libBoost version
-SET(DOMO_MIN_LIBBOOST_VERSION 106000)
+SET(DOMO_MIN_LIBBOOST_VERSION 1.66.0)
 ##
+
+MACRO(History_GET_REVISION variable)
+  IF(EXISTS ${CMAKE_SOURCE_DIR}/History.txt)
+    MESSAGE(STATUS "Read ProjectRevision from History.txt")
+    CMAKE_POLICY(SET CMP0007 NEW)
+    FILE(STRINGS ${CMAKE_SOURCE_DIR}/History.txt AppVersionContent)
+    LIST(GET AppVersionContent 0 AppVersionContent)
+    STRING(REPLACE " " ";" AppVersionContent ${AppVersionContent})
+    LIST(GET AppVersionContent 1 AppVersionContent)
+    STRING(REPLACE "." ";" AppVersionContent ${AppVersionContent})
+    LIST(GET AppVersionContent 1 ${variable})
+  ELSE(EXISTS ${CMAKE_SOURCE_DIR}/History.txt)
+    MESSAGE(STATUS "Failed to get ProjectRevision from History.txt, set it to 0")
+    set (${variable} 0)
+  ENDIF(EXISTS ${CMAKE_SOURCE_DIR}/History.txt)
+ENDMACRO(History_GET_REVISION)
 
 MACRO(Gitversion_GET_REVISION dir variable)
   EXECUTE_PROCESS(COMMAND ${GIT_EXECUTABLE} --git-dir ./.git rev-list HEAD --count
@@ -17,16 +33,7 @@ ENDMACRO(Gitversion_GET_REVISION)
 Gitversion_GET_REVISION("${CMAKE_SOURCE_DIR}" ProjectRevision)
 IF(NOT ProjectRevision)
   MESSAGE(STATUS "Failed to get ProjectRevision from git")
-  IF(EXISTS ${CMAKE_SOURCE_DIR}/appversion.default)
-    MESSAGE(STATUS "Read ProjectRevision from appversion.default")
-    FILE(STRINGS ${CMAKE_SOURCE_DIR}/appversion.default AppVersionContent)
-    LIST(GET AppVersionContent 0 AppVersionContent)
-    STRING(REPLACE " " ";" AppVersionContent ${AppVersionContent})
-    LIST(GET AppVersionContent 2 ProjectRevision)
-  ELSE(EXISTS ${CMAKE_SOURCE_DIR}/appversion.default)
-    MESSAGE(STATUS "No appversion.default, set ProjectRevision to 0")
-    set (ProjectRevision 0)
-  ENDIF(EXISTS ${CMAKE_SOURCE_DIR}/appversion.default)
+  History_GET_REVISION(ProjectRevision)
 ELSE(NOT ProjectRevision)
   MATH(EXPR ProjectRevision "${ProjectRevision}+2107")
 ENDIF(NOT ProjectRevision)
@@ -125,6 +132,7 @@ ENDIF(USE_BUILTIN_SQLITE)
 
 option(USE_PYTHON "Use Python for Plugins and Event-Scripts" YES)
 IF(USE_PYTHON)
+  find_package(PythonInterp 3.4)
   find_package(PythonLibs 3.4)
   IF(PYTHONLIBS_FOUND)
     MESSAGE(STATUS "Python3 includes found at: ${PYTHON_INCLUDE_PATH}")
@@ -242,7 +250,7 @@ MACRO(ADD_PRECOMPILED_HEADER _targetName _input)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
   ENDIF()
   IF(CMAKE_COMPILER_IS_GNUCXX)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-psabi")
     #SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-switch")
     #ADD_DEFINITIONS( -Wall -O0 -ggdb )
     #ADD_DEFINITIONS( -Wfatal-errors -Wformat=2 -Werror=format-security )
@@ -298,6 +306,7 @@ ADD_CUSTOM_COMMAND(TARGET revisiontag COMMAND ${CMAKE_COMMAND}
 set(
 domoticz_SRCS
 main/stdafx.cpp
+main/BaroForecastCalculator.cpp
 main/CmdLine.cpp
 main/Camera.cpp
 main/domoticz.cpp
@@ -306,6 +315,7 @@ main/EventSystem.cpp
 main/EventsPythonModule.cpp
 main/EventsPythonDevice.cpp
 main/Helper.cpp
+main/HTMLSanitizer.cpp
 main/IFTTT.cpp
 main/localtime_r.cpp
 main/Logger.cpp
@@ -314,8 +324,10 @@ main/LuaHandler.cpp
 main/mainworker.cpp
 main/RFXNames.cpp
 main/Scheduler.cpp
+main/SignalHandler.cpp
 main/SQLHelper.cpp
 main/SunRiseSet.cpp
+main/TrendCalculator.cpp
 main/WebServer.cpp
 main/WebServerHelper.cpp
 main/WindCalculation.cpp
@@ -340,6 +352,8 @@ hardware/ASyncTCP.cpp
 hardware/VirtualThermostat.cpp
 hardware/AtagOne.cpp
 hardware/BleBox.cpp
+hardware/Buienradar.cpp
+hardware/cayenne_lpp/CayenneLPP_Dec.cpp
 hardware/ColorSwitch.cpp
 hardware/Comm5Serial.cpp
 hardware/Comm5SMTCP.cpp
@@ -351,9 +365,9 @@ hardware/CurrentCostMeterTCP.cpp
 hardware/Daikin.cpp
 hardware/DarkSky.cpp
 hardware/DavisLoggerSerial.cpp
-hardware/DenkoviSmartdenIPInOut.cpp
-hardware/DenkoviSmartdenLan.cpp
 hardware/DenkoviDevices.cpp
+hardware/DenkoviUSBDevices.cpp
+hardware/DenkoviTCPDevices.cpp
 hardware/DomoticzHardware.cpp
 hardware/DomoticzInternal.cpp
 hardware/DomoticzTCP.cpp
@@ -456,8 +470,10 @@ hardware/TE923Tool.cpp
 hardware/TeleinfoBase.cpp
 hardware/TeleinfoSerial.cpp
 hardware/Tellstick.cpp
+hardware/TellstickFactory.cpp
 hardware/Thermosmart.cpp
 hardware/ToonThermostat.cpp
+hardware/TTNMQTT.cpp
 hardware/USBtin.cpp
 hardware/USBtin_MultiblocV8.cpp
 hardware/VolcraftCO20.cpp
@@ -501,7 +517,7 @@ webserver/connection_manager.cpp
 webserver/cWebem.cpp
 webserver/fastcgi.cpp
 webserver/mime_types.cpp
-webserver/proxycommon.cpp
+webserver/proxycereal.cpp
 webserver/proxyclient.cpp
 webserver/reply.cpp
 webserver/request_handler.cpp
@@ -570,13 +586,15 @@ set(Boost_USE_STATIC_LIBS ${USE_STATIC_BOOST})
 set(Boost_USE_MULTITHREADED ON)
 unset(Boost_INCLUDE_DIR CACHE)
 unset(Boost_LIBRARY_DIRS CACHE)
-find_package(Boost REQUIRED COMPONENTS thread system)
 
 if(USE_STATIC_BOOST)
    message(STATUS "Linking against boost static libraries")
 else(USE_STATIC_BOOST)
    message(STATUS "Linking against boost dynamic libraries")
 endif(USE_STATIC_BOOST)
+
+find_package(Boost REQUIRED COMPONENTS thread system)
+target_link_libraries(domoticz Boost::thread Boost::system)
 
 # compare found vs required libBoost version
 if(Boost_VERSION VERSION_LESS DOMO_MIN_LIBBOOST_VERSION)
@@ -685,41 +703,6 @@ IF(OpenZWave)
   target_link_libraries(domoticz ${OpenZWave})
   include_directories(${CMAKE_SOURCE_DIR}/hardware/openzwave)
   add_definitions(-DWITH_OPENZWAVE)
-  # open-zwave needs libudev if statically linked
-  IF(USE_STATIC_OPENZWAVE)
-    IF(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-      set(IOKIT_LIBRARY "-framework IOKit -framework CoreFoundation" CACHE FILEPATH "IOKit framework" FORCE)
-      target_link_libraries(domoticz ${IOKIT_LIBRARY})
-    ELSEIF(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
-      MESSAGE(STATUS "Building on FreeBSD, libudev not needed!")
-      FIND_PATH(ICONV_INCLUDE_DIR iconv.h)
-      FIND_LIBRARY(ICONV_LIBRARIES NAMES iconv libiconv libiconv-2 c)
-      IF(ICONV_INCLUDE_DIR AND ICONV_LIBRARIES)
-        SET(ICONV_FOUND TRUE)
-        #target_link_libraries(domoticz ${ICONV_INCLUDE_DIR})
-        target_link_libraries(domoticz ${ICONV_LIBRARIES} -lrt)
-        message(STATUS ${ICONV_LIBRARIES})
-      ELSE()
-        MESSAGE(FATAL_ERROR "libiconv not found on your system")
-      ENDIF(ICONV_INCLUDE_DIR AND ICONV_LIBRARIES)
-    ELSEIF(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
-      MESSAGE(STATUS "Building on NetBSD, libudev not needed!")
-    ELSE()
-      find_library(UDEV NAMES libudev.a)
-      IF(UDEV)
-        message(STATUS ${UDEV})
-        target_link_libraries(domoticz ${UDEV} -lrt -lresolv)
-      ELSE()
-        find_library(UDEV NAMES libudev.so)
-        IF(UDEV)
-           message(STATUS ${UDEV})
-           target_link_libraries(domoticz ${UDEV} -lrt -lresolv)
-        ELSE()
-           MESSAGE(FATAL_ERROR "LIB UDEV not found on your system, see install.txt how to get them installed.\nsudo apt-get install libudev-dev")
-        ENDIF(UDEV)
-      ENDIF(UDEV)
-    ENDIF()
-  ENDIF(USE_STATIC_OPENZWAVE)
 ELSE()
   MESSAGE(STATUS "==== OpenZWave not found, support disabled!")
 ENDIF(OpenZWave)
@@ -745,12 +728,16 @@ else()
   message(STATUS "Not found telldus-core (telldus-core.h), not adding tellstick support")
 endif (TELLDUSCORE_INCLUDE)
 
+target_link_libraries(domoticz ${Boost_LIBRARIES} ${ZLIB_LIBRARIES} ${MINIZIP_LIBRARIES} ${CURL_LIBRARIES} pthread ${LUA_LIBRARIES} ${MQTT_LIBRARIES} ${SQLite_LIBRARIES} ${CMAKE_DL_LIBS} ${TELLDUS_LIBRARIES})
+
 IF(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-  target_link_libraries(domoticz ${Boost_LIBRARIES} ${ZLIB_LIBRARIES} ${MINIZIP_LIBRARIES} ${CURL_LIBRARIES} pthread ${LUA_LIBRARIES} ${MQTT_LIBRARIES} ${SQLite_LIBRARIES} ${CMAKE_DL_LIBS} ${TELLDUS_LIBRARIES})
+  target_link_libraries(domoticz -lresolv)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
-  target_link_libraries(domoticz ${Boost_LIBRARIES} ${ZLIB_LIBRARIES} ${MINIZIP_LIBRARIES} ${CURL_LIBRARIES} pthread ${LUA_LIBRARIES} ${MQTT_LIBRARIES} ${SQLite_LIBRARIES} ${CMAKE_DL_LIBS} ${TELLDUS_LIBRARIES} ${EXECINFO_LIBRARIES})
+  target_link_libraries(domoticz ${EXECINFO_LIBRARIES})
+elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+  target_link_libraries(domoticz ${EXECINFO_LIBRARIES})
 else()
-  target_link_libraries(domoticz -lrt ${Boost_LIBRARIES} ${ZLIB_LIBRARIES} ${MINIZIP_LIBRARIES} ${CURL_LIBRARIES} pthread ${LUA_LIBRARIES} ${MQTT_LIBRARIES} ${SQLite_LIBRARIES} ${CMAKE_DL_LIBS} ${TELLDUS_LIBRARIES} ${EXECINFO_LIBRARIES})
+  target_link_libraries(domoticz -lrt -lresolv ${EXECINFO_LIBRARIES})
 ENDIF()
 
 ADD_PRECOMPILED_HEADER(domoticz "main/stdafx.h")

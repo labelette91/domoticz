@@ -2,6 +2,7 @@
 #include "WOL.h"
 #include "../json/json.h"
 #include "../main/Helper.h"
+#include "../main/HTMLSanitizer.h"
 #include "../main/Logger.h"
 #include "../main/SQLHelper.h"
 #include "../main/RFXtrx.h"
@@ -33,6 +34,8 @@ void CWOL::Init()
 
 bool CWOL::StartHardware()
 {
+	RequestStart();
+
 	Init();
 	m_bIsStarted = true;
 	sOnConnected(this);
@@ -287,8 +290,8 @@ namespace http {
 			}
 
 			std::string hwid = request::findValue(&req, "idx");
-			std::string name = request::findValue(&req, "name");
-			std::string mac = request::findValue(&req, "mac");
+			std::string name = HTMLSanitizer::Sanitize(request::findValue(&req, "name"));
+			std::string mac = HTMLSanitizer::Sanitize(request::findValue(&req, "mac"));
 			if (
 				(hwid == "") ||
 				(name == "") ||
@@ -318,8 +321,8 @@ namespace http {
 
 			std::string hwid = request::findValue(&req, "idx");
 			std::string nodeid = request::findValue(&req, "nodeid");
-			std::string name = request::findValue(&req, "name");
-			std::string mac = request::findValue(&req, "mac");
+			std::string name = HTMLSanitizer::Sanitize(request::findValue(&req, "name"));
+			std::string mac = HTMLSanitizer::Sanitize(request::findValue(&req, "mac"));
 			if (
 				(hwid == "") ||
 				(nodeid == "") ||

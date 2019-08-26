@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Pinger.h"
 #include "../main/Helper.h"
+#include "../main/HTMLSanitizer.h"
 #include "../main/Logger.h"
 #include "../main/SQLHelper.h"
 #include "../main/RFXtrx.h"
@@ -17,6 +18,12 @@
 #include "pinger/ipv4_header.h"
 
 #include <iostream>
+
+#if BOOST_VERSION >= 107000
+#define GET_IO_SERVICE(s) ((boost::asio::io_context&)(s).get_executor().context())
+#else
+#define GET_IO_SERVICE(s) ((s).get_io_service())
+#endif
 
 class pinger
 	: private domoticz::noncopyable
@@ -76,7 +83,7 @@ private:
 				num_tries_++;
 				if (num_tries_ > 4)
 				{
-					resolver_.get_io_service().stop();
+					GET_IO_SERVICE(resolver_).stop();
 				}
 				else
 				{
@@ -118,7 +125,7 @@ private:
 			if (num_replies_++ == 0)
 				timer_.cancel();
 			m_PingState = true;
-			resolver_.get_io_service().stop();
+			GET_IO_SERVICE(resolver_).stop();
 		}
 		else
 		{
@@ -147,7 +154,6 @@ private:
 };
 
 CPinger::CPinger(const int ID, const int PollIntervalsec, const int PingTimeoutms) :
-	m_stoprequested(false),
 	m_iThreadsRunning(0)
 {
 	m_HwdID = ID;
@@ -163,6 +169,9 @@ CPinger::~CPinger(void)
 bool CPinger::StartHardware()
 {
 	StopHardware();
+
+	RequestStart();
+
 	m_bIsStarted = true;
 	sOnConnected(this);
 	m_iThreadsRunning = 0;
@@ -172,10 +181,8 @@ bool CPinger::StartHardware()
 	ReloadNodes();
 
 	//Start worker thread
-	m_stoprequested = false;
 	m_thread = std::make_shared<std::thread>(&CPinger::Do_Work, this);
-	_log.Log(LOG_STATUS, "Pinger: Started");
-
+	SetThreadNameInt(m_thread->native_handle());
 	return true;
 }
 
@@ -183,25 +190,11 @@ bool CPinger::StopHardware()
 {
 	StopHeartbeatThread();
 
-	try {
-		if (m_thread)
-		{
-			m_stoprequested = true;
-			m_thread->join();
-			m_thread.reset();
-
-			//Make sure all our background workers are stopped
-			int iRetryCounter = 0;
-			while ((m_iThreadsRunning > 0) && (iRetryCounter < 15))
-			{
-				sleep_milliseconds(500);
-				iRetryCounter++;
-			}
-		}
-	}
-	catch (...)
+	if (m_thread)
 	{
-		//Don't throw from a Stop command
+		RequestStop();
+		m_thread->join();
+		m_thread.reset();
 	}
 	m_bIsStarted = false;
 	return true;
@@ -386,12 +379,13 @@ void CPinger::DoPingHosts()
 	std::vector<PingNode>::const_iterator itt;
 	for (itt = m_nodes.begin(); itt != m_nodes.end(); ++itt)
 	{
-		if (m_stoprequested)
+		if (IsStopRequested(0))
 			return;
 		if (m_iThreadsRunning < 1000)
 		{
 			//m_iThreadsRunning++;
 			boost::thread t(boost::bind(&CPinger::Do_Ping_Worker, this, *itt));
+			SetThreadName(t.native_handle(), "PingerWorker");
 			t.join();
 		}
 	}
@@ -402,9 +396,9 @@ void CPinger::Do_Work()
 	int mcounter = 0;
 	int scounter = 0;
 	bool bFirstTime = true;
-	while (!m_stoprequested)
+	_log.Log(LOG_STATUS, "Pinger: Worker started...");
+	while (!IsStopRequested(500))
 	{
-		sleep_milliseconds(500);
 		mcounter++;
 		if (mcounter == 2)
 		{
@@ -417,6 +411,11 @@ void CPinger::Do_Work()
 				DoPingHosts();
 			}
 		}
+	}
+	//Make sure all our background workers are stopped
+	while (m_iThreadsRunning > 0)
+	{
+		sleep_milliseconds(150);
 	}
 	_log.Log(LOG_STATUS, "Pinger: Worker stopped...");
 }
@@ -431,12 +430,6 @@ void CPinger::SetSettings(const int PollIntervalsec, const int PingTimeoutms)
 		m_iPollInterval = PollIntervalsec;
 	if ((PingTimeoutms / 1000 < m_iPollInterval) && (PingTimeoutms != 0))
 		m_iPingTimeoutms = PingTimeoutms;
-}
-
-void CPinger::Restart()
-{
-	StopHardware();
-	StartHardware();
 }
 
 //Webserver helpers
@@ -531,8 +524,8 @@ namespace http {
 			}
 
 			std::string hwid = request::findValue(&req, "idx");
-			std::string name = request::findValue(&req, "name");
-			std::string ip = request::findValue(&req, "ip");
+			std::string name = HTMLSanitizer::Sanitize(request::findValue(&req, "name"));
+			std::string ip = HTMLSanitizer::Sanitize(request::findValue(&req, "ip"));
 			int Timeout = atoi(request::findValue(&req, "timeout").c_str());
 			if (
 				(hwid == "") ||
@@ -564,8 +557,8 @@ namespace http {
 
 			std::string hwid = request::findValue(&req, "idx");
 			std::string nodeid = request::findValue(&req, "nodeid");
-			std::string name = request::findValue(&req, "name");
-			std::string ip = request::findValue(&req, "ip");
+			std::string name = HTMLSanitizer::Sanitize(request::findValue(&req, "name"));
+			std::string ip = HTMLSanitizer::Sanitize(request::findValue(&req, "ip"));
 			int Timeout = atoi(request::findValue(&req, "timeout").c_str());
 			if (
 				(hwid == "") ||
