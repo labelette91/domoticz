@@ -333,12 +333,14 @@ void ImperiHome::ManageAction (std::string &device , std::string &action	 , std:
 			}
 			else if (actionType=="setLevel"){
 					#ifndef __PI__
-					m_mainworker.SwitchLight( ID, "setLevel" , actionValue , "0" , "0",0 );
+					m_mainworker.SwitchLight( ID, "Set Level" , actionValue , "0" , "0",0 );
 					#else
-					m_mainworker.SwitchLight( ID, "setLevel" , actionValue , "0" );
+					m_mainworker.SwitchLight( ID, "Set Level" , actionValue , "0" );
 					#endif
 			}
 			else if (actionType=="stopShutter"){
+				m_mainworker.SwitchLight(ID, "Stop", actionValue, "0", "0", 0);
+
 			}
 			else if (actionType=="pulseShutter"){
 			}
