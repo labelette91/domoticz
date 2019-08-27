@@ -5,7 +5,7 @@
 #include <fstream>
 #include "mainworker.h"
 #include "Helper.h"
-#include "localtime_r.h"
+#include "locje nealtime_r.h"
 #include "EventSystem.h"
 #include "HTMLSanitizer.h"
 #include "dzVents.h"
@@ -326,6 +326,13 @@ namespace http {
 			m_pWebEm->RegisterPageCode("/raspberry.cgi", [this](auto &&session, auto &&req, auto &&rep) { GetInternalCameraSnapshot(session, req, rep); });
 			m_pWebEm->RegisterPageCode("/uvccapture.cgi", [this](auto &&session, auto &&req, auto &&rep) { GetInternalCameraSnapshot(session, req, rep); });
 			m_pWebEm->RegisterPageCode("/images/floorplans/plan", [this](auto &&session, auto &&req, auto &&rep) { GetFloorplanImage(session, req, rep); });
+
+// imperihome API
+
+			m_pWebEm->RegisterPageCode("/rooms"  , [this](auto &&session, auto &&req, auto &&rep) { ImperihomeServices(session, req, rep); });
+			m_pWebEm->RegisterPageCode("/devices", [this](auto &&session, auto &&req, auto &&rep) { ImperihomeServices(session, req, rep); });
+			m_pWebEm->RegisterPageCode("/system" , [this](auto &&session, auto &&req, auto &&rep) { ImperihomeServices(session, req, rep); });
+
 
 			m_pWebEm->RegisterPageCode("/storesettings", [this](auto &&session, auto &&req, auto &&rep) { PostSettings(session, req, rep); });
 			m_pWebEm->RegisterActionCode("setrfxcommode", [this](auto &&session, auto &&req, auto &&redirect_uri) { SetRFXCOMMode(session, req, redirect_uri); });
