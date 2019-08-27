@@ -133,6 +133,20 @@ namespace http {
 				(*it)->ClearUserPasswords();
 			 }
 		}
+		void CWebServerHelper::RType_Scenes(Json::Value &root)//called from imperihome
+		{
+			request request_;
+			WebEmSession session ;
+
+			if (plainServer_) { // assert
+				plainServer_->RType_Scenes(session,request_,root);
+			}
+#ifdef NS_ENABLE_SSL
+			else if (secureServer_) {
+				secureServer_->RType_Scenes(session,request_,root);
+			}
+#endif
+		}
 
 		//JSon
 		void CWebServerHelper::	GetJSonDevices(

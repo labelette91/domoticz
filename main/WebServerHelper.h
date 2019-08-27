@@ -46,6 +46,7 @@ namespace http {
 				const time_t LastUpdate,
 				const std::string &username,
 				const std::string &hardwareid = "");
+			void RType_Scenes(Json::Value &root);//called from imperihome
 			// called from CSQLHelper
 			void ReloadCustomSwitchIcons();
 			std::string our_listener_port;
