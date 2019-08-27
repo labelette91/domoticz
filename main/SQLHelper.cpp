@@ -3765,27 +3765,38 @@ std::vector<std::vector<std::string> > CSQLHelper::queryBlob(const std::string &
 	return results;
 }
 
+//return the hadrware type of HardwareID
+_eHardwareTypes GetHardwareType(const int HardwareID)
+{
+	_eHardwareTypes Type = (_eHardwareTypes)0 ;
+
+	std::vector<std::vector<std::string> > result;
+	result = m_sql.safe_query("SELECT Type FROM Hardware WHERE (ID == %d)", HardwareID);
+	if (!result.empty())
+	{
+		std::vector<std::string> sd = result[0];
+		Type = (_eHardwareTypes)atoi(sd[0].c_str());
+	}
+	return Type;
+}
+
+
 uint64_t CSQLHelper::CreateDevice(const int HardwareID, const int SensorType, const int SensorSubType, std::string &devname, const unsigned long nid, const std::string &soptions)
 {
 	uint64_t DeviceRowIdx = (uint64_t)-1;
 	char ID[20];
 	sprintf(ID, "%lu", nid);
 
+	//recover hardware Type
+	_eHardwareTypes Type = GetHardwareType(HardwareID);
 #ifdef ENABLE_PYTHON
 	{
-		std::vector<std::vector<std::string> > result;
-		result = m_sql.safe_query("SELECT Type FROM Hardware WHERE (ID == %d)", HardwareID);
-		if (!result.empty())
-		{
-			std::vector<std::string> sd = result[0];
-			_eHardwareTypes Type = (_eHardwareTypes)atoi(sd[0].c_str());
 			if (Type == HTYPE_PythonPlugin)
 			{
 				// Not allowed to add device to plugin HW (plugin framework does not use key column "ID" but instead uses column "unit" as key)
 				_log.Log(LOG_ERROR, "CSQLHelper::CreateDevice: Not allowed to add device owned by plugin %u!", HardwareID);
 				return DeviceRowIdx;
 			}
-		}
 	}
 #endif
 
@@ -3841,10 +3852,14 @@ uint64_t CSQLHelper::CreateDevice(const int HardwareID, const int SensorType, co
 		sprintf(ID, "%X%02X%02X%02X", ID1, ID2, ID3, ID4);
 
 		DeviceRowIdx = UpdateValue(HardwareID, ID, 1, SensorType, SensorSubType, 12, 255, 0, "20.5", devname);
-		//set coefficient for PID for virtual Thermostat
-		std::string uidstr = boost::to_string(DeviceRowIdx);
 
-		UpdateVirtualThermostatOption(DeviceRowIdx, 0, 20, -1, -1, 16.0, 100, 20.0, 20.0, std::string("On"), std::string("Off"));
+		if (Type == HTYPE_VirtualThermostat)
+		{
+			//set coefficient for PID for virtual Thermostat
+			std::string uidstr = boost::to_string(DeviceRowIdx);
+
+			UpdateVirtualThermostatOption(DeviceRowIdx, 0, 20, -1, -1, 16.0, 100, 20.0, 20.0, std::string("On"), std::string("Off"));
+		}
 		break;
 	}
 
@@ -5180,13 +5195,26 @@ void CSQLHelper::UpdateTemperatureLog()
 				temp = static_cast<float>(atof(splitresults[0].c_str()));
 				break;
 			case pTypeThermostat:
-				//set point temperature record as chill
-				chill = static_cast<float>(atof(splitresults[0].c_str()));
-				//record power % as humidity
-				humidity = atoi(VirtualThermostatGetOption("Power",sd[6] ).c_str() ); 
-				//record room temp 
-				temp = (float)atof(VirtualThermostatGetOption("RoomTemp",sd[6] ).c_str());
-				break;
+				{
+
+					//if not a virtual thermostat
+					std::string Options  = sd[6];
+					if (Options.empty() )
+					{
+						temp = static_cast<float>(atof(splitresults[0].c_str()));
+					}
+					else
+					{
+						//for virtual thermostat record Room Temperature / set point & power level 0..100%
+						//set point temperature record as chill
+						chill = static_cast<float>(atof(splitresults[0].c_str()));
+						//record power % as humidity
+						humidity = atoi(VirtualThermostatGetOption("Power", Options).c_str());
+						//record room temp 
+						temp = (float)atof(VirtualThermostatGetOption("RoomTemp", Options).c_str());
+					}
+				}
+			break;
 			case pTypeThermostat1:
 				temp = static_cast<float>(atof(splitresults[0].c_str()));
 				break;
@@ -8614,6 +8642,29 @@ bool CSQLHelper::InsertCustomIconFromZipFile(const std::string &szZipFile, std::
 	m_webservers.ReloadCustomSwitchIcons();
 	return true;
 }
+
+#include <stdarg.h>     /* va_list, va_start, va_arg, va_end */
+
+TOptionMap  BuildDeviceOptions(int NbOptions ,... )
+{
+	std::map<std::string, std::string> optionsMap;
+
+	char * optionName, *optionValue;
+
+	va_list vl;
+	va_start(vl, NbOptions);
+	for (int i = 0; i < NbOptions; i++ )
+	{
+		optionName  = va_arg(vl, char*);
+		optionValue = va_arg(vl, char*);
+		optionsMap.insert(std::pair<std::string, std::string>(optionName, optionValue));
+
+	}
+	va_end(vl);
+
+	return optionsMap;
+}
+
 bool CSQLHelper::UpdateDeviceOptions(const uint64_t idx, std::string options , const bool decode ) {
 
     //get current option values
