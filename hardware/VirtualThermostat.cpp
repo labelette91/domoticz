@@ -99,11 +99,16 @@ VirtualThermostat::~VirtualThermostat()
 }
 bool VirtualThermostat::StartHardware()
 {
+	RequestStart();
+
 	m_stoprequested = false;
 
 
 	//Start worker thread
-	m_thread = std::shared_ptr<std::thread>(new std::thread(std::bind(&VirtualThermostat::Do_Work, this)));
+	//Start worker thread
+	m_thread = std::make_shared<std::thread>(&VirtualThermostat::Do_Work, this);
+	SetThreadNameInt(m_thread->native_handle());
+
 	sOnConnected(this);
 	m_bIsStarted = true;
 	return (m_thread != NULL);
@@ -111,8 +116,11 @@ bool VirtualThermostat::StartHardware()
 bool VirtualThermostat::StopHardware()
 {
 	m_stoprequested = true;
-	if (m_thread != NULL)
+	{
+		RequestStop();
 		m_thread->join();
+		m_thread.reset();
+	}
 	m_bIsStarted = false;
 	return true;
 }
@@ -120,9 +128,8 @@ void VirtualThermostat::Do_Work()
 {
 	int sec_counter = 0;
 	_log.Log(LOG_STATUS, "VirtualThermostat: Worker started...");
-	while (!m_stoprequested)
+	while (IsStopRequested(1000) == false)
 	{
-		sleep_milliseconds(1000);
 		if (m_stoprequested)
 			break;
 		sec_counter++;
