@@ -482,8 +482,10 @@ const char* sqlCreateEnoceanSensors =
 "[HardwareID] INTEGER NOT NULL, "
 "[DeviceID] VARCHAR(25) NOT NULL, "
 "[Manufacturer] INTEGER NOT NULL, "
+	"[Rorg]    INTEGER NOT NULL, "
 "[Profile] INTEGER NOT NULL, "
-"[Type] INTEGER NOT NULL);";
+	"[Type] INTEGER NOT NULL, "
+	"[Address] INTEGER DEFAULT 0);";
 
 const char* sqlCreatePushLink =
 "CREATE TABLE IF NOT EXISTS [PushLink] ("
@@ -2233,6 +2235,12 @@ bool CSQLHelper::OpenDatabase()
 				UpdatePreferencesVar("EnableEventScriptSystem", !nValue);
 			}
 			DeletePreferencesVar("DisableEventScriptSystem");
+		}
+		if (dbversion < 120)
+		{
+			//Add Address in EnOcean table 
+			query("ALTER TABLE EnoceanSensors ADD COLUMN [Address] INTEGER DEFAULT 0");
+			query("ALTER TABLE EnoceanSensors ADD COLUMN [Rorg] INTEGER DEFAULT 0");
 		}
 		if (dbversion < 120)
 		{
@@ -7244,50 +7252,61 @@ void CSQLHelper::DeleteDevices(const std::string& idx)
 		}
 	}
 #endif
-	{
-		//Avoid mutex deadlock here
-		std::lock_guard<std::mutex> l(m_sqlQueryMutex);
-
-		char* errorMessage;
-		sqlite3_exec(m_dbase, "BEGIN TRANSACTION", NULL, NULL, &errorMessage);
-
-		for (const auto& itt : _idx)
 		{
-			safe_exec_no_return("DELETE FROM LightingLog WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM LightSubDevices WHERE (ParentID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM LightSubDevices WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM Notifications WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM Rain WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM Rain_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM Temperature WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM Temperature_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM Timers WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM SetpointTimers WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM UV WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM UV_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM Wind WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM Wind_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM Meter WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM Meter_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM MultiMeter WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM MultiMeter_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM Percentage WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM Percentage_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM Fan WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM Fan_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM SceneDevices WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM DeviceToPlansMap WHERE (DeviceRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM CamerasActiveDevices WHERE (DevSceneType==0) AND (DevSceneRowID == '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM SharedDevices WHERE (DeviceRowID== '%q')", itt.c_str());
-			safe_exec_no_return("DELETE FROM PushLink WHERE (DeviceRowID== '%q')", itt.c_str());
-			//notify eventsystem device is no longer present
-			uint64_t ullidx = std::stoull(itt);
-			m_mainworker.m_eventsystem.RemoveSingleState(ullidx, m_mainworker.m_eventsystem.REASON_DEVICE);
-			//and now delete all records in the DeviceStatus table itself
-			safe_exec_no_return("DELETE FROM DeviceStatus WHERE (ID == '%q')", itt.c_str());
+			//Avoid mutex deadlock here
+			std::lock_guard<std::mutex> l(m_sqlQueryMutex);
+
+			char* errorMessage;
+			sqlite3_exec(m_dbase, "BEGIN TRANSACTION", NULL, NULL, &errorMessage);
+
+			for (const auto & itt : _idx)
+			{
+				//get the number of enocean devices with same DeviceId in order to delete from EnoceanSensors
+				std::string DeviceID;
+				std::vector<std::vector<std::string> > result;
+				result = m_sql.safe_query("SELECT DeviceID  FROM DeviceStatus   WHERE (ID==%s) ", (itt).c_str());
+				if (result.size()>0)	DeviceID = result[0][0];
+				result = m_sql.safe_query("SELECT DeviceID FROM DeviceStatus  WHERE (DeviceID=='%s') ", DeviceID.c_str());
+				int NbDeviceId = result.size();
+
+
+				safe_exec_no_return("DELETE FROM LightingLog WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM LightSubDevices WHERE (ParentID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM LightSubDevices WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM Notifications WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM Rain WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM Rain_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM Temperature WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM Temperature_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM Timers WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM SetpointTimers WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM UV WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM UV_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM Wind WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM Wind_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM Meter WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM Meter_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM MultiMeter WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM MultiMeter_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM Percentage WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM Percentage_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM Fan WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM Fan_Calendar WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM SceneDevices WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM DeviceToPlansMap WHERE (DeviceRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM CamerasActiveDevices WHERE (DevSceneType==0) AND (DevSceneRowID == '%q')", itt.c_str());
+				safe_exec_no_return("DELETE FROM SharedDevices WHERE (DeviceRowID== '%q')", itt.c_str());
+			  safe_exec_no_return("DELETE FROM PushLink WHERE (DeviceRowID== '%q')", itt.c_str());
+				if (NbDeviceId==1)
+					safe_exec_no_return("DELETE FROM EnoceanSensors WHERE (DeviceID == '%q')", DeviceID.c_str() );
+				//notify eventsystem device is no longer present
+				uint64_t ullidx = std::strtoull(itt.c_str(), nullptr, 10);
+				m_mainworker.m_eventsystem.RemoveSingleState(ullidx, m_mainworker.m_eventsystem.REASON_DEVICE);
+				//and now delete all records in the DeviceStatus table itself
+				safe_exec_no_return("DELETE FROM DeviceStatus WHERE (ID == '%q')", itt.c_str());
+			}
+			sqlite3_exec(m_dbase, "COMMIT TRANSACTION", NULL, NULL, &errorMessage);
 		}
-		sqlite3_exec(m_dbase, "COMMIT TRANSACTION", NULL, NULL, &errorMessage);
-	}
 #ifdef ENABLE_PYTHON
 	for (const auto& it : removeddevices)
 	{

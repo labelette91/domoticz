@@ -41,6 +41,7 @@ public:
 	CLogger(void);
 	~CLogger(void);
 
+	bool isTraceEnabled() { return true; };
 	bool SetLogFlags(const std::string &sFlags);
 	void SetLogFlags(const uint32_t iFlags) {
 		m_log_flags = iFlags;

@@ -678,6 +678,7 @@ namespace http {
 			//
 			//pollpost.html
 			RegisterRType("openzwavenodes", boost::bind(&CWebServer::RType_OpenZWaveNodes, this, _1, _2, _3));
+			RegisterRType("enocean"       , boost::bind(&CWebServer::RType_OpenEnOcean, this, _1, _2, _3));
 #endif
 			RegisterCommandCode("tellstickApplySettings", boost::bind(&CWebServer::Cmd_TellstickApplySettings, this, _1, _2, _3));
 
