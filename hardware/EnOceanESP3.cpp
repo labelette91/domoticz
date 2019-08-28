@@ -1,3 +1,4 @@
+
 #include "stdafx.h"
 #include "EnOceanESP3.h"
 #include "../main/Logger.h"
@@ -495,11 +496,7 @@ void CEnOceanESP3::Do_Work()
 			{
 				m_LastHeartbeat = mytime(NULL);
 			}
-#ifndef TEST
 //			testParsingData( sec_counter);
-
-
-#endif
 		}
 
 		if (!isOpen())
@@ -1901,13 +1898,16 @@ void CEnOceanESP3::ParseRadioDatagram()
 									_log.Log(LOG_NORM, "EnOcean: Sender_ID 0x%08X inserted in the database with base address 0x%08X : ", id, senderBaseAddr );
 								else
 									_log.Log(LOG_ERROR, "EnOcean: could not find base empty base address for Sender_ID 0x%08X : maximum 127 address", id );
-							ReloadVLDNodes();
+								ReloadVLDNodes();
 
-								//automatic teach in 
-								//send teachin message
-								//Send1BSTeachIn(senderBaseAddr);
-								SendRpsTeachIn(senderBaseAddr);
-								//Send4BSTeachIn(senderBaseAddr);
+								//if automatic teach in request 
+								if (eep_teach_in_response_expected == 0)
+								{
+									//send teachin message
+									//Send1BSTeachIn(senderBaseAddr);
+									SendRpsTeachIn(senderBaseAddr);
+									//Send4BSTeachIn(senderBaseAddr);
+								}
 
 								//create device switch
 								if ((rorg == 0xD2) && (func == 0x01) && ((type == 0x12) || (type == 0x0F)))
@@ -1967,7 +1967,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 
 				//D2-05 
 				//{ 0xD2 , 0x05 , 0x00 , "Blinds Control for Position and Angle                                            ",  "Type 0x00           
-				if ( (Rorg==0xd2) && (Func==0x05)) 
+				if ( (Func==0x05)) 
 				{
 					//get command
 					unsigned char * data =&m_buffer[1];
@@ -1988,7 +1988,8 @@ void CEnOceanESP3::ParseRadioDatagram()
 					}
 				}
 
-				if ((Rorg == 0xd2) && (Func == 0x01))
+				//Electonics switch
+				if ( (Func == 0x01))
 				{
 					_log.Log(LOG_NORM, "EnOcean: VLD: senderID: %08X Func:%02X  Type:%02X", senderId, Func, iType);
 					//get command 
@@ -2219,7 +2220,6 @@ void CEnOceanESP3::TestData(char * sdata, char * optData)
 
 void CEnOceanESP3::testParsingData(int sec_counter)
 {
-#ifndef TEST
 	//			if (sec_counter == 5)	TestData("D5 0 01 02 03 04 00 ");
 	//			if (sec_counter == 25)	TestData("D5 1 01 02 03 04 00 ");
 
@@ -2244,11 +2244,20 @@ void CEnOceanESP3::testParsingData(int sec_counter)
 
 	//			if (sec_counter == 2)	TestData("A5 02 00 00 00 FF 99 DF 01 30 "); //4BS teach in variation 1 : noo eep
 
-	if (sec_counter == 2)	TestData("A5 b1000 b1000 46 b10000000 01 02 03 04 30 "); //4BS teach in variation 1 :  eep func A-02-01
+//	if (sec_counter == 2)	TestData("A5 b00001000 b00001000 46 b10000000 01 02 03 04 30 "); //4BS teach in variation 2 :  eep func A-02-01
 //														        | eep
-//													         | manufactuer ID nodon
+//													         | manufactuer ID nodon = 46
 
-	if (sec_counter == 3)	TestData("A5 00 00 46 b00001000 01 02 03 04 30 "); //4BS data  :  eep func A-02-01
+//	if (sec_counter == 3)	TestData("A5 00         00       46 b00001000 01 02 03 04 30 "); //4BS data  :  eep func A-02-01
+
+
+	//function 6 bit  type:7 bits manufacyurer 11
+
+	if (sec_counter == 2)	TestData("A5 b00001100 b01010000 46 b10000000 00 00 00 01 30 "); //4BS teach in variation 2 :  eep func D2-03-0A
+//												         | manufactuer ID nodon = 46
+//														        | eep
+
+	if (sec_counter == 2)	TestData("D2 32 01 00 00 00 01 30 "); //VLD D2  eep func D2-03-0A baterie 50% button 1
 
 //			if (sec_counter == 3)	remoteLearning(0x01A65428 , true ); //4BS data  :  eep func A-02-01
 
@@ -2263,11 +2272,102 @@ void CEnOceanESP3::testParsingData(int sec_counter)
 //			if (sec_counter == 12)	getallLinkTable(0x01A65428,0,3);
 //			if (sec_counter == 4)	getProductFunction(0x01A65428);
 
+	char * VLD_BLINDS_D2_05_00_position = "D2 00 00 00 04 05 85 87 4A 00 "; //         01 FF FF FF FF 2E";
+	char * VLD_switch_uti				= "D4 A0 02 46 00 12 01 D2 01 A6 54 28 00 ""; //01 FF FF FF FF 33"; //teach-in request received from 01A65428 (manufacturer: 046). number of channels: 2, device profile: D2-01-12
+	char * VLD_switch_status            = "D2 04 60 80 01 A6 54 28 00 "; // 01 FF FF FF FF 31";
+
+
+	char * VLD_BLINDS_D2_05_00_uti = "D4 A0 01 46 00 00 05 D2 05 85 87 4A 00 ";//  -01 FF FF FF FF 30 "; // 09.031 EnOcean : teach - in request received from 0585874A(manufacturer: 046).number of channels : 1, device profile : D2 - 05 - 00
+
+
+	char * button_left_up_pressed  = "F6 30 00 34 F8 FE 30";
+	char * button_left_up_released = "F6 00 00 34 F8 FE 20";
+	char * button_left_do_pressed  = "F6 10 00 34 F8 FE 30";
+	char * button_left_do_released = "F6 00 00 34 F8 FE 20";
+
+	char * button_right_up_pressed  = "F6 70 00 34 F8 FE 30";
+	char * button_right_up_released = "F6 00 00 34 F8 FE 20";
+	char * button_right_do_pressed  = "F6 50 00 34 F8 FE 30";
+	char * button_right_do_released = "F6 00 00 34 F8 FE 20";
+
+	// 
+// button gauche Up
+// recv 01 PACKET_RADIO (07/07) F6 30 00 34 F8 FE 30 - 01 FF FF FF FF 36 00 Dest: 0xffffffff RSSI: 46
+// RPS data: Sender id: 0x0034f8fe Status: 30 Data: 30 T21:0
+// RPS N-Message message: 0x30 Node 0x0034f8fe RockerID: 0 ButtonID: 1 Pressed: 1 UD: 1 Second Rocker ID: 0 SecondButtonID: 0 SUD: 0 Second Action: 0
+// message: 0x30 Node 0x0034f8fe UnitID: 02 cmd: 01
+//
+// recv 01 PACKET_RADIO (07/07) F6 00 00 34 F8 FE 20 - 01 FF FF FF FF 36 00 Dest: 0xffffffff RSSI: 46
+// RPS data: Sender id: 0x0034f8fe Status: 20 Data: 00 T21:0
+// RPS T21-Message message: 0x00 Node 0x0034f8fe ButtonID: 0 Pressed: 0 UD: 1
+// message: 0x00 Node 0x0034f8fe UnitID: 00 cmd: 03
+//
+//button gauche Down
+// recv 01 PACKET_RADIO (07/07) F6 10 00 34 F8 FE 30 - 01 FF FF FF FF 39 00 Dest: 0xffffffff RSSI: 43
+// RPS data: Sender id: 0x0034f8fe Status: 30 Data: 10 T21:0
+// RPS N-Message message: 0x10 Node 0x0034f8fe RockerID: 0 ButtonID: 0 Pressed: 0 UD: 1 Second Rocker ID: 0 SecondButtonID: 0 SUD: 0 Second Action: 0
+// message: 0x10 Node 0x0034f8fe UnitID: 01 cmd: 01
+//
+// recv 01 PACKET_RADIO (07/07) F6 00 00 34 F8 FE 20 - 01 FF FF FF FF 39 00 Dest: 0xffffffff RSSI: 43
+// RPS data: Sender id: 0x0034f8fe Status: 20 Data: 00 T21:0
+// RPS T21-Message message: 0x00 Node 0x0034f8fe ButtonID: 0 Pressed: 0 UD: 1
+// message: 0x00 Node 0x0034f8fe UnitID: 00 cmd: 03
+//
+//
+// button droite Up
+//recv 01 PACKET_RADIO (07/07) F6 70 00 34 F8 FE 30 - 01 FF FF FF FF 30 00 Dest: 0xffffffff RSSI: 52
+// RPS data: Sender id: 0x0034f8fe Status: 30 Data: 70 T21:0
+// RPS N-Message message: 0x70 Node 0x0034f8fe RockerID: 1 ButtonID: 3 Pressed: 1 UD: 1 Second Rocker ID: 0 SecondButtonID: 0 SUD: 0 Second Action: 0
+// message: 0x70 Node 0x0034f8fe UnitID: 04 cmd: 01
+//
+// recv 01 PACKET_RADIO (07/07) F6 00 00 34 F8 FE 20 - 01 FF FF FF FF 30 00 Dest: 0xffffffff RSSI: 52
+// RPS data: Sender id: 0x0034f8fe Status: 20 Data: 00 T21:0
+// RPS T21-Message message: 0x00 Node 0x0034f8fe ButtonID: 0 Pressed: 0 UD: 1
+// message: 0x00 Node 0x0034f8fe UnitID: 00 cmd: 03
+//
+// button droite down
+// recv 01 PACKET_RADIO (07/07) F6 50 00 34 F8 FE 30 - 01 FF FF FF FF 34 00 Dest: 0xffffffff RSSI: 48
+// RPS data: Sender id: 0x0034f8fe Status: 30 Data: 50 T21:0
+// RPS N-Message message: 0x50 Node 0x0034f8fe RockerID: 1 ButtonID: 2 Pressed: 0 UD: 1 Second Rocker ID: 0 SecondButtonID: 0 SUD: 0 Second Action: 0
+// message: 0x50 Node 0x0034f8fe UnitID: 03 cmd: 01
+//
+// recv 01 PACKET_RADIO (07/07) F6 00 00 34 F8 FE 20 - 01 FF FF FF FF 36 00 Dest: 0xffffffff RSSI: 46
+// RPS data: Sender id: 0x0034f8fe Status: 20 Data: 00 T21:0
+// RPS T21-Message message: 0x00 Node 0x0034f8fe ButtonID: 0 Pressed: 0 UD: 1
+// message: 0x00 Node 0x0034f8fe UnitID: 00 cmd: 03
+//
+// Need Teach-In for 0585874A : position retour
+// recv 01 PACKET_RADIO (0A/07) D2 0A 00 00 04 05 85 87 4A 00 - 01 FF FF FF FF 2E 00 Dest: 0xffffffff RSSI: 54
+// recv 01 PACKET_RADIO (0A/07) D2 14 00 00 04 05 85 87 4A 00 - 01 FF FF FF FF 2E 00 Dest: 0xffffffff RSSI: 54
+// recv 01 PACKET_RADIO (0A/07) D2 1E 00 00 04 05 85 87 4A 00 - 01 FF FF FF FF 2E 00 Dest: 0xffffffff RSSI: 54
+// recv 01 PACKET_RADIO (0A/07) D2 28 00 00 04 05 85 87 4A 00 - 01 FF FF FF FF 30 00 Dest: 0xffffffff RSSI: 52
+// recv 01 PACKET_RADIO (0A/07) D2 32 00 00 04 05 85 87 4A 00 - 01 FF FF FF FF 30 00 Dest: 0xffffffff RSSI: 52
+// recv 01 PACKET_RADIO (0A/07) D2 3C 00 00 04 05 85 87 4A 00 - 01 FF FF FF FF 30 00 Dest: 0xffffffff RSSI: 52
+// recv 01 PACKET_RADIO (0A/07) D2 46 00 00 04 05 85 87 4A 00 - 01 FF FF FF FF 2E 00 Dest: 0xffffffff RSSI: 54
+// recv 01 PACKET_RADIO (0A/07) D2 50 00 00 04 05 85 87 4A 00 - 01 FF FF FF FF 30 00 Dest: 0xffffffff RSSI: 52
+// recv 01 PACKET_RADIO (0A/07) D2 5A 00 00 04 05 85 87 4A 00 - 01 FF FF FF FF 30 00 Dest: 0xffffffff RSSI: 52
+// recv 01 PACKET_RADIO (0A/07) D2 64 00 00 04 05 85 87 4A 00 - 01 FF FF FF FF 30 00 Dest: 0xffffffff RSSI: 52
 
 
 
+//VLD: senderID: 01A65428 Func : 01 Type : 12
+// 
+// recv 01 PACKET_RADIO (09/07) D2 04 60 E4 01 A6 54 28 00 - 01 FF FF FF FF 2D 00 Dest: 0xffffffff RSSI: 55
+// VLD : 0x04 Node 0x01a65428 UnitID: 01 cmd: 01
+// recv 01 PACKET_RADIO (09/07) D2 04 61 E4 01 A6 54 28 00 - 01 FF FF FF FF 2D 00 Dest: 0xffffffff RSSI: 55
+// VLD : 0x04 Node 0x01a65428 UnitID: 02 cmd: 01
+// 
+// recv 01 PACKET_RADIO (09/07) D2 04 60 80 01 A6 54 28 00 - 01 FF FF FF FF 2D 00 Dest: 0xffffffff RSSI: 55
+// VLD : 0x04 Node 0x01a65428 UnitID: 01 cmd: 00
+// recv 01 PACKET_RADIO (09/07) D2 04 61 80 01 A6 54 28 00 - 01 FF FF FF FF 2D 00 Dest: 0xffffffff RSSI: 55
+// VLD : 0x04 Node 0x01a65428 UnitID: 02 cmd: 00
 
-#endif
+
+	char * VLD_switch_B1_ON   = "D2 04 60 E4 01 A6 54 28 00";
+	 char * VLD_switch_B2_ON  = "D2 04 61 E4 01 A6 54 28 00";
+	 char * VLD_switch_B1_OFF = "D2 04 60 80 01 A6 54 28 00";
+	 char * VLD_switch_B2_OFF = "D2 04 61 80 01 A6 54 28 00";
+
 }
 
 

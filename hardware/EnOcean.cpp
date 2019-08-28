@@ -39,7 +39,7 @@ uint64_t CEnOcean::CreateDevice(const int HardwareID, const char* ID, const int 
 {
 	uint64_t ulID = 0;
 	std::vector<std::vector<std::string> > result;
-	result = m_sql.safe_query("SELECT ID,Name, Used, SwitchType, nValue, sValue, LastUpdate, Options, Log FROM DeviceStatus WHERE (HardwareID=%d AND DeviceID='%q' AND Unit=%d AND Type=%d AND SubType=%d)", HardwareID, ID, unitCode, devType, subType);
+	result = m_sql.safe_query("SELECT ID  FROM DeviceStatus WHERE (HardwareID=%d AND DeviceID='%q' AND Unit=%d AND Type=%d AND SubType=%d)", HardwareID, ID, unitCode, devType, subType);
 	if (result.size() == 0)
 	{
 		//Insert
@@ -720,7 +720,7 @@ void CEnOcean::remoteLearning(unsigned int destID, bool StartLearning, int chann
 	//optionnal data
 	setDestination(opt, destID);
 
-	_log.Log(LOG_TRACE, "EnOcean: send remoteLearning");
+	_log.Debug(DEBUG_NORM, "EnOcean: send remoteLearning");
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 }
 
@@ -743,7 +743,7 @@ void CEnOcean::unlock(unsigned int destID, unsigned int code)
 	//optionnal data
 	setDestination(opt, destID);
 
-	_log.Log(LOG_TRACE, "EnOcean: send unlock");
+	_log.Debug(DEBUG_NORM, "EnOcean: send unlock");
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 }
 
@@ -766,7 +766,7 @@ void CEnOcean::lock(unsigned int destID, unsigned int code)
 	//optionnal data
 	setDestination(opt, destID);
 
-	_log.Log(LOG_TRACE, "EnOcean: send lock");
+	_log.Debug(DEBUG_NORM, "EnOcean: send lock");
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
 }
@@ -790,7 +790,7 @@ void CEnOcean::setcode(unsigned int destID, unsigned int code)
 	//optionnal data
 	setDestination(opt, destID);
 
-	_log.Log(LOG_TRACE, "EnOcean: send setcode %08X , %d", destID, code);
+	_log.Debug(DEBUG_NORM, "EnOcean: send setcode %08X , %d", destID, code);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
 }
@@ -812,7 +812,7 @@ void CEnOcean::ping(unsigned int destID)
 	//optionnal data
 	setDestination(opt, destID);
 
-	_log.Log(LOG_TRACE, "EnOcean: send ping %08X ", destID);
+	_log.Debug(DEBUG_NORM, "EnOcean: send ping %08X ", destID);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
 }
@@ -835,7 +835,7 @@ void CEnOcean::action(unsigned int destID)
 	setDestination(opt, destID);
 
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
-	_log.Log(LOG_TRACE, "EnOcean: send action %08X ", destID);
+	_log.Debug(DEBUG_NORM, "EnOcean: send action %08X ", destID);
 
 }
 
@@ -856,7 +856,7 @@ void CEnOcean::getProductId()
 							//optionnal data
 	setDestination(opt, 0xFFFFFFFF);
 
-	_log.Log(LOG_TRACE, "EnOcean: send getProductId");
+	_log.Debug(DEBUG_NORM, "EnOcean: send getProductId");
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
 }
@@ -888,7 +888,7 @@ void CEnOcean::getLinkTableMedadata(uint destID)
 					 //optionnal data
 	setDestination(opt, destID);
 
-	_log.Log(LOG_TRACE, "EnOcean: send getLinkTableMedadata %08X ", destID);
+	_log.Debug(DEBUG_NORM, "EnOcean: send getLinkTableMedadata %08X ", destID);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
 }
@@ -917,7 +917,7 @@ void CEnOcean::getProductFunction(uint destID)
 					 //optionnal data
 	setDestination(opt, destID);
 
-	_log.Log(LOG_TRACE, "EnOcean: send getProductFunction %08X ", destID);
+	_log.Debug(DEBUG_NORM, "EnOcean: send getProductFunction %08X ", destID);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
 }
@@ -944,7 +944,7 @@ void CEnOcean::getallLinkTable(uint SensorId, int begin, int end)
 					 //optionnal data
 	setDestination(opt, SensorId);
 
-	_log.Log(LOG_TRACE, "EnOcean: send getallLinkTable %08X ", SensorId);
+	_log.Debug(DEBUG_NORM, "EnOcean: send getallLinkTable %08X ", SensorId);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
 }

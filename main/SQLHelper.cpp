@@ -482,10 +482,10 @@ const char* sqlCreateEnoceanSensors =
 "[HardwareID] INTEGER NOT NULL, "
 "[DeviceID] VARCHAR(25) NOT NULL, "
 "[Manufacturer] INTEGER NOT NULL, "
-	"[Rorg]    INTEGER NOT NULL, "
+"[Rorg]    INTEGER NOT NULL, "
 "[Profile] INTEGER NOT NULL, "
-	"[Type] INTEGER NOT NULL, "
-	"[Address] INTEGER DEFAULT 0);";
+"[Type] INTEGER NOT NULL, "
+"[Address] INTEGER DEFAULT 0);";
 
 const char* sqlCreatePushLink =
 "CREATE TABLE IF NOT EXISTS [PushLink] ("
@@ -7253,11 +7253,7 @@ void CSQLHelper::DeleteDevices(const std::string& idx)
 	}
 #endif
 		{
-			//Avoid mutex deadlock here
-			std::lock_guard<std::mutex> l(m_sqlQueryMutex);
-
 			char* errorMessage;
-			sqlite3_exec(m_dbase, "BEGIN TRANSACTION", NULL, NULL, &errorMessage);
 
 			for (const auto & itt : _idx)
 			{
@@ -7269,6 +7265,10 @@ void CSQLHelper::DeleteDevices(const std::string& idx)
 				result = m_sql.safe_query("SELECT DeviceID FROM DeviceStatus  WHERE (DeviceID=='%s') ", DeviceID.c_str());
 				int NbDeviceId = result.size();
 
+
+				//Avoid mutex deadlock here
+				std::lock_guard<std::mutex> l(m_sqlQueryMutex);
+				sqlite3_exec(m_dbase, "BEGIN TRANSACTION", NULL, NULL, &errorMessage);
 
 				safe_exec_no_return("DELETE FROM LightingLog WHERE (DeviceRowID == '%q')", itt.c_str());
 				safe_exec_no_return("DELETE FROM LightSubDevices WHERE (ParentID == '%q')", itt.c_str());
@@ -7304,8 +7304,9 @@ void CSQLHelper::DeleteDevices(const std::string& idx)
 				m_mainworker.m_eventsystem.RemoveSingleState(ullidx, m_mainworker.m_eventsystem.REASON_DEVICE);
 				//and now delete all records in the DeviceStatus table itself
 				safe_exec_no_return("DELETE FROM DeviceStatus WHERE (ID == '%q')", itt.c_str());
+
+				sqlite3_exec(m_dbase, "COMMIT TRANSACTION", NULL, NULL, &errorMessage);
 			}
-			sqlite3_exec(m_dbase, "COMMIT TRANSACTION", NULL, NULL, &errorMessage);
 		}
 #ifdef ENABLE_PYTHON
 	for (const auto& it : removeddevices)
