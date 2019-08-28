@@ -80,6 +80,17 @@ public:
 	void EnableLogTimestamps(const bool bEnableTimestamps);
 	bool IsLogTimestampsEnabled();
 
+	bool IsDebugStringFiltered(const std::string& sString) {
+		if (strstr(FilterString.c_str(), sString.c_str()) != 0)
+			return true;
+		else
+			return false;
+	}
+
+	void SetFilterString(std::string &Filter);
+	bool TestFilter(const char *cbuffer);
+	void SetLogPreference(std::string LogFilter);
+	void GetLogPreference();
 	void ForwardErrorsToNotificationSystem(const bool bDoForward);
 
 	std::list<_tLogLineStruct> GetLog(const _eLogLevel level, const time_t lastlogtime = 0);
@@ -101,5 +112,9 @@ private:
 	bool m_bEnableErrorsToNotificationSystem;
 	time_t m_LastLogNotificationsSend;
 	std::stringstream m_sequencestring;
+	
+	std::string FilterString;
+	std::vector<std::string> FilterStringList;	//contain the list of filtered words
+	std::vector<std::string> KeepStringList;	//contain the list of  words to be kept
 };
 extern CLogger _log;

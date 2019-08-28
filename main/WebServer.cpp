@@ -382,6 +382,7 @@ namespace http {
 			RegisterCommandCode("logincheck", boost::bind(&CWebServer::Cmd_LoginCheck, this, _1, _2, _3), true);
 			RegisterCommandCode("getversion", boost::bind(&CWebServer::Cmd_GetVersion, this, _1, _2, _3), true);
 			RegisterCommandCode("getlog", boost::bind(&CWebServer::Cmd_GetLog, this, _1, _2, _3));
+			RegisterCommandCode("setlogfilter", boost::bind(&CWebServer::Cmd_setlogfilter, this, _1, _2, _3));
 			RegisterCommandCode("clearlog", boost::bind(&CWebServer::Cmd_ClearLog, this, _1, _2, _3));
 			RegisterCommandCode("getauth", boost::bind(&CWebServer::Cmd_GetAuth, this, _1, _2, _3), true);
 			RegisterCommandCode("getuptime", boost::bind(&CWebServer::Cmd_GetUptime, this, _1, _2, _3), true);
@@ -2139,6 +2140,22 @@ namespace http {
 
 			m_mainworker.RemoveDomoticzHardware(hwID);
 			m_sql.DeleteHardware(idx);
+		}
+
+		//json.htm?type=command&param=setlogfilter&filter="SQL;IMPA;"
+		//set tthe log filtyer string
+		void CWebServer::Cmd_setlogfilter(WebEmSession & session, const request& req, Json::Value &root)
+		{
+			root["status"] = "OK";
+			root["title"] = "SetLogFilter";
+
+			std::string LogFilter = request::findValue(&req, "filter");
+			if (!LogFilter.empty() )
+			{
+				_log.SetFilterString(LogFilter);
+			}
+
+
 		}
 
 		void CWebServer::Cmd_GetLog(WebEmSession & session, const request& req, Json::Value &root)

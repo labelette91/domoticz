@@ -301,6 +301,7 @@ public:
 
 	bool OpenDatabase();
 	void CloseDatabase();
+	bool IsOpened() { return m_dbase != 0; }
 
 	bool BackupDatabase(const std::string &OutputFile);
 	bool RestoreDatabase(const std::string &dbase);

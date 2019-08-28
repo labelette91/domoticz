@@ -169,6 +169,7 @@ private:
 	void Cmd_GetUserVariable(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_AllowNewHardware(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_GetLog(WebEmSession & session, const request& req, Json::Value &root);
+	void Cmd_setlogfilter(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_ClearLog(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_AddPlan(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_UpdatePlan(WebEmSession & session, const request& req, Json::Value &root);

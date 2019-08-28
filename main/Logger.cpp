@@ -7,6 +7,7 @@
 #include "localtime_r.h"
 #include "Helper.h"
 #include "mainworker.h"
+#include "Helper.h"
 
 #ifndef WIN32
 #include <syslog.h>
@@ -30,6 +31,8 @@ CLogger::_tLogLineStruct::_tLogLineStruct(const _eLogLevel nlevel, const std::st
 
 CLogger::CLogger(void)
 {
+	FilterString = "SQL;";
+	SetFilterString(FilterString);
 	m_bInSequenceMode = false;
 	m_bEnableLogThreadIDs = false;
 	m_bEnableLogTimestamps = true;
@@ -266,7 +269,24 @@ void CLogger::Debug(const _eDebugLevel level, const char* logline, ...)
 	va_start(argList, logline);
 	vsnprintf(cbuffer, sizeof(cbuffer), logline, argList);
 	va_end(argList);
+
+	//test if debug log contain a string to be filtered from LOG content
+	if (TestFilter(cbuffer))
+		return;
+	if (FilterString == "SQL;")
+	{
+		//get from db
+		//if db initialzed
+		if (m_sql.IsOpened()) {
+			GetLogPreference();
+			if (FilterString.empty())
+				//filter SQL & IMperihome
+				SetLogPreference("SQL;IMPE;IMPA;");
+		}
+	}
+
 	Debug(level, std::string(cbuffer));
+
 }
 
 void CLogger::Debug(const _eDebugLevel level, const std::string& sLogline)
@@ -392,4 +412,68 @@ std::list<CLogger::_tLogLineStruct> CLogger::GetNotificationLogs()
 bool CLogger::NotificationLogsEnabled()
 {
 	return m_bEnableErrorsToNotificationSystem;
+}
+
+
+
+void CLogger::SetFilterString(std::string  &pFilter)
+{
+	std::vector<std::string> FilterList;
+	FilterString = pFilter;
+	FilterStringList.clear();
+	KeepStringList.clear();
+	StringSplit(pFilter, ";", FilterList);
+	for (size_t i = 0; i < FilterList.size(); i++)
+	{
+		if (FilterList[i][0] == '+')
+			KeepStringList.push_back(FilterList[i].substr(1));
+		else
+			FilterStringList.push_back(FilterList[i]);
+	}
+}
+
+//return true if the log shall be filtered
+//
+bool CLogger::TestFilter(const char *cbuffer)
+{
+	bool filtered = false; //default not filtered
+
+	//search if the log shall be filter
+	for (size_t i = 0; i < FilterStringList.size(); i++)
+	{
+		if (strstr(cbuffer, FilterStringList[i].c_str()) != 0)
+		{
+			filtered = true;
+			break;
+		}
+	}
+	//if the log as been filtered , search if it shall be kept
+	if (filtered)
+	{
+		for (size_t i = 0; i < KeepStringList.size(); i++)
+		{
+			if (strstr(cbuffer, KeepStringList[i].c_str()) != 0)
+			{
+				filtered = false;
+				break;
+			}
+		}
+	}
+	return filtered;
+}
+
+void CLogger::SetLogPreference(std::string  LogFilter)
+{
+		//set LogFilter from Preferences tables
+		m_sql.UpdatePreferencesVar("LogFilter", 0, LogFilter.c_str());
+		SetFilterString(LogFilter);
+	
+}
+void CLogger::GetLogPreference()
+{
+	std::string LogFilter;
+
+		//get LogFilter from Preferences tables
+		m_sql.GetPreferencesVar("LogFilter", LogFilter);
+		SetFilterString(LogFilter);
 }
