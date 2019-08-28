@@ -496,7 +496,7 @@ void CEnOceanESP3::Do_Work()
 			{
 				m_LastHeartbeat = mytime(NULL);
 			}
-//			testParsingData( sec_counter);
+			testParsingData( sec_counter);
 		}
 
 		if (!isOpen())
