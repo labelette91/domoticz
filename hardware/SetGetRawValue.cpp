@@ -68,7 +68,7 @@ uint32_t GetRawValue(uint8_t * data ,  uint16_t offset, uint8_t size)
 
 	if (len == 5)
 	{
-		value = tmpLongValue >> bite;
+		value = (uint32_t)(tmpLongValue >> bite);
 	}
 	else
 	{
@@ -299,12 +299,29 @@ uint32_t SetRawValues(uint8_t * data, T_DATAFIELD * OffsetDes,  ...)
 
 //vld D2-03-0A : len=2 offset 0 battery level 1= action : //1 = simple press, 2=double press, 3=long press, 4=press release
 
-T_DATAFIELD D2030A [] = {
+T_DATAFIELD D2030A[] = {
 {  0  , 8 , "BAT"  , 0,0,0,0,"battert level" },
 {  8  , 8 , "BUT"  , 0,0,0,0,"button       " }, //
+{ 0  , 0  , 0      , 0,0,0,0,0              }  //
+};
 
 #define D2030A_BAT 0
 #define D2030A_BUT 1
 #define D2030A_NB_DATA    1
 #define D2030A_DATA_SIZE  2
+
+T_DATAFIELD TEACHIN_4BS[] = {
+{ 0  , 6 , "FUNC"  , 0,0,0,0,"function" },
+{ 6  , 7 , "TYPE"  , 0,0,0,0,"type    " }, //
+{ 13 , 11, "MANU"  , 0,0,0,0,"manufacturer   " }, //
+{ 24 , 1 , "LRNT"  , 0,0,0,0,"  learn type " }, //  0:WithOut EEP 1: with EEP
+{ 28 , 1 , "LRNB"  , 0,0,0,0,"  learn bite " }, //  0 TeachIn telegram 1 DataLelegram
+{ 0  , 0  , 0      , 0,0,0,0,0 }  //
+};
+
+#define WITHOUT_EEP 0
+#define WITH_EEP 1
+#define TEACHIN  0
+#define DATA_TELEG  1
+
 

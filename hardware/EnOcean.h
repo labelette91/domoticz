@@ -74,16 +74,16 @@ typedef struct {
 	int Offset;
 	int Size;
 	char * ShortCut;
-	int  RangeMin;
-	int  RangeMax;
-	int  ScaleMin;
-	int  ScaleMax;
+	double  RangeMin;
+	double  RangeMax;
+	double  ScaleMin;
+	double  ScaleMax;
 
 	char * description;
 }T_DATAFIELD;
 
 //value for the last argument of a telegram data payload
-#define END_ARG_DATA  ((1<<31)-1)
+#define END_ARG_DATA  (((unsigned int)1<<31)-1)
 
 class CEnOcean : public AsyncSerial, public CDomoticzHardwareBase
 {

@@ -2199,20 +2199,19 @@ namespace http {
 	}
 }
 
-void CEnOceanESP3::TestData(ESP3_RORG rorg, unsigned sID,  unsigned char status , T_DATAFIELD * OffsetDes, ...)
+void CEnOceanESP3::TestData(ESP3_RORG rorg, unsigned int sID,  unsigned char status , T_DATAFIELD * OffsetDes, ...)
 {
-	uint8_t data[64];
 
 	va_list value;
+	unsigned char *buff = m_buffer;
 
-	data[0] = rorg;
+	*buff++ = rorg;
 	/* Initialize the va_list structure */
 	va_start(value, OffsetDes);
-	uint32_t total_bytes = SetRawValues(&data[1], OffsetDes, value);
+	uint32_t total_bytes = SetRawValues(buff, OffsetDes, value);
 	va_end(value);
-	
+	buff += total_bytes;
 	//add adress
-	unsigned char *buff = &data[total_bytes+1];
 	*buff++ = (sID >> 24) & 0xff;		// Sender ID
 	*buff++ = (sID >> 16) & 0xff;
 	*buff++ = (sID >> 8) & 0xff;
@@ -2222,7 +2221,7 @@ void CEnOceanESP3::TestData(ESP3_RORG rorg, unsigned sID,  unsigned char status 
 
 	m_ReceivedPacketType = 0x01;
 	m_OptionalDataSize = 0;
-	m_bufferpos = 1+total_bytes+4+1 ;
+	m_DataSize=m_bufferpos = 1+total_bytes+4+1 ;
 	ParseData();
 }
 
@@ -2280,11 +2279,24 @@ void CEnOceanESP3::testParsingData(int sec_counter)
 
 	//function 6 bit  type:7 bits manufacyurer 11
 
-	if (sec_counter == 2)	TestData("A5 b00001100 b01010000 46 b10000000 00 00 00 01 30 "); //4BS teach in variation 2 :  eep func D2-03-0A
+//	if (sec_counter == 2)	TestData("A5 b00001100 b01010000 46 b10000000 00 00 00 01 30 "); //4BS teach in variation 2 :  eep func D2-03-0A
 //												         | manufactuer ID nodon = 46
 //														        | eep
 
-	if (sec_counter == 2)	TestData("D2 32 01 00 00 00 01 30 "); //VLD D2  eep func D2-03-0A baterie 50% button 1
+
+//ESP3_RORG rorg, unsigned sID,  unsigned char status , T_DATAFIELD * OffsetDes, ...
+	if (sec_counter == 2) {
+
+		//4BS teachin D2-03-0A 
+
+		TestData(RORG_4BS, 0x12345678, 0, TEACHIN_4BS, 0x03,0x0A, 0x46, WITH_EEP, TEACHIN , END_ARG_DATA);
+
+		//data bat=50 button=1
+		TestData(RORG_VLD, 0x12345678, 0, D2030A, 50, 1, END_ARG_DATA);
+	}
+
+
+//	if (sec_counter == 2)	TestData("D2 32 01 00 00 00 01 30 "); //VLD D2  eep func D2-03-0A baterie 50% button 1
 
 //			if (sec_counter == 3)	remoteLearning(0x01A65428 , true ); //4BS data  :  eep func A-02-01
 
@@ -2394,6 +2406,8 @@ void CEnOceanESP3::testParsingData(int sec_counter)
 	 char * VLD_switch_B2_ON  = "D2 04 61 E4 01 A6 54 28 00";
 	 char * VLD_switch_B1_OFF = "D2 04 60 80 01 A6 54 28 00";
 	 char * VLD_switch_B2_OFF = "D2 04 61 80 01 A6 54 28 00";
+
+
 
 }
 
