@@ -24,7 +24,7 @@
 using namespace boost::placeholders;
 
 #include "SetGetRawValue.cpp"
-#include "eep-d2-05.h"
+#include "eep-d2.h"
 
 #if _DEBUG
 	#define ENOCEAN_BUTTON_DEBUG
@@ -717,10 +717,10 @@ bool CEnOceanESP3::WriteToHardware(const char *pdata, const unsigned char /*leng
 
 			if (LastPosition == pos) {
 				//send command stop si rappuie
-				sendVld(unitBaseAddr, D20500_CMD_2,  channel, 2, END_ARG_DATA);
+				sendVld(unitBaseAddr, D20500_CMD2,  channel, 2, END_ARG_DATA);
 				LastPosition = -1;
 			}else{
-				 sendVld(unitBaseAddr, D20500_CMD_1,  pos, 127, 0, 0, channel, 1, END_ARG_DATA);
+				 sendVld(unitBaseAddr, D20500_CMD1,  pos, 127, 0, 0, channel, 1, END_ARG_DATA);
 				 LastPosition = pos;
 			}
 		}
@@ -1972,13 +1972,13 @@ void CEnOceanESP3::ParseRadioDatagram()
 					//get command
 					unsigned char * data =&m_buffer[1];
 				
-					int cmd = GetRawValue(data, D2_05_00_Cmd_1 ,  D20500_CMD_1_CMD  ) ;
-					int unitcode = GetRawValue(data, D2_05_00_Cmd_1, D20500_CMD_1_CHN);
+					int cmd = GetRawValue(data, D20500_CMD1 ,  D20500_CMD1_CMD  ) ;
+					int unitcode = GetRawValue(data, D20500_CMD1, D20500_CMD1_CHN);
 					//if position
 					if (cmd == 4 )
 					{
 						//get position
-						int pos = GetRawValue( data,D2_05_00_Cmd_1 ,  D20500_CMD_1_POS  ) ;
+						int pos = GetRawValue( data,D20500_CMD1 ,  D20500_CMD1_POS  ) ;
 					    _log.Log(LOG_NORM, "EnOcean: VLD: senderID: %08X EEP:D2-05  Reply Position Position:%d%", senderId, pos);
 						bool bon = (pos > 0 ? 1 : 0 );
 						if (pos >= 100)	pos = 0;

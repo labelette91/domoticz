@@ -74,6 +74,11 @@ typedef struct {
 	int Offset;
 	int Size;
 	char * ShortCut;
+	int  RangeMin;
+	int  RangeMax;
+	int  ScaleMin;
+	int  ScaleMax;
+
 	char * description;
 }T_DATAFIELD;
 

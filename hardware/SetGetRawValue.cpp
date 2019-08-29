@@ -297,17 +297,14 @@ uint32_t SetRawValues(uint8_t * data, T_DATAFIELD * OffsetDes,  ...)
 }
 
 
+//vld D2-03-0A : len=2 offset 0 battery level 1= action : //1 = simple press, 2=double press, 3=long press, 4=press release
 
-T_DATAFIELD D2_05_00_Cmd_1 [] = {
-{  1  , 7 , "POS " , "" },
-{  9  , 7 , "ANG " , "" },
-{  17 , 3 , "REPO" , "" },
-{  21 , 3 , "LOCK" , "" },
-{  24 , 4 , "CHN " , "" },
-{  28 , 4 , "CMD " , "" },
-{  0  , 0 , "    " , "" },
+T_DATAFIELD D2030A [] = {
+{  0  , 8 , "BAT"  , 0,0,0,0,"battert level" },
+{  8  , 8 , "BUT"  , 0,0,0,0,"button       " }, //
 
-
-};
-
+#define D2030A_BAT 0
+#define D2030A_BUT 1
+#define D2030A_NB_DATA    1
+#define D2030A_DATA_SIZE  2
 
