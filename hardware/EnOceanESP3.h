@@ -76,7 +76,10 @@ private:
 	std::mutex m_sendMutex;
 	std::vector<std::string> m_sendqueue;
 	int LastPosition = -1;
-	void TestData(char * sdata);
+
+
+	void TestData(ESP3_RORG rorg, unsigned sID, unsigned char status, T_DATAFIELD * OffsetDes, ...);
+		void TestData(char * sdata);
 	void TestData(char * sdata, char * optData);
 	void testParsingData(int sec_counter);
 };

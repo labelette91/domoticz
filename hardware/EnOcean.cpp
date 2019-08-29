@@ -253,14 +253,15 @@ void CEnOcean::AddSensors(unsigned int DeviceID, int manufacturer, int profile, 
 std::string CEnOcean::DeviceIDToString(unsigned int DeviceID)
 {
 	char szDeviceID[20];
-	DeviceIDIntToChar(DeviceID, szDeviceID);
+	sprintf(szDeviceID, "%8X", (unsigned int)DeviceID);
 	return szDeviceID;
 }
 
+//add leading 0 
 void ToSensorsId(std::string &DeviceId)
 {
-//	while (DeviceId.size() < 8)
-//		DeviceId = '0' + DeviceId;
+	while (DeviceId.size() < 8)
+		DeviceId = '0' + DeviceId;
 }
 
 //convert device ID id from  buffer[] to unsigned int
@@ -278,18 +279,6 @@ buf[0] = (sID >> 24) & 0xff;
 buf[1] = (sID >> 16) & 0xff;
 buf[2] = (sID >> 8) & 0xff;
 buf[3] = sID & 0xff;
-}
-
-void DeviceIDIntToChar(unsigned int DeviceID ,  char szDeviceID[])
-{
-	sprintf(szDeviceID, "%7X", (unsigned int)DeviceID);
-
-}
-std::string  DeviceIDIntToChar(unsigned int DeviceID)
-{
-	char szDeviceID[16];
-	sprintf(szDeviceID, "%7X", (unsigned int)DeviceID);
-	return szDeviceID;
 }
 
 

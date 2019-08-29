@@ -20,6 +20,7 @@
 #include "../hardware/plugins/Plugins.h"
 #endif
 #include "../hardware/VirtualThermostat.h"
+#include "../hardware/enocean.h"
 
 #ifndef WIN32
 #include <sys/stat.h>
@@ -7264,7 +7265,7 @@ void CSQLHelper::DeleteDevices(const std::string& idx)
 				if (result.size()>0)	DeviceID = result[0][0];
 				result = m_sql.safe_query("SELECT DeviceID FROM DeviceStatus  WHERE (DeviceID=='%s') ", DeviceID.c_str());
 				int NbDeviceId = result.size();
-
+				ToSensorsId(DeviceID);
 
 				//Avoid mutex deadlock here
 				std::lock_guard<std::mutex> l(m_sqlQueryMutex);

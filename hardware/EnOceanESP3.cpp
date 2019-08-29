@@ -1916,7 +1916,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 									{
 										_log.Debug(DEBUG_NORM, "EnOcean: TEACH : 0xD2 Node 0x%08x UnitID: %02X cmd: %02X ", id, nbc + 1, light2_sOff);
 //										SendSwitch(id, nbc + 1, -1, light2_sOff, 0, DeviceIDToString(senderBaseAddr).c_str());
-										CreateDevice(m_HwdID, GetLighting2StringId(id).c_str(), nbc + 1, pTypeLighting2, sTypeAC, 0, -1, light2_sOff, "0", DeviceIDIntToChar(id), STYPE_OnOff, "" );
+										CreateDevice(m_HwdID, GetLighting2StringId(id).c_str(), nbc + 1, pTypeLighting2, sTypeAC, 0, -1, light2_sOff, "0", DeviceIDToString(id), STYPE_OnOff, "" );
 									}
 									return;
 								}
@@ -1927,7 +1927,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 									{
 										_log.Debug(DEBUG_NORM, "EnOcean: TEACH : 0xD2 Node 0x%08x UnitID: %02X cmd: %02X ", id, nbc + 1, light2_sOff);
 //										SendSwitch(id, nbc + 1, -1, light2_sOff, 0, DeviceIDToString(senderBaseAddr).c_str());
-										CreateDevice(m_HwdID, GetLighting2StringId(id).c_str(), nbc + 1, pTypeLighting2, sTypeAC, 0, -1, light2_sOff, "0", DeviceIDIntToChar(id), STYPE_BlindsPercentage , "" );
+										CreateDevice(m_HwdID, GetLighting2StringId(id).c_str(), nbc + 1, pTypeLighting2, sTypeAC, 0, -1, light2_sOff, "0", DeviceIDToString(id), STYPE_BlindsPercentage , "" );
 									}
 									return;
 								}
@@ -2197,6 +2197,33 @@ namespace http {
 
 		}
 	}
+}
+
+void CEnOceanESP3::TestData(ESP3_RORG rorg, unsigned sID,  unsigned char status , T_DATAFIELD * OffsetDes, ...)
+{
+	uint8_t data[64];
+
+	va_list value;
+
+	data[0] = rorg;
+	/* Initialize the va_list structure */
+	va_start(value, OffsetDes);
+	uint32_t total_bytes = SetRawValues(&data[1], OffsetDes, value);
+	va_end(value);
+	
+	//add adress
+	unsigned char *buff = &data[total_bytes+1];
+	*buff++ = (sID >> 24) & 0xff;		// Sender ID
+	*buff++ = (sID >> 16) & 0xff;
+	*buff++ = (sID >> 8) & 0xff;
+	*buff++ = sID & 0xff;
+	*buff++ = status ; //status
+
+
+	m_ReceivedPacketType = 0x01;
+	m_OptionalDataSize = 0;
+	m_bufferpos = 1+total_bytes+4+1 ;
+	ParseData();
 }
 
 

@@ -198,8 +198,6 @@ public:	unsigned long m_id_base;
 unsigned int DeviceArrayToInt(unsigned char m_buffer[]);
 void         DeviceIntToArray(unsigned int sID, unsigned char buf[]);
 
-void         DeviceIDIntToChar(unsigned int DeviceID,  char szDeviceID[]);
-std::string  DeviceIDIntToChar(unsigned int DeviceID);
 unsigned int DeviceIdCharToInt(std::string &DeviceID);
 std::string GetLighting2StringId(unsigned int id);
 
