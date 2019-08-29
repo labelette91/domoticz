@@ -260,7 +260,8 @@ define(['app'], function (app) {
 			$scope.ozw_node_id = "-";
 			$scope.ozw_node_desc = "-";
 
-			EditOpenZWave($ctrl.hardware.idx, $ctrl.hardware.Name)
+//			EditOpenZWave($ctrl.hardware.idx, $ctrl.hardware.Name)
+			EditEnOcean($ctrl.hardware.idx, $ctrl.hardware.Name, 1, 2, 3, 4, 5, 6);
 		};
 
 		$scope.ZWaveCheckIncludeReady = function () {
@@ -1144,9 +1145,10 @@ define(['app'], function (app) {
 		    $.devName = name;
 		    cursordefault();
 		    var htmlcontent = '';
-		    htmlcontent = '<p><center><h2><span data-i18n="Device"></span>: ' + name + '</h2></center></p>\n';
+//		    htmlcontent = '<p><center><h2><span data-i18n="Device"></span>: ' + name + '</h2></center></p>\n';
 		    htmlcontent += $('#enocean').html();
-		    $('#hardwarecontent').html(GetBackbuttonHTMLTable('ShowHardware') + htmlcontent);
+//		    $('#hardwarecontent').html(GetBackbuttonHTMLTable('ShowHardware') + htmlcontent);
+		    $('#hardwarecontent').html( htmlcontent);
 		    $('#hardwarecontent').i18n();
 
 		    var oTable = $('#nodestable').dataTable({

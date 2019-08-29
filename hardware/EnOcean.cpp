@@ -1025,10 +1025,15 @@ void CEnOcean::GetNodeList(http::server::WebEmSession & session, const http::ser
 
 				root["result"][ii]["Profile"] = IntToString(rorg, 2) + "-" + IntToString(func, 2) + "-" + IntToString(type, 2);
 				root["result"][ii]["Manufacturer"] = sd[9];
-				root["result"][ii]["Manufacturer_name"] = Get_EnoceanManufacturer(atoi(sd[9].c_str()));
+				std::string man = Get_EnoceanManufacturer(atoi(sd[9].c_str()));
+				if (man[0] == '>') man = "Unkown";
+				root["result"][ii]["Manufacturer_name"] = man ;
 				
 				root["result"][ii]["BaseAddress"] = GetAdress(atoi(sd[10].c_str()));
-				root["result"][ii]["EnoTypeName"] = Get_Enocean4BSType(rorg, func, type);
+				std::string typ = Get_Enocean4BSType(rorg, func, type);
+				if (typ[0] == '>') typ = "Unkown";
+
+				root["result"][ii]["EnoTypeName"] = typ;
 
 
 				char szDate[80] = "";
