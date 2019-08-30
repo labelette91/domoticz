@@ -1076,6 +1076,9 @@ void CEnOcean::GetLinkTable(http::server::WebEmSession & session, const http::se
 				root["result"][entry]["Profile"]  = string_format("%06X", m_sensors[DeviceId].LinkTable[entry].Profile) ;
 				root["result"][entry]["SenderId"] = string_format("%7X", m_sensors[DeviceId].LinkTable[entry].SenderId);
 				root["result"][entry]["Channel"] = string_format("%d", m_sensors[DeviceId].LinkTable[entry].Channel);
+
+				root["result"][entry]["Name"] = GetDeviceNameFromId(m_sensors[DeviceId].LinkTable[entry].SenderId);
+
 			
 		}
 	}
@@ -1109,5 +1112,20 @@ bool CEnOcean::CheckIsGatewayAdress(unsigned int deviceid)
 	else
 		return false;
 
+}
+
+
+std::string  CEnOcean::GetDeviceNameFromId( unsigned int ID )
+{
+	char szDeviceID[20];
+	sprintf(szDeviceID, "%7X", (unsigned int)ID );
+
+	std::vector<std::vector<std::string> > result;
+	result = m_sql.safe_query("SELECT Name  FROM DeviceStatus WHERE ( instr(DeviceID, '%q' ) <> 0) )", szDeviceID );
+	if (result.size() == 0)
+	{
+		return result[0][0];
+	}
+	return "" ;
 }
 

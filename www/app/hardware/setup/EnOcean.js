@@ -1096,14 +1096,6 @@ define(['app'], function (app) {
 		                var statusImg = '<img src="images/' + status + '.png" />';
 		                var healButton = '<img src="images/heal.png" onclick="ZWaveHealNode(' + '1' + ')" class="lcursor" title="' + $.t("Heal node") + '" />';
 
-		                var addId = oTable.fnAddData({
-		                    "entry": -1,
-		                    "0": "Entry",
-		                    "1": "Profile",
-		                    "2": data[0],
-		                    "3": "Channel",
-		                    "4": statusImg + '&nbsp;&nbsp;' + healButton,
-		                });
 
 		                $.ajax({
 		                    url: "json.htm?type=enocean&hwid=" + $.devIdx + "&cmd=GetLinkTable" + "&sensorid=" + DeviceID,
@@ -1121,10 +1113,11 @@ define(['app'], function (app) {
 		                                    "entry": i,
 		                                    "0": n,
 		                                    "1": item.Profile,
-		                                    "2": item.SenderId,
-		                                    "3": item.Channel,
+		                                    "2": item.Name,
+		                                    "3": item.SenderId,
+		                                    "4": item.Channel,
 		                                    //		                                    "4": statusImg + '&nbsp;&nbsp;' + healButton,
-		                                    "4": itemChecker,
+		                                    "5": itemChecker,
 
 		                                });
 		                            });
