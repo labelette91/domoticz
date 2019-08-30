@@ -1004,6 +1004,65 @@ define(['app'], function (app) {
 
 		}
 
+
+
+		EnOceanLink = function (cmd) {
+
+		    var oTable = $('#nodestable').dataTable();
+		    var anSelected = fnGetSelected(oTable);
+		    var payload = {};
+             
+
+		    var totalselected = $('#nodestable input:checkbox:checked').length;
+		    if (totalselected != 1) {
+		        bootbox.alert($.t('select only one  Devices !'));
+		        return;
+		    }
+
+//get device to link
+		    $('#nodestable input:checkbox:checked').each(function () {
+		        lineNo = $(this).val();
+		        var data = oTable.fnGetData(lineNo);
+                //DeviceId
+		        payload[0] = data[0];
+                //Channel
+		        payload[1] = data[1];
+		    });
+
+
+            oTable = $('#inboundlinktable').dataTable();
+            anSelected = fnGetSelected(oTable);
+
+            if (anSelected.length == 0) {
+                bootbox.alert($.t('No link entry selected !'));
+                return;
+            }
+		    //data device selectonne
+            var Entry = oTable.fnGetData(anSelected[0]);
+
+            //device Id
+            payload[2] = Entry["entry"];
+		    //link table entry
+            payload[3] = Entry[0];
+
+
+
+		    $.ajax({
+		        //		        type: 'POST',
+		        url: "json.htm?type=enocean&hwid=" + $.devIdx + "&cmd=" + cmd,
+		        data: payload,
+		        async: false,
+		        dataType: 'json',
+		        success: function (data) {
+		            if (typeof data.result != 'undefined') {
+
+		            }
+		        }
+		    });
+
+		}
+
+
 		RefreshOpenEnOceanNodeTable = function () {
 		    $('#modal').show();
 
@@ -1055,6 +1114,20 @@ define(['app'], function (app) {
 		        }
 		    });
 
+		    var oTableLink = $('#inboundlinktable').dataTable();
+		    $("#inboundlinktable tbody").on('click', 'tr', function () {
+		        if ($(this).hasClass('row_selected')) {
+		            $(this).removeClass('row_selected');
+		        }
+		        else {
+		            var oTable = $('#inboundlinktable').dataTable();
+		            oTable.$('tr.row_selected').removeClass('row_selected');
+		            $(this).addClass('row_selected');
+
+		        }
+		    });
+
+
 		    /* Add a click handler to the rows - this could be used as a callback */
 		    $("#nodestable tbody").off();
 		    $("#nodestable tbody").on('click', 'tr', function () {
@@ -1098,23 +1171,9 @@ define(['app'], function (app) {
 		                //		                var szConfig = "";
 		                //		                $("#hardwarecontent #configuration").html(szConfig);
 		                //$("#hardwarecontent #configuration").i18n();
-		                var oTable = $('#inboundlinktable').dataTable();
-		                oTable.fnClearTable();
+		                oTableLink.fnClearTable();
 		                var statusImg = '<img src="images/' + status + '.png" />';
 		                var healButton = '<img src="images/heal.png" onclick="ZWaveHealNode(' + '1' + ')" class="lcursor" title="' + $.t("Heal node") + '" />';
-
-		                $("#inboundlinktable tbody").on('click', 'tr', function () {
-		                    if ($(this).hasClass('row_selected')) {
-		                        $(this).removeClass('row_selected');
-		                    }
-		                    else {
-		                        var oTable = $('#inboundlinktable').dataTable();
-		                        oTable.$('tr.row_selected').removeClass('row_selected');
-		                        $(this).addClass('row_selected');
-
-		                    }
-		                });
-
 
 		                $.ajax({
 		                    url: "json.htm?type=enocean&hwid=" + $.devIdx + "&cmd=GetLinkTable" + "&sensorid=" + DeviceID,
@@ -1127,9 +1186,9 @@ define(['app'], function (app) {
 		                                var itemChecker = '<input type="checkbox" class="noscheck" name="Check-' + i + ' id="Check-' + i + '" value="' + i + '" />';
 
 		                                var n = "" + i; if (i <= 9) n = "0" + n;
-		                                var addId = oTable.fnAddData({
+		                                var addId = oTableLink.fnAddData({
 		                                    //		                        "Name": item.Name,
-		                                    "entry": i,
+		                                    "entry": DeviceID,
 		                                    "0": n,
 		                                    "1": item.Profile,
 		                                    "2": item.Name,
