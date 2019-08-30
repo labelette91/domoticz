@@ -1041,7 +1041,7 @@ define(['app'], function (app) {
 		                        "0": item.DeviceID,
 		                        "1": item.Unit,
 		                        "2": item.Name,
-		                        "3": "Description",
+		                        "3": item.Description,
 		                        "4": item.Manufacturer_name,
 		                        "5": item.Profile,
 		                        "6": item.TypeName,
@@ -1069,7 +1069,10 @@ define(['app'], function (app) {
                     */
 		        }
 		        else {
+		            var oTable = $('#nodestable').dataTable();
+		            oTable.$('tr.row_selected').removeClass('row_selected');
 		            $(this).addClass('row_selected');
+
 		        }
 
 		        {
@@ -1100,6 +1103,18 @@ define(['app'], function (app) {
 		                var statusImg = '<img src="images/' + status + '.png" />';
 		                var healButton = '<img src="images/heal.png" onclick="ZWaveHealNode(' + '1' + ')" class="lcursor" title="' + $.t("Heal node") + '" />';
 
+		                $("#inboundlinktable tbody").on('click', 'tr', function () {
+		                    if ($(this).hasClass('row_selected')) {
+		                        $(this).removeClass('row_selected');
+		                    }
+		                    else {
+		                        var oTable = $('#inboundlinktable').dataTable();
+		                        oTable.$('tr.row_selected').removeClass('row_selected');
+		                        $(this).addClass('row_selected');
+
+		                    }
+		                });
+
 
 		                $.ajax({
 		                    url: "json.htm?type=enocean&hwid=" + $.devIdx + "&cmd=GetLinkTable" + "&sensorid=" + DeviceID,
@@ -1111,7 +1126,7 @@ define(['app'], function (app) {
 		                            $.each(data.result, function (i, item) {
 		                                var itemChecker = '<input type="checkbox" class="noscheck" name="Check-' + i + ' id="Check-' + i + '" value="' + i + '" />';
 
-		                                var n = "" + i; if (i < 9) n = "0" + n;
+		                                var n = "" + i; if (i <= 9) n = "0" + n;
 		                                var addId = oTable.fnAddData({
 		                                    //		                        "Name": item.Name,
 		                                    "entry": i,

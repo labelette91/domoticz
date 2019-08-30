@@ -1037,6 +1037,8 @@ void CEnOcean::GetNodeList(http::server::WebEmSession & session, const http::ser
 
 				root["result"][ii]["EnoTypeName"] = typ;
 
+				root["result"][ii]["Description"] = Get_Enocean4BSDesc(rorg, func, type);
+
 
 				char szDate[80] = "";
 				//struct tm loctime;

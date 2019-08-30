@@ -58,12 +58,23 @@ typedef struct {
 	int		Channel;
 }T_LINK_TABLE;
 
-typedef struct {
+typedef struct _T_SENSOR {
 	unsigned int	Profile;
 	int				Manufacturer;
 	int				CurrentSize;
 	int				MaxSize;
 	T_LINK_TABLE	LinkTable[SIZE_LINK_TABLE];
+
+	_T_SENSOR()
+	{
+		for (int i = 0; i < SIZE_LINK_TABLE; i++)
+		{
+			LinkTable[i].Profile = 0xFF;
+			LinkTable[i].SenderId = 0xFFFFFFFF;
+			LinkTable[i].Channel = 0;
+
+		}
+	}
 
 }T_SENSOR;
 
@@ -214,6 +225,8 @@ const char* Get_EnoceanManufacturer(unsigned long ID);
 const char* Get_Enocean4BSType(const int Org, const int Func, const int Type);
 
 void ToSensorsId(std::string &DeviceId);
+
+const char* Get_Enocean4BSDesc(const int Org, const int Func, const int Type);
 
 
 #endif
