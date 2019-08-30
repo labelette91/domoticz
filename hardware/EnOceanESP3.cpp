@@ -496,7 +496,7 @@ void CEnOceanESP3::Do_Work()
 			{
 				m_LastHeartbeat = mytime(NULL);
 			}
-			testParsingData( sec_counter);
+//			testParsingData( sec_counter);
 		}
 
 		if (!isOpen())
@@ -2155,13 +2155,25 @@ void CEnOceanESP3::ParseRadioDatagram()
 
 
 
-
+void getDeviceIdUnit(std::string &cmd , std::string &deviceId , std::string &Unit)
+{
+	std::vector<std::string> splitresults;
+	StringSplit(cmd, ";", splitresults);
+	if (splitresults.size()==2 )
+	{
+	deviceId = splitresults[0];
+	Unit = splitresults[1];
+	}
+}
 
 //Webserver helpers
 namespace http {
 	namespace server {
 		void CWebServer::RType_OpenEnOcean(WebEmSession & session, const request& req, Json::Value &root)
 		{
+			std::string deviceId;
+			std::string  Unit   ;
+
 			root["status"] = "ERR";
 			root["title"] = "teachin";
 
@@ -2180,17 +2192,27 @@ namespace http {
 
 			if (cmd == "GetNodeList")
 				pEnocean->GetNodeList(session, req, root);
-			else if (cmd == "SetCode")
-				pEnocean->SetCode(session, req, root);
+			else if (cmd == "SetCode"){
+				for (unsigned int i = 0; i < nbParam; i++) {
+					std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
+					getDeviceIdUnit(cmd, deviceId, Unit);
+					if (deviceId.empty())	return;
+					pEnocean->setcode(DeviceIdCharToInt(deviceId) , 1) ;
+				}
+
+			}
 			else if (cmd == "GetLinkTable") {
 				pEnocean->GetLinkTable(session, req, root);
 			}
 
-			else if (cmd == "teachin") {
-				std::string idx = request::findValue(&req, "idx");
-				if ((idx == ""))	return;
+			else if (cmd == "TeachIn") {
+					for (unsigned int i = 0; i < nbParam ; i++) {
+						std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
+						getDeviceIdUnit ( cmd, deviceId, Unit);
+						if ( deviceId.empty() )	return;
+						pEnocean->TeachIn(deviceId, Unit);
+					}
 
-				pEnocean->TeachIn(idx);
 			}
 			root["status"] = "OK";
 

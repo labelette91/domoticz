@@ -982,7 +982,9 @@ define(['app'], function (app) {
 		    payload = {};
 		    var cnt = 0;
 		    $('#nodestable input:checkbox:checked').each(function () {
-		        payload[cnt] = $(this).val();
+		        lineNo = $(this).val();
+		        var data = oTable.fnGetData(lineNo);
+		        payload[cnt] = data[0] + ";" + data[1];
 		        cnt++;
 		    });
 
@@ -1026,7 +1028,8 @@ define(['app'], function (app) {
 		                    var status = "ok";
 		                    var statusImg = '<img src="images/' + status + '.png" />';
 		                    var healButton = '<img src="images/heal.png" onclick="ZWaveHealNode(' + item.ID + ')" class="lcursor" title="' + $.t("Heal node") + '" />';
-		                    var itemChecker = '<input type="checkbox" class="noscheck" name="Check-' + item.DeviceID + ' id="Check-' + item.DeviceID + '" value="' + item.DeviceID + '" />';
+//		                    var itemChecker = '<input type="checkbox" class="noscheck" name="Check-' + item.DeviceID + ' id="Check-' + item.DeviceID + '" value="' + item.DeviceID + '" />';
+		                    var itemChecker = '<input type="checkbox" class="noscheck" name="Check-' + item.DeviceID + ' id="Check-' + item.DeviceID + '" value="' + i + '" />';
 
 		                    //		                    var Description = item.Description;
 		                    //		                    var nodeStr = addLeadingZeros(item.NodeID, 3) + " (0x" + addLeadingZeros(item.NodeID.toString(16), 2) + ")";
@@ -1036,15 +1039,16 @@ define(['app'], function (app) {
 		                        //"NodeID"  : item.ID,
 		                        "DeviceID": item.DeviceID,
 		                        "0": item.DeviceID,
-		                        "1": item.Name,
-		                        "2": "Description",
-		                        "3": item.Manufacturer_name,
-		                        "4": item.Profile,
-		                        "5": item.TypeName,
-		                        "6": item.BaseAddress,
-		                        "7": item.EnoTypeName,
+		                        "1": item.Unit,
+		                        "2": item.Name,
+		                        "3": "Description",
+		                        "4": item.Manufacturer_name,
+		                        "5": item.Profile,
+		                        "6": item.TypeName,
+		                        "7": item.BaseAddress,
+		                        "8": item.EnoTypeName,
 		                        //		                        "8": statusImg + '&nbsp;&nbsp;' + healButton,
-		                        "8": statusImg + '&nbsp;&nbsp;' + itemChecker,
+		                        "9": statusImg + '&nbsp;&nbsp;' + itemChecker,
 		                    });
 		                });
 		            }

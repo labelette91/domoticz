@@ -961,16 +961,21 @@ void CEnOcean::printSensors()
 
 }
 
-
+//teachin from ID database
 void CEnOcean::TeachIn(std::string& sidx)
 {
 	std::vector<std::vector<std::string> > result;
 	result = m_sql.safe_query("SELECT DeviceID,Unit  FROM DeviceStatus WHERE (ID='%s')  ", sidx.c_str());
 	if (result.size() > 0)
 	{
-		std::string deviceId = result[0][0];
+		TeachIn(result[0][0], result[0][1]);
+	}
 
-		int channel = atoi(result[0][1].c_str());
+}
+//teachin from senderId / unit 
+void CEnOcean::TeachIn(std::string& deviceId , std::string& unit )
+{
+		int channel = atoi(unit.c_str());
 		//get sender adress from db
 		unsigned int SenderAdress = DeviceIdCharToInt(deviceId);
 
@@ -978,9 +983,6 @@ void CEnOcean::TeachIn(std::string& sidx)
 
 		unlock(SenderAdress, 1);
 		remoteLearning(SenderAdress, true, channel - 1);
-
-	}
-
 }
 
 std::string IntToString(int val, int nbDigit)
@@ -1069,12 +1071,15 @@ void CEnOcean::GetLinkTable(http::server::WebEmSession & session, const http::se
 	unsigned int  DeviceId = DeviceIdCharToInt(DeviceIds);
 
 	addLinkTable(0x1a65428, 0, 0xD0500, 0xABCDEF, 1);
+	addLinkTable(0x1a65428, 1, 0xD0500, 0x1a65428, 1);
+	addLinkTable(0x1a65428, 2, 0xD0500, 0x1234567, 1);
+	addLinkTable(0x1a65428, 3, 0xD0500, 0x2345678, 1);
 
 	{
 		for (int entry = 0; entry < SIZE_LINK_TABLE; entry++)
 		{
 				root["result"][entry]["Profile"]  = string_format("%06X", m_sensors[DeviceId].LinkTable[entry].Profile) ;
-				root["result"][entry]["SenderId"] = string_format("%7X", m_sensors[DeviceId].LinkTable[entry].SenderId);
+				root["result"][entry]["SenderId"] = string_format("%07X", m_sensors[DeviceId].LinkTable[entry].SenderId);
 				root["result"][entry]["Channel"] = string_format("%d", m_sensors[DeviceId].LinkTable[entry].Channel);
 
 				root["result"][entry]["Name"] = GetDeviceNameFromId(m_sensors[DeviceId].LinkTable[entry].SenderId);
@@ -1084,23 +1089,11 @@ void CEnOcean::GetLinkTable(http::server::WebEmSession & session, const http::se
 	}
 }
 
-
-
-
-void CEnOcean::SetCode(http::server::WebEmSession & session, const http::server::request & req, Json::Value & root)
-{
-	for (unsigned int i = 0; i < req.parameters.size() - 3; i++) {
-		setcode(DeviceIdCharToInt(http::server::request::findValue(&req, std::to_string(i).c_str())), 1);
-	}
-
-}
-
-
 std::string GetLighting2StringId(unsigned int id )
 {
 	char szTmp[300];
 
-	sprintf(szTmp, "%7X", id );
+	sprintf(szTmp, "%07X", id );
 	return szTmp;
 }
 
@@ -1118,11 +1111,11 @@ bool CEnOcean::CheckIsGatewayAdress(unsigned int deviceid)
 std::string  CEnOcean::GetDeviceNameFromId( unsigned int ID )
 {
 	char szDeviceID[20];
-	sprintf(szDeviceID, "%7X", (unsigned int)ID );
+	sprintf(szDeviceID, "%07X", (unsigned int)ID );
 
 	std::vector<std::vector<std::string> > result;
-	result = m_sql.safe_query("SELECT Name  FROM DeviceStatus WHERE ( instr(DeviceID, '%q' ) <> 0) )", szDeviceID );
-	if (result.size() == 0)
+	result = m_sql.safe_query("SELECT Name  FROM DeviceStatus WHERE ( instr(DeviceID, '%q' ) <> 0) ", szDeviceID );
+	if (result.size() != 0)
 	{
 		return result[0][0];
 	}

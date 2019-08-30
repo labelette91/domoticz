@@ -153,8 +153,9 @@ public:
 	void UpdateProfileSensors(char * szDeviceID, int rorg, int profile, int ttype);
 
 	void TeachIn(std::string& idx);
+	void CEnOcean::TeachIn(std::string& deviceId, std::string& unit);
+
 	void GetNodeList(http::server::WebEmSession & session, const http::server::request& req, Json::Value &root);
-	void SetCode(http::server::WebEmSession & session, const http::server::request& req, Json::Value &root);
 	void GetLinkTable(http::server::WebEmSession & session, const http::server::request& req, Json::Value &root);
 
 	bool CheckIsGatewayAdress(unsigned int id);
@@ -165,7 +166,7 @@ private:
 	virtual bool sendFrame(unsigned char frametype, unsigned char *databuf, unsigned short datalen, unsigned char *optdata, unsigned char optdatalen) { return true; };
 	virtual bool sendFrameQueue(unsigned char frametype, unsigned char *databuf, unsigned short datalen, unsigned char *optdata, unsigned char optdatalen) { return true; };
 
-protected:
+public:
 	void parse_PACKET_REMOTE_MAN_COMMAND(unsigned char m_buffer[], int m_DataSize, int m_OptionalDataSize);
 	void sendVld(unsigned int sID, int channel, int value);
 	void sendVld(unsigned int sID, unsigned char *data, int DataLen);
