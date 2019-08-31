@@ -959,22 +959,17 @@ void CEnOcean::getallLinkTable(uint SensorId, int begin, int end)
 	_log.Debug(DEBUG_NORM, "EnOcean: send getallLinkTable %08X begin :%d End:%d ", SensorId, begin,  end );
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
+	waitRemote_man_answer(RC_GET_TABLE_RESPONSE, 30);
+
+
 }
 
 void CEnOcean::addLinkTable(uint DeviceId, int entry, int profile, uint sensorId, int channel)
 {
-	//1ere entree 
-	if (entry ==0 ) {
-		m_sensors[DeviceId].CurrentSize = 0;
-	}
-
 	if (entry < SIZE_LINK_TABLE) {
 		m_sensors[DeviceId].LinkTable[entry].Profile = profile;
 		m_sensors[DeviceId].LinkTable[entry].SenderId = sensorId;
 		m_sensors[DeviceId].LinkTable[entry].Channel = channel;
-		entry++;
-		if (entry > m_sensors[DeviceId].CurrentSize)
-			 m_sensors[DeviceId].CurrentSize = entry;
 	}
 
 }
@@ -1111,7 +1106,7 @@ addLinkTable(0x1a65428, 0, 0xD0500, 0xABCDEF, 1);
 */
 	{
 		if (m_sensors.find(DeviceId)!= m_sensors.end())
-		for (int entry = 0; entry <=  m_sensors[DeviceId].CurrentSize; entry++)
+		for (int entry = 0; entry <  m_sensors[DeviceId].MaxSize; entry++)
 		{
 				root["result"][entry]["Profile"]  = string_format("%06X", m_sensors[DeviceId].LinkTable[entry].Profile) ;
 				root["result"][entry]["SenderId"] = string_format("%07X", m_sensors[DeviceId].LinkTable[entry].SenderId);
@@ -1189,3 +1184,7 @@ bool CEnOcean::waitRemote_man_answer(int premote_man_answer, int timeout )
 	return (timeout == 0);
 }
 
+int  CEnOcean::getTableLinkCurrentSize(unsigned int DeviceId)
+{
+	return  m_sensors[DeviceId].CurrentSize;
+}

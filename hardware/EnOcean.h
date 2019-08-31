@@ -122,7 +122,7 @@ typedef struct _T_SENSOR {
 		MaxSize = 0;
 		for (int i = 0; i < SIZE_LINK_TABLE; i++)
 		{
-			LinkTable[i].Profile = 0xFF;
+			LinkTable[i].Profile = 0xFFFFFF;
 			LinkTable[i].SenderId = 0xFFFFFFFF;
 			LinkTable[i].Channel = 0;
 
@@ -264,6 +264,7 @@ public:
 	void setRemote_man_answer(int premote_man_answer);
 	int  getRemote_man_answer();
 	bool CEnOcean::waitRemote_man_answer(int premote_man_answer, int timeout);
+	int getTableLinkCurrentSize(unsigned int DeviceId);
 
 public:	unsigned long m_id_base;
 	int m_Seq;

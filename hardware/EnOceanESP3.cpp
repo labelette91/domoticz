@@ -2203,6 +2203,14 @@ namespace http {
 				return;
 			int nbParam = req.parameters.size() - 3;
 
+
+			std::string arg;
+			for (unsigned int i = 0; i < nbParam; i++) {
+				arg += http::server::request::findValue(&req, std::to_string(i).c_str())+"-";
+			}
+
+			_log.Debug(DEBUG_NORM, "EnOcean: Received cmd:%s Hwid:%s arg:%s", cmd.c_str(),hwid.c_str(),arg.c_str());
+
 			if (cmd == "GetNodeList")
 				pEnocean->GetNodeList(session, req, root);
 			else if (cmd == "SendCode") {
@@ -2250,7 +2258,7 @@ namespace http {
 				Sleep(1000);
 				pEnocean->getLinkTableMedadata(DeviceId);
 				Sleep(1000);
-				pEnocean->getallLinkTable(DeviceId, 0, 3);
+				pEnocean->getallLinkTable(DeviceId, 0, pEnocean->getTableLinkCurrentSize( DeviceId) );
 				Sleep(1000);
 			}
 			else
