@@ -393,6 +393,7 @@ void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m
 	//get function
 	int fct = m_buffer[0] * 256 + m_buffer[1];
 	//ping response
+	setRemote_man_answer(fct);
 	if (fct == 0x606)
 	{
 		// ping
@@ -709,7 +710,9 @@ void CEnOcean::remoteLearning(unsigned int destID, bool StartLearning, int chann
 	//optionnal data
 	setDestination(opt, destID);
 
-	_log.Debug(DEBUG_NORM, "EnOcean: send remoteLearning");
+	setRemote_man_answer(0);
+
+	_log.Debug(DEBUG_NORM, "EnOcean: send remoteLearning to %08X ",destID);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 }
 
@@ -731,6 +734,8 @@ void CEnOcean::unlock(unsigned int destID, unsigned int code)
 
 	//optionnal data
 	setDestination(opt, destID);
+
+	setRemote_man_answer(0);
 
 	_log.Debug(DEBUG_NORM, "EnOcean: send unlock");
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
@@ -754,6 +759,8 @@ void CEnOcean::lock(unsigned int destID, unsigned int code)
 
 	//optionnal data
 	setDestination(opt, destID);
+
+	setRemote_man_answer(0);
 
 	_log.Debug(DEBUG_NORM, "EnOcean: send lock");
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
@@ -779,6 +786,8 @@ void CEnOcean::setcode(unsigned int destID, unsigned int code)
 	//optionnal data
 	setDestination(opt, destID);
 
+	setRemote_man_answer(0);
+
 	_log.Debug(DEBUG_NORM, "EnOcean: send setcode %08X , %d", destID, code);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
@@ -800,6 +809,8 @@ void CEnOcean::ping(unsigned int destID)
 
 	//optionnal data
 	setDestination(opt, destID);
+
+	setRemote_man_answer(0);
 
 	_log.Debug(DEBUG_NORM, "EnOcean: send ping %08X ", destID);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
@@ -823,6 +834,8 @@ void CEnOcean::action(unsigned int destID)
 					 //optionnal data
 	setDestination(opt, destID);
 
+	setRemote_man_answer(0);
+
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 	_log.Debug(DEBUG_NORM, "EnOcean: send action %08X ", destID);
 
@@ -844,6 +857,8 @@ void CEnOcean::getProductId(unsigned int destination )
 
 							//optionnal data
 	setDestination(opt, destination);
+
+	setRemote_man_answer(0);
 
 	_log.Debug(DEBUG_NORM, "EnOcean: send getProductId");
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
@@ -877,8 +892,12 @@ void CEnOcean::getLinkTableMedadata(uint destID)
 					 //optionnal data
 	setDestination(opt, destID);
 
+	setRemote_man_answer(0);
+
 	_log.Debug(DEBUG_NORM, "EnOcean: send getLinkTableMedadata %08X ", destID);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
+
+	waitRemote_man_answer(RC_GET_METADATA_RESPONSE,30 );
 
 }
 
@@ -905,6 +924,8 @@ void CEnOcean::getProductFunction(uint destID)
 
 					 //optionnal data
 	setDestination(opt, destID);
+
+	setRemote_man_answer(0);
 
 	_log.Debug(DEBUG_NORM, "EnOcean: send getProductFunction %08X ", destID);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
@@ -933,7 +954,9 @@ void CEnOcean::getallLinkTable(uint SensorId, int begin, int end)
 					 //optionnal data
 	setDestination(opt, SensorId);
 
-	_log.Debug(DEBUG_NORM, "EnOcean: send getallLinkTable %08X ", SensorId);
+	setRemote_man_answer(0);
+
+	_log.Debug(DEBUG_NORM, "EnOcean: send getallLinkTable %08X begin :%d End:%d ", SensorId, begin,  end );
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
 }
@@ -989,7 +1012,7 @@ void CEnOcean::TeachIn(std::string& deviceId , std::string& unit )
 
 		_log.Log(LOG_NORM, "EnOcean: send remoteLearning to device %s channel:%d", deviceId.c_str(), channel);
 
-		unlock(SenderAdress, 1);
+		unlock(SenderAdress, GetLockCode() );
 		remoteLearning(SenderAdress, true, channel - 1);
 }
 
@@ -1132,5 +1155,37 @@ std::string  CEnOcean::GetDeviceNameFromId( unsigned int ID )
 		return result[0][0];
 	}
 	return "" ;
+}
+
+unsigned int CEnOcean::GetLockCode()
+{
+	std::string scode;
+	m_sql.GetPreferencesVar("EnOceanLockCode", scode);
+	unsigned int code = DeviceIdCharToInt(scode);
+	return code;
+}
+void  CEnOcean::SetLockCode(std::string scode)
+{
+	m_sql.UpdatePreferencesVar("EnOceanLockCode", scode);
+}
+
+void CEnOcean::setRemote_man_answer(int premote_man_answer) 
+	{ remote_man_answer = premote_man_answer; };
+
+int CEnOcean::getRemote_man_answer() 
+{ return remote_man_answer; };
+
+//return true if time out
+bool CEnOcean::waitRemote_man_answer(int premote_man_answer, int timeout )
+{
+	while ( (getRemote_man_answer() != premote_man_answer) && (timeout>0) )
+	{
+		Sleep(1000);
+		timeout--;
+	}
+	if (timeout == 0) 
+		_log.Debug(DEBUG_NORM, "EnOcean: TIMEOUT waiting answer %04X ", premote_man_answer);
+
+	return (timeout == 0);
 }
 

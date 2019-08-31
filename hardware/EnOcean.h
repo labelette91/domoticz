@@ -49,6 +49,57 @@ typedef enum
 
 } PACKET_TYPE;
 
+typedef enum
+{
+	UNLOCK = 0x001, //Unlock
+	LOCK = 0x002, //Lock
+	SETCODE = 0x003, //Set code
+	QUERYID = 0x004, //Query ID
+	QUERYID_ANSWER = 0x604, //Query ID answer
+	QUERYID_ANSWER_EXT = 0x704, //! Ext Query Id Answer
+	ACTION = 0x005, //Action
+	PING = 0x006, //Ping
+	PING_ANSWER = 0x606, //Ping answer
+	QUERY_FUNCTION = 0x007, //Query function
+	QUERY_FUNCTION_ANSWER = 0x607, //Query function answer
+	QUERY_STATUS = 0x008, //Query status
+	QUERY_STATUS_ANSWER = 0x608, //Query status answer
+	REMOTE_LEARNIN = 0x201, //Remote learn in
+	REMOTE_FLASH_WRITE = 0x203, //Remote flash write
+	REMOTE_FLASH_READ = 0x204, //Remote flash read
+	REMOTE_FLASH_READ_ANSWER = 0x804, //Remote flash read answer
+	SMARTACK_READ = 0x205, //SmartACK read
+	SMARTACK_READ_MAILBOX_ANSWER = 0x805, //SmartACK read mailbox answer
+	SMARTACK_READ_LEARNED_SENSOR_ANSWER = 0x806, //SmartACK read learned sensor answer
+	SMARTACK_WRITE = 0x206, //SmartACK write
+	RC_ACK = 0x240, //Remote Commissioning Acknowledge
+	RC_GET_METADATA = 0x210, //Get Link Table Metadata Query
+	RC_GET_METADATA_RESPONSE = 0x810, //Get Link Table Metadata Response
+	RC_GET_TABLE = 0x211, //Get Link Table Query
+	RC_GET_TABLE_RESPONSE = 0x811, //Get Link Table Response
+	RC_SET_TABLE = 0x212, //Set Link Table Query
+	RC_GET_GP_TABLE = 0x213, //Get Link Table GP Entry Query
+	RC_GET_GP_TABLE_RESPONSE = 0x813, //Get Link Table GP Entry Response
+	RC_SET_GP_TABLE = 0x214, //Set Link Table GP Entry Query
+	RC_SET_LEARN_MODE = 0x220, //Remote Set Learn Mode
+	RC_TRIG_OUTBOUND_TEACH_REQ = 0x221, //Trigger Outbound Remote Teach Request
+	RC_GET_DEVICE_CONFIG = 0x230, //Get Device Configuration Query
+	RC_GET_DEVICE_CONFIG_RESPONSE = 0x830, //Get Device Configuration Response
+	RC_SET_DEVICE_CONFIG = 0x231, //Set Device Configuration Query
+	RC_GET_LINK_BASED_CONFIG = 0x232, //Get Link Based Configuration Query
+	RC_GET_LINK_BASED_CONFIG_RESPONSE = 0x832, //Get Link Based Configuration Response
+	RC_SET_LINK_BASED_CONFIG = 0x233, //Set Link Based Configuration Query
+	RC_APPLY_CHANGES = 0x226, //Apply Changes Command
+	RC_RESET_TO_DEFAULTS = 0x224, //Reset to Defaults
+	RC_RADIO_LINK_TEST_CONTROL = 0x225, //Radio Link Test Control
+	RC_GET_PRODUCT_ID = 0x227, //Get Product ID Query
+	RC_GET_PRODUCT_RESPONSE = 0x827, //Get Product ID Response
+	RC_GET_REPEATER_FUNCTIONS = 0x250, //Get Repeater Functions Query
+	RC_GET_REPEATER_FUNCTIONS_RESPONSE = 0x850, //Get Repeater Functions Response
+	RC_SET_REPEATER_FUNCTIONS = 0x251, //Set Repeater Functions Query
+	RC_SET_REPEATER_FILTER = 0x252  //Set Repeater Filter Query
+}FCT_CODE;
+
 
 #define SIZE_LINK_TABLE 24 
 
@@ -208,10 +259,16 @@ public:
 	void printTableLink();
 
 	std::string  GetDeviceNameFromId(unsigned int ID);
+	unsigned int GetLockCode();
+	void  SetLockCode(std::string scode);
+	void setRemote_man_answer(int premote_man_answer);
+	int  getRemote_man_answer();
+	bool CEnOcean::waitRemote_man_answer(int premote_man_answer, int timeout);
 
 public:	unsigned long m_id_base;
 	int m_Seq;
 	T_SENSOR_MAP m_sensors;
+	int remote_man_answer;
 
 };
 

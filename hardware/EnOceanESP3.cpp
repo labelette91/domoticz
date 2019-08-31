@@ -2177,19 +2177,6 @@ void getDeviceIdUnit(std::string &cmd, unsigned &pdeviceId, unsigned &pUnit)
 
 }
 
-unsigned int GetLockCode()
-{
-	std::string scode;
-	m_sql.GetPreferencesVar("EnOceanLockCode", scode);
-	unsigned int code = DeviceIdCharToInt(scode);
-	return code;
-}
-void SetLockCode(std::string scode)
-{
-	m_sql.UpdatePreferencesVar("EnOceanLockCode", scode);
-}
-
-
 //Webserver helpers
 namespace http {
 	namespace server {
@@ -2218,15 +2205,15 @@ namespace http {
 
 			if (cmd == "GetNodeList")
 				pEnocean->GetNodeList(session, req, root);
-			else if (cmd == "SendCode"){
+			else if (cmd == "SendCode") {
 
-				unsigned int code = GetLockCode();
+				unsigned int code = pEnocean->GetLockCode();
 
 				for (unsigned int i = 0; i < nbParam; i++) {
 					std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
 					getDeviceIdUnit(cmd, deviceId, unit);
 					if (deviceId.empty())	return;
-					pEnocean->setcode(DeviceIdCharToInt(deviceId) , code) ;
+					pEnocean->setcode(DeviceIdCharToInt(deviceId), code);
 				}
 
 			}
@@ -2235,7 +2222,7 @@ namespace http {
 				std::string code = request::findValue(&req, "code");
 				if (code.empty())
 					return;
-				SetLockCode( code);
+				pEnocean->SetLockCode(code);
 
 			}
 			else if (cmd == "GetLinkTable") {
@@ -2243,29 +2230,31 @@ namespace http {
 			}
 
 			else if (cmd == "TeachIn") {
-					for (unsigned int i = 0; i < nbParam ; i++) {
-						std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
-						getDeviceIdUnit ( cmd, deviceId, unit);
-						if ( deviceId.empty() )	return;
-						pEnocean->TeachIn(deviceId, unit);
-					}
+				for (unsigned int i = 0; i < nbParam; i++) {
+					std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
+					getDeviceIdUnit(cmd, deviceId, unit);
+					if (deviceId.empty())	return;
+					pEnocean->TeachIn(deviceId, unit);
+				}
 
 			}
 			else if (cmd == "GetProductId") {
-				pEnocean->unlock(0xFFFFFFFF, 1);
+				pEnocean->unlock(0xFFFFFFFF, pEnocean->GetLockCode());
 				pEnocean->getProductId();
 			}
 			else if (cmd == "RefreshLinkTable") {
 				std::string device = http::server::request::findValue(&req, std::to_string(0).c_str());
 				getDeviceIdUnit(device, DeviceId, Unit);
 
-				pEnocean->unlock(DeviceId, 1);
+				pEnocean->unlock(DeviceId, pEnocean->GetLockCode());
 				Sleep(1000);
 				pEnocean->getLinkTableMedadata(DeviceId);
 				Sleep(1000);
-				pEnocean->getallLinkTable(DeviceId,0,3);
+				pEnocean->getallLinkTable(DeviceId, 0, 3);
 				Sleep(1000);
 			}
+			else
+				return;
 
 			
 			root["status"] = "OK";
