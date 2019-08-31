@@ -428,7 +428,7 @@ void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m
 		int currentSize = m_buffer[7];
 		int maxSize = m_buffer[8];
 		unsigned int senderId = DeviceArrayToInt(&m_buffer[13]);
-		_log.Log(LOG_NORM, "EnOcean: getLink table medatadata SenderId: %08X Size:%d Max:%d ", senderId, currentSize, maxSize);
+		_log.Log(LOG_NORM, "EnOcean: SET  Link table medatadata SenderId: %08X Size:%d Max:%d ", senderId, currentSize, maxSize);
 		setLinkTableMedadata(senderId, currentSize, maxSize);
 	}
 	//get all link table
@@ -457,10 +457,10 @@ void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m
 			entryProfile /= 256;
 			addLinkTable(senderId, offs, entryProfile, entryId, channel);
 			if (entryId > 0)
-				_log.Log(LOG_NORM, "EnOcean: SenderId: %08X Link table entry %02d EntryId: %08X Profile %06X Channel:%d", senderId, offs, entryId, entryProfile, channel);
+				_log.Log(LOG_NORM, "EnOcean: ADD Link table Entry SenderId: %08X  entry %02d EntryId: %08X Profile %06X Channel:%d", senderId, offs, entryId, entryProfile, channel);
 
-			printSensors();
 		}
+		printTableLink();
 	}
 	//query function
 	else if (fct == 0x607)
@@ -828,7 +828,7 @@ void CEnOcean::action(unsigned int destID)
 
 }
 
-void CEnOcean::getProductId()
+void CEnOcean::getProductId(unsigned int destination )
 {
 	unsigned char buff[16];
 	unsigned char opt[16];
@@ -843,7 +843,7 @@ void CEnOcean::getProductId()
 	buff[14] = 0x8F;		//status
 
 							//optionnal data
-	setDestination(opt, 0xFFFFFFFF);
+	setDestination(opt, destination);
 
 	_log.Debug(DEBUG_NORM, "EnOcean: send getProductId");
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
@@ -940,22 +940,30 @@ void CEnOcean::getallLinkTable(uint SensorId, int begin, int end)
 
 void CEnOcean::addLinkTable(uint DeviceId, int entry, int profile, uint sensorId, int channel)
 {
+	//1ere entree 
+	if (entry ==0 ) {
+		m_sensors[DeviceId].CurrentSize = 0;
+	}
+
 	if (entry < SIZE_LINK_TABLE) {
 		m_sensors[DeviceId].LinkTable[entry].Profile = profile;
 		m_sensors[DeviceId].LinkTable[entry].SenderId = sensorId;
 		m_sensors[DeviceId].LinkTable[entry].Channel = channel;
+		entry++;
+		if (entry > m_sensors[DeviceId].CurrentSize)
+			 m_sensors[DeviceId].CurrentSize = entry;
 	}
 
 }
 
-void CEnOcean::printSensors()
+void CEnOcean::printTableLink()
 {
 	for (T_SENSOR_MAP::iterator itt = m_sensors.begin(); itt != m_sensors.end(); itt++)
 	{
 
-		_log.Log(LOG_NORM, "DeviceId:%08X  Profile:%0X Manufacturer:%d CurrentSize:%d MaxSize:%d", itt->first, itt->second.Profile, itt->second.Manufacturer, itt->second.CurrentSize, itt->second.MaxSize);
+		_log.Log(LOG_NORM, "EnOcean: Print Link Table DeviceId:%08X  Profile:%0X Manufacturer:%d CurrentSize:%d MaxSize:%d", itt->first, itt->second.Profile, itt->second.Manufacturer, itt->second.CurrentSize, itt->second.MaxSize);
 		for (int i = 0; i < itt->second.CurrentSize; i++)
-			_log.Log(LOG_NORM, "                  Entry:%d Id:%08X Profile:%X Channel:%d", i, itt->second.LinkTable[i].SenderId, itt->second.LinkTable[i].Profile, itt->second.LinkTable[i].Channel);
+			_log.Log(LOG_NORM, "                      Entry:%d Id:%08X Profile:%X Channel:%d", i, itt->second.LinkTable[i].SenderId, itt->second.LinkTable[i].Profile, itt->second.LinkTable[i].Channel);
 
 	}
 
@@ -1072,13 +1080,15 @@ void CEnOcean::GetLinkTable(http::server::WebEmSession & session, const http::se
 	std::string DeviceIds = http::server::request::findValue(&req, "sensorid");
 	unsigned int  DeviceId = DeviceIdCharToInt(DeviceIds);
 
-	addLinkTable(0x1a65428, 0, 0xD0500, 0xABCDEF, 1);
+/*
+addLinkTable(0x1a65428, 0, 0xD0500, 0xABCDEF, 1);
 	addLinkTable(0x1a65428, 1, 0xD0500, 0x1a65428, 1);
 	addLinkTable(0x1a65428, 2, 0xD0500, 0x1234567, 1);
 	addLinkTable(0x1a65428, 3, 0xD0500, 0x2345678, 1);
-
+*/
 	{
-		for (int entry = 0; entry < SIZE_LINK_TABLE; entry++)
+		if (m_sensors.find(DeviceId)!= m_sensors.end())
+		for (int entry = 0; entry <=  m_sensors[DeviceId].CurrentSize; entry++)
 		{
 				root["result"][entry]["Profile"]  = string_format("%06X", m_sensors[DeviceId].LinkTable[entry].Profile) ;
 				root["result"][entry]["SenderId"] = string_format("%07X", m_sensors[DeviceId].LinkTable[entry].SenderId);

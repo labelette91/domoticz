@@ -2166,13 +2166,26 @@ void getDeviceIdUnit(std::string &cmd , std::string &deviceId , std::string &Uni
 	}
 }
 
+void getDeviceIdUnit(std::string &cmd, unsigned &pdeviceId, unsigned &pUnit)
+{
+	std::string deviceId;
+	std::string Unit;
+	getDeviceIdUnit(cmd, deviceId, Unit);
+
+	pdeviceId = DeviceIdCharToInt(deviceId);
+	pUnit = DeviceIdCharToInt(Unit);
+
+}
+
 //Webserver helpers
 namespace http {
 	namespace server {
 		void CWebServer::RType_OpenEnOcean(WebEmSession & session, const request& req, Json::Value &root)
 		{
 			std::string deviceId;
-			std::string  Unit   ;
+			std::string  unit   ;
+
+			unsigned int  DeviceId,  Unit;
 
 			root["status"] = "ERR";
 			root["title"] = "teachin";
@@ -2195,7 +2208,7 @@ namespace http {
 			else if (cmd == "SetCode"){
 				for (unsigned int i = 0; i < nbParam; i++) {
 					std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
-					getDeviceIdUnit(cmd, deviceId, Unit);
+					getDeviceIdUnit(cmd, deviceId, unit);
 					if (deviceId.empty())	return;
 					pEnocean->setcode(DeviceIdCharToInt(deviceId) , 1) ;
 				}
@@ -2208,12 +2221,29 @@ namespace http {
 			else if (cmd == "TeachIn") {
 					for (unsigned int i = 0; i < nbParam ; i++) {
 						std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
-						getDeviceIdUnit ( cmd, deviceId, Unit);
+						getDeviceIdUnit ( cmd, deviceId, unit);
 						if ( deviceId.empty() )	return;
-						pEnocean->TeachIn(deviceId, Unit);
+						pEnocean->TeachIn(deviceId, unit);
 					}
 
 			}
+			else if (cmd == "GetProductId") {
+				pEnocean->unlock(0xFFFFFFFF, 1);
+				pEnocean->getProductId();
+			}
+			else if (cmd == "RefreshLinkTable") {
+				std::string device = http::server::request::findValue(&req, std::to_string(0).c_str());
+				getDeviceIdUnit(device, DeviceId, Unit);
+
+				pEnocean->unlock(DeviceId, 1);
+				Sleep(1000);
+				pEnocean->getLinkTableMedadata(DeviceId);
+				Sleep(1000);
+				pEnocean->getallLinkTable(DeviceId,0,3);
+				Sleep(1000);
+			}
+
+			
 			root["status"] = "OK";
 
 

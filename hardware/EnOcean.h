@@ -67,6 +67,8 @@ typedef struct _T_SENSOR {
 
 	_T_SENSOR()
 	{
+		CurrentSize = 0;
+		MaxSize = 0;
 		for (int i = 0; i < SIZE_LINK_TABLE; i++)
 		{
 			LinkTable[i].Profile = 0xFF;
@@ -194,7 +196,7 @@ public:
 	void setcode(unsigned int destID, unsigned int code);
 	void ping(unsigned int destID);
 	void action(unsigned int destID);
-	void getProductId();
+	void getProductId(unsigned int destination=0xFFFFFFFF);
 	void addSensorManuf(uint SensorId, uint Manuf);
 	void addSensorProfile(uint SensorId, uint Profile);
 	void getLinkTableMedadata(uint SensorId);
@@ -203,7 +205,7 @@ public:
 
 	void getallLinkTable(uint SensorId, int begin, int end);
 	void addLinkTable(uint DeviceId, int entry, int profile, uint sensorId, int channel);
-	void printSensors();
+	void printTableLink();
 
 	std::string  GetDeviceNameFromId(unsigned int ID);
 
