@@ -1027,7 +1027,7 @@ void CEnOcean::GetNodeList(http::server::WebEmSession & session, const http::ser
 	root["title"] = "EnOceanNodes";
 
 	std::vector<std::vector<std::string> > result;
-	result = m_sql.safe_query("SELECT D.Name, D.Type, d.SubType, d.SwitchType, d.Unit, E.DeviceId, E.Rorg, E.Profile, E.Type, E.Manufacturer, E.Address FROM DeviceStatus as d LEFT OUTER JOIN EnoceanSensors as e ON(instr(E.DeviceID, D.DeviceId) <> 0)  WHERE (D.HardwareID==%d) ", m_HwdID);
+	result = m_sql.safe_query("SELECT D.Name, D.Type, d.SubType, d.SwitchType, d.Unit, d.DeviceId, E.Rorg, E.Profile, E.Type, E.Manufacturer, E.Address FROM DeviceStatus as d LEFT OUTER JOIN EnoceanSensors as e ON(instr(E.DeviceID, D.DeviceId) <> 0)  WHERE (D.HardwareID==%d) ", m_HwdID);
 
 	if (result.size() > 0)
 	{
@@ -1057,7 +1057,7 @@ void CEnOcean::GetNodeList(http::server::WebEmSession & session, const http::ser
 				if (man[0] == '>') man = "Unkown";
 				root["result"][ii]["Manufacturer_name"] = man ;
 				
-				root["result"][ii]["BaseAddress"] = GetAdress(atoi(sd[10].c_str()));
+				root["result"][ii]["BaseAddress"] = DeviceIDToString( GetAdress(atoi(sd[10].c_str())));
 				std::string typ = Get_Enocean4BSType(rorg, func, type);
 				if (typ[0] == '>') typ = "Unkown";
 
