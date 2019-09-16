@@ -269,7 +269,15 @@ public:
 public:	unsigned long m_id_base;
 	int m_Seq;
 	T_SENSOR_MAP m_sensors;
+
+	//remote management
+	//remote management function reception 
 	int remote_man_answer;
+
+	//Remote Mannagement Control Command reception Mutex
+	std::mutex m_RMCC_Mutex;
+	//Remote Mannagement Control Command reception Queue
+	std::vector<int> m_RMCC_queue;
 
 };
 

@@ -389,12 +389,10 @@ bool TypFnAToB(const char * st, unsigned char bin[], int  *trame_len)
 
 void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m_DataSize, int m_OptionalDataSize )
 {
-{
 	//get function
 	int fct = m_buffer[0] * 256 + m_buffer[1];
 	//ping response
-	setRemote_man_answer(fct);
-	if (fct == 0x606)
+	if (fct == PING_ANSWER)
 	{
 		// ping
 		//	55 00 0F 07 01 2B         C5 80 00 7F F0 06 00 00 00 00 00 00 00 00 8F        03 01 A6 54 28 FF 00 83
@@ -407,7 +405,7 @@ void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m
 		_log.Log(LOG_NORM, "EnOcean: Ping SenderId: %08X Profile:%06X ", senderId, profile);
 	}
 	//product id  response
-	else if (fct == 0x827)
+	else if (fct == RC_GET_PRODUCT_RESPONSE)
 	{
 		//get product id  cmd 227 
 		//55 00 0F 07 01 2B         C5 80 00 7F F2 27 00 00 00 00 00 00 00 00 8F        03 FF FF FF FF FF 00             55
@@ -420,7 +418,7 @@ void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m
 		ping(senderId);
 	}
 	//get link table medatadate cmd 0210 : taille current / max  table
-	else if (fct == 0x810)
+	else if (fct == RC_GET_METADATA_RESPONSE)
 	{
 		//get link table medatadate cmd 0210 : taille current/ max  table
 		//55 00 0F 07 01 2B         C5 40 00 7F F2 10 00 00 00 00 00 00 00 00 8F        03 01 A6 54 28 FF 00  AD
@@ -433,18 +431,19 @@ void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m
 		setLinkTableMedadata(senderId, currentSize, maxSize);
 	}
 	//get all link table
-	else if (fct == 0x811)
+	else if (fct == RC_GET_TABLE_RESPONSE)
 	{
 		//get all link table
 		//55 00 0F 07 01 2B         C5 40 01 FF F2 11 00 00 17 00 00 00 00 00 8F        03 01 A6 54 28 FF 00 56
-		//response
-		//55 00 20 0A 07 D4         08 11 07 FF  00 00 FF 99 DF 01 D5 00 01  00 01 FF 99 DF 02 F6 02 01   00 02 FF 99 DF 02 F6 02 01 01       FF FF FF FF 01 A6 54 28 2E 00 FB
-		//55 00 20 0A 07 D4         08 11 07 FF  00 03 00 00 00 00 FF FF FF  00 04 00 00 00 00 FF FF FF   00 05 00 00 00 00 FF FF FF 00       FF FF FF FF 01 A6 54 28 2E 00 8F
-		//55 00 20 0A 07 D4         08 11 07 FF  00 06 00 00 00 00 FF FF FF  00 07 00 00 00 00 FF FF FF   00 08 00 00 00 00 FF FF FF 00       FF FF FF FF 01 A6 54 28 2E 00 DE
-		//55 00 20 0A 07 D4         08 11 07 FF  00 09 00 00 00 00 FF FF FF  00 0A 00 00 00 00 FF FF FF   00 0B 00 00 00 00 FF FF FF 00       FF FF FF FF 01 A6 54 28 2E 00 F4
-		//55 00 20 0A 07 D4         08 11 07 FF  00 0C 00 00 00 00 FF FF FF  00 0D 00 00 00 00 FF FF FF   00 0E 00 00 00 00 FF FF FF 00       FF FF FF FF 01 A6 54 28 2E 00 E1
-		//55 00 20 0A 07 D4         08 11 07 FF  00 0F 00 00 00 00 FF FF FF  00 10 00 00 00 00 FF FF FF   00 11 00 00 00 00 FF FF FF 00       FF FF FF FF 01 A6 54 28 2E 00 BC
-		//55 00 20 0A 07 D4         08 11 07 FF  00 15 00 00 00 00 FF FF FF  00 16 00 00 00 00 FF FF FF   00 17 00 00 00 00 FF FF FF 00       FF FF FF FF 01 A6 54 28 2E 00 66
+		//response                                        ID DEVICE ID   PROFILE  CHN
+		//                          0  1    2  3     4    5  6  7  8  9  10 11 12 13
+		//55 00 20 0A 07 D4         08 11   07 FF    00   00 FF 99 DF 01 D5 00 01 00   01 FF 99 DF 02 F6 02 01 00   02 FF 99 DF 02 F6 02 01 01       FF FF FF FF 01 A6 54 28 2E 00 FB
+		//55 00 20 0A 07 D4         08 11   07 FF    00   03 00 00 00 00 FF FF FF 00   04 00 00 00 00 FF FF FF 00   05 00 00 00 00 FF FF FF 00       FF FF FF FF 01 A6 54 28 2E 00 8F
+		//55 00 20 0A 07 D4         08 11   07 FF    00   06 00 00 00 00 FF FF FF 00   07 00 00 00 00 FF FF FF 00   08 00 00 00 00 FF FF FF 00       FF FF FF FF 01 A6 54 28 2E 00 DE
+		//55 00 20 0A 07 D4         08 11   07 FF    00   09 00 00 00 00 FF FF FF 00   0A 00 00 00 00 FF FF FF 00   0B 00 00 00 00 FF FF FF 00       FF FF FF FF 01 A6 54 28 2E 00 F4
+		//55 00 20 0A 07 D4         08 11   07 FF    00   0C 00 00 00 00 FF FF FF 00   0D 00 00 00 00 FF FF FF 00   0E 00 00 00 00 FF FF FF 00       FF FF FF FF 01 A6 54 28 2E 00 E1
+		//55 00 20 0A 07 D4         08 11   07 FF    00   0F 00 00 00 00 FF FF FF 00   10 00 00 00 00 FF FF FF 00   11 00 00 00 00 FF FF FF 00       FF FF FF FF 01 A6 54 28 2E 00 BC
+		//55 00 20 0A 07 D4         08 11   07 FF    00   15 00 00 00 00 FF FF FF 00   16 00 00 00 00 FF FF FF 00   17 00 00 00 00 FF FF FF 00       FF FF FF FF 01 A6 54 28 2E 00 66
 
 		unsigned int senderId = DeviceArrayToInt(&m_buffer[m_DataSize + 4]);
 		int nb = m_DataSize - 5;
@@ -464,7 +463,7 @@ void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m
 		printTableLink();
 	}
 	//query function
-	else if (fct == 0x607)
+	else if (fct == QUERY_FUNCTION_ANSWER)
 	{
 		//query function
 		//55 00 0F 07 01 2B	C5 80 00 7F F0 07 00 00 00 00 00 00 00 00 8F 				03 01 A6 54 28 FF 00     8D  opt 7
@@ -480,7 +479,7 @@ void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m
 		}
 
 	}
-	}
+	setRemote_man_answer(fct);
 
 }
 
@@ -688,6 +687,19 @@ void setDestination(unsigned char * opt, unsigned int destID)
 	opt[6] = 00;//RSI 
 
 }
+
+T_DATAFIELD remote_sysex[] = {
+{  0 , 2 , "SEQ"       ,   0 ,   0 ,   0 ,   0 , "SEQ"},
+{  2 , 6 , "IDX"       ,   0 ,   0 ,   0 ,   0 , "IDX"},
+{  8 , 9 , "LEN"       ,   0 ,   0 ,   0 ,   0 , ""},
+{  17, 11, "MAN"       ,   0 ,   0 ,   0 ,   0 , ""},
+{  28, 12, "FN"        ,   0 ,   0 ,   0 ,   0 , ""},
+
+															   //Value: 0x01 = Configuration data valid 
+{  0 , 0 , 0          , 0           }
+};
+
+
 void CEnOcean::remoteLearning(unsigned int destID, bool StartLearning, int channel)
 {
 	unsigned char buff[16];
@@ -709,8 +721,6 @@ void CEnOcean::remoteLearning(unsigned int destID, bool StartLearning, int chann
 
 	//optionnal data
 	setDestination(opt, destID);
-
-	setRemote_man_answer(0);
 
 	_log.Debug(DEBUG_NORM, "EnOcean: send remoteLearning to %08X ",destID);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
@@ -735,8 +745,6 @@ void CEnOcean::unlock(unsigned int destID, unsigned int code)
 	//optionnal data
 	setDestination(opt, destID);
 
-	setRemote_man_answer(0);
-
 	_log.Debug(DEBUG_NORM, "EnOcean: send unlock");
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 }
@@ -759,8 +767,6 @@ void CEnOcean::lock(unsigned int destID, unsigned int code)
 
 	//optionnal data
 	setDestination(opt, destID);
-
-	setRemote_man_answer(0);
 
 	_log.Debug(DEBUG_NORM, "EnOcean: send lock");
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
@@ -786,8 +792,6 @@ void CEnOcean::setcode(unsigned int destID, unsigned int code)
 	//optionnal data
 	setDestination(opt, destID);
 
-	setRemote_man_answer(0);
-
 	_log.Debug(DEBUG_NORM, "EnOcean: send setcode %08X , %d", destID, code);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
@@ -809,8 +813,6 @@ void CEnOcean::ping(unsigned int destID)
 
 	//optionnal data
 	setDestination(opt, destID);
-
-	setRemote_man_answer(0);
 
 	_log.Debug(DEBUG_NORM, "EnOcean: send ping %08X ", destID);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
@@ -834,8 +836,6 @@ void CEnOcean::action(unsigned int destID)
 					 //optionnal data
 	setDestination(opt, destID);
 
-	setRemote_man_answer(0);
-
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 	_log.Debug(DEBUG_NORM, "EnOcean: send action %08X ", destID);
 
@@ -857,8 +857,6 @@ void CEnOcean::getProductId(unsigned int destination )
 
 							//optionnal data
 	setDestination(opt, destination);
-
-	setRemote_man_answer(0);
 
 	_log.Debug(DEBUG_NORM, "EnOcean: send getProductId");
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
@@ -892,8 +890,6 @@ void CEnOcean::getLinkTableMedadata(uint destID)
 					 //optionnal data
 	setDestination(opt, destID);
 
-	setRemote_man_answer(0);
-
 	_log.Debug(DEBUG_NORM, "EnOcean: send getLinkTableMedadata %08X ", destID);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
@@ -925,8 +921,6 @@ void CEnOcean::getProductFunction(uint destID)
 					 //optionnal data
 	setDestination(opt, destID);
 
-	setRemote_man_answer(0);
-
 	_log.Debug(DEBUG_NORM, "EnOcean: send getProductFunction %08X ", destID);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
@@ -954,13 +948,16 @@ void CEnOcean::getallLinkTable(uint SensorId, int begin, int end)
 					 //optionnal data
 	setDestination(opt, SensorId);
 
-	setRemote_man_answer(0);
-
 	_log.Debug(DEBUG_NORM, "EnOcean: send getallLinkTable %08X begin :%d End:%d ", SensorId, begin,  end );
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
-	waitRemote_man_answer(RC_GET_TABLE_RESPONSE, 30);
+	//Number of table entry to received
+	//3 entry by response datagramm
+	int NbAnswer = ( ( end - begin + 1 ) + 2 ) / 3 ;
 
+	//wait for all the table response
+	for (int i=0;i< NbAnswer;i++)
+		waitRemote_man_answer(RC_GET_TABLE_RESPONSE, 30);
 
 }
 
@@ -1165,10 +1162,27 @@ void  CEnOcean::SetLockCode(std::string scode)
 }
 
 void CEnOcean::setRemote_man_answer(int premote_man_answer) 
-	{ remote_man_answer = premote_man_answer; };
+{ 
+	std::lock_guard<std::mutex> l(m_RMCC_Mutex);
+	m_RMCC_queue.push_back(premote_man_answer);
+};
 
 int CEnOcean::getRemote_man_answer() 
-{ return remote_man_answer; };
+{ 
+	int remote_man_answer=0;
+
+	//if a response as been received
+	if (m_RMCC_queue.size() > 0)
+	{
+		std::lock_guard<std::mutex> l(m_RMCC_Mutex);
+
+		remote_man_answer = m_RMCC_queue.front();
+
+		m_RMCC_queue.erase(m_RMCC_queue.begin());
+	}
+
+	return remote_man_answer; 
+};
 
 //return true if time out
 bool CEnOcean::waitRemote_man_answer(int premote_man_answer, int timeout )
