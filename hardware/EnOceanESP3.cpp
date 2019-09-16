@@ -2211,8 +2211,10 @@ namespace http {
 
 			_log.Debug(DEBUG_NORM, "EnOcean: Received cmd:%s Hwid:%s arg:%s", cmd.c_str(),hwid.c_str(),arg.c_str());
 
+			//retrieve the list od Device Id
 			if (cmd == "GetNodeList")
 				pEnocean->GetNodeList(session, req, root);
+
 			else if (cmd == "SendCode") {
 
 				unsigned int code = pEnocean->GetLockCode();
