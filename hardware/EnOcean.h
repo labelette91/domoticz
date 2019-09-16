@@ -123,7 +123,7 @@ typedef struct _T_SENSOR {
 		for (int i = 0; i < SIZE_LINK_TABLE; i++)
 		{
 			LinkTable[i].Profile = 0xFFFFFF;
-			LinkTable[i].SenderId = 0xFFFFFFFF;
+			LinkTable[i].SenderId = 0;
 			LinkTable[i].Channel = 0;
 
 		}

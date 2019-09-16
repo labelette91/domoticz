@@ -2255,11 +2255,8 @@ namespace http {
 				getDeviceIdUnit(device, DeviceId, Unit);
 
 				pEnocean->unlock(DeviceId, pEnocean->GetLockCode());
-				Sleep(1000);
 				pEnocean->getLinkTableMedadata(DeviceId);
-				Sleep(1000);
-				pEnocean->getallLinkTable(DeviceId, 0, pEnocean->getTableLinkCurrentSize( DeviceId) );
-				Sleep(1000);
+				pEnocean->getallLinkTable(DeviceId, 0, pEnocean->getTableLinkCurrentSize( DeviceId)-1 );
 			}
 			else
 				return;

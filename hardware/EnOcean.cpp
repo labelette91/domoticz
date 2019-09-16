@@ -456,8 +456,7 @@ void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m
 			int  channel = m_buffer[13 + i * 9];
 			entryProfile /= 256;
 			addLinkTable(senderId, offs, entryProfile, entryId, channel);
-			if (entryId > 0)
-				_log.Log(LOG_NORM, "EnOcean: ADD Link table Entry SenderId: %08X  entry %02d EntryId: %08X Profile %06X Channel:%d", senderId, offs, entryId, entryProfile, channel);
+			_log.Log(LOG_NORM, "EnOcean: ADD Link table Entry SenderId: %08X  entry %02d EntryId: %08X Profile %06X Channel:%d", senderId, offs, entryId, entryProfile, channel);
 
 		}
 		printTableLink();
