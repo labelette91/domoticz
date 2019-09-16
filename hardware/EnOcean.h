@@ -245,6 +245,8 @@ public:
 	void unlock(unsigned int destID, unsigned int code);
 	void lock(unsigned int destID, unsigned int code);
 	void setcode(unsigned int destID, unsigned int code);
+	void queryid(unsigned int destID, unsigned int mask);
+
 	void ping(unsigned int destID);
 	void action(unsigned int destID);
 	void getProductId(unsigned int destination=0xFFFFFFFF);

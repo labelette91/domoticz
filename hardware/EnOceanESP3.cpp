@@ -2252,6 +2252,10 @@ namespace http {
 				pEnocean->unlock(0xFFFFFFFF, pEnocean->GetLockCode());
 				pEnocean->getProductId();
 			}
+			else if (cmd == "QueryId") {
+				pEnocean->unlock(0xFFFFFFFF, pEnocean->GetLockCode());
+				pEnocean->queryid(0,0);
+			}
 			else if (cmd == "RefreshLinkTable") {
 				std::string device = http::server::request::findValue(&req, std::to_string(0).c_str());
 				getDeviceIdUnit(device, DeviceId, Unit);
