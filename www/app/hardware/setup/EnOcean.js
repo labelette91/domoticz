@@ -962,7 +962,7 @@ define(['app'], function (app) {
 			RefreshOpenZWaveNodeTable();
 		};
 
-		EnOceanCmd = function (cmd) {
+		EnOceanCmd = function (cmd,MinimumSelected) {
 
 		    //		    $.ajax({ type: 'POST', url: url + "api/" + topic, data: payload, async: true });
 		    var oTable = $('#nodestable').dataTable();
@@ -976,7 +976,7 @@ define(['app'], function (app) {
 		    var deviceIdSelected = oTable.fnGetData(anSelected[0])[0] ;
 		    
 		    var totalselected = $('#nodestable input:checkbox:checked').length;
-		    if (totalselected == 0) {
+		    if (totalselected < MinimumSelected) {
 		        bootbox.alert($.t('No Devices selected !'));
 		        return;
 		    }

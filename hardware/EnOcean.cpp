@@ -402,7 +402,7 @@ void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m
 		unsigned int senderId = DeviceArrayToInt(&m_buffer[12]);
 		addSensorProfile(senderId, profile);
 
-		_log.Log(LOG_NORM, "EnOcean: Ping SenderId: %08X Profile:%06X ", senderId, profile);
+		_log.Log(LOG_NORM, "EnOcean: Ping Answer SenderId: %08X Profile:%06X ", senderId, profile);
 	}
 	//product id  response
 	else if (fct == RC_GET_PRODUCT_RESPONSE)
@@ -413,7 +413,7 @@ void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m
 		//55 00 0A 0A 07 10         08 27 07 FF 00 46 00 01 00 03                       FF FF FF FF 01 A6 54 28 2C 00     B3
 		int manuf = m_buffer[5];
 		unsigned int senderId = DeviceArrayToInt(&m_buffer[14]);
-		_log.Log(LOG_NORM, "EnOcean: getProductId SenderId: %08X Manufacturer:%s  ", senderId, Get_EnoceanManufacturer(manuf));
+		_log.Log(LOG_NORM, "EnOcean: getProductId Answer SenderId: %08X Manufacturer:%s  ", senderId, Get_EnoceanManufacturer(manuf));
 		addSensorManuf(senderId, manuf);
 		ping(senderId);
 	}
@@ -427,7 +427,7 @@ void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m
 		int currentSize = m_buffer[7];
 		int maxSize = m_buffer[8];
 		unsigned int senderId = DeviceArrayToInt(&m_buffer[13]);
-		_log.Log(LOG_NORM, "EnOcean: SET  Link table medatadata SenderId: %08X Size:%d Max:%d ", senderId, currentSize, maxSize);
+		_log.Log(LOG_NORM, "EnOcean: Get Link table medatadata Answer SenderId: %08X Size:%d Max:%d ", senderId, currentSize, maxSize);
 		setLinkTableMedadata(senderId, currentSize, maxSize);
 	}
 	//get all link table
@@ -474,7 +474,7 @@ void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m
 
 			int  function = m_buffer[4 + i * 4] * 256 + m_buffer[5 + i * 4];
 			if (function)
-				_log.Log(LOG_NORM, "EnOcean: SenderId: %08X Function :%0X  ", senderId, function);
+				_log.Log(LOG_NORM, "EnOcean: QUERY FUNCTION answer SenderId: %08X Function :%0X  ", senderId, function);
 		}
 
 	}
@@ -744,7 +744,7 @@ void CEnOcean::unlock(unsigned int destID, unsigned int code)
 	//optionnal data
 	setDestination(opt, destID);
 
-	_log.Debug(DEBUG_NORM, "EnOcean: send unlock");
+	_log.Debug(DEBUG_NORM, "EnOcean: unlock send cmd code:%08X",code);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 }
 
@@ -767,7 +767,7 @@ void CEnOcean::lock(unsigned int destID, unsigned int code)
 	//optionnal data
 	setDestination(opt, destID);
 
-	_log.Debug(DEBUG_NORM, "EnOcean: send lock");
+	_log.Debug(DEBUG_NORM, "EnOcean: lock send cmd ");
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
 }
@@ -791,7 +791,7 @@ void CEnOcean::setcode(unsigned int destID, unsigned int code)
 	//optionnal data
 	setDestination(opt, destID);
 
-	_log.Debug(DEBUG_NORM, "EnOcean: send setcode %08X , %d", destID, code);
+	_log.Debug(DEBUG_NORM, "EnOcean: setcode send cmd to %08X , %d", destID, code);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
 }
@@ -813,7 +813,7 @@ void CEnOcean::ping(unsigned int destID)
 	//optionnal data
 	setDestination(opt, destID);
 
-	_log.Debug(DEBUG_NORM, "EnOcean: send ping %08X ", destID);
+	_log.Debug(DEBUG_NORM, "EnOcean: Ping cmd send to %08X ", destID);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
 }
@@ -857,7 +857,7 @@ void CEnOcean::getProductId(unsigned int destination )
 							//optionnal data
 	setDestination(opt, destination);
 
-	_log.Debug(DEBUG_NORM, "EnOcean: send getProductId");
+	_log.Debug(DEBUG_NORM, "EnOcean: getProductId cmd send to %08X", destination );
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
 }

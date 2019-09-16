@@ -966,7 +966,7 @@ bool CEnOceanESP3::ParseData()
 	{
 		std::stringstream sstr;
 
-		sstr << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << (unsigned int)m_ReceivedPacketType << " " << PACKET_TYPE_name[m_ReceivedPacketType] << " (";
+		sstr << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << (unsigned int)m_ReceivedPacketType << ":" << PACKET_TYPE_name[m_ReceivedPacketType] << " (";
 		sstr << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << (unsigned int)m_DataSize << "/";
 		sstr << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << (unsigned int)m_OptionalDataSize << ") ";
 
@@ -2209,7 +2209,7 @@ namespace http {
 				arg += http::server::request::findValue(&req, std::to_string(i).c_str())+"-";
 			}
 
-			_log.Debug(DEBUG_NORM, "EnOcean: Received cmd:%s Hwid:%s arg:%s", cmd.c_str(),hwid.c_str(),arg.c_str());
+			_log.Debug(DEBUG_NORM, "EnOcean: Server received cmd:%s Hwid:%s arg:%s", cmd.c_str(),hwid.c_str(),arg.c_str());
 
 			//retrieve the list od Device Id
 			if (cmd == "GetNodeList")
