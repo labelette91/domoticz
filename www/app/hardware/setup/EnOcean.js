@@ -973,7 +973,8 @@ define(['app'], function (app) {
 		        payload[i] = data[0];
 		    }
 
-
+		    var deviceIdSelected = oTable.fnGetData(anSelected[0])[0] ;
+		    
 		    var totalselected = $('#nodestable input:checkbox:checked').length;
 		    if (totalselected == 0) {
 		        bootbox.alert($.t('No Devices selected !'));
@@ -996,9 +997,16 @@ define(['app'], function (app) {
 		        async: false,
 		        dataType: 'json',
 		        success: function (data) {
+		            if (data.status == "ERR")
+		                bootbox.alert($.t('Error funcion '+cmd ));
+
+		            if (cmd == "RefreshLinkTable")
+		                refreshLinkTable(deviceIdSelected);
 		            if (typeof data.result != 'undefined') {
 
 		            }
+		        },
+		        error: function (response) {
 		        }
 		    });
 
@@ -1062,6 +1070,44 @@ define(['app'], function (app) {
 
 		}
 
+
+		refreshLinkTable = function (DeviceID) {
+		    var oTableLink = $('#inboundlinktable').dataTable();
+
+		    oTableLink.fnClearTable();
+		    var statusImg = '<img src="images/' + status + '.png" />';
+		    var healButton = '<img src="images/heal.png" onclick="ZWaveHealNode(' + '1' + ')" class="lcursor" title="' + $.t("Heal node") + '" />';
+
+		    $.ajax({
+		        url: "json.htm?type=enocean&hwid=" + $.devIdx + "&cmd=GetLinkTable" + "&sensorid=" + DeviceID,
+		        async: false,
+		        dataType: 'json',
+		        success: function (data) {
+		            if (typeof data.result != 'undefined') {
+
+		                $.each(data.result, function (i, item) {
+		                    var itemChecker = '<input type="checkbox" class="noscheck" name="Check-' + i + ' id="Check-' + i + '" value="' + i + '" />';
+
+		                    var n = "" + i; if (i <= 9) n = "0" + n;
+		                    var addId = oTableLink.fnAddData({
+		                        //		                        "Name": item.Name,
+		                        "entry": DeviceID,
+		                        "0": n,
+		                        "1": item.Profile,
+		                        "2": item.Name,
+		                        "3": item.SenderId,
+		                        "4": item.Channel,
+		                        //		                                    "4": statusImg + '&nbsp;&nbsp;' + healButton,
+		                        "5": itemChecker,
+
+		                    });
+		                });
+		            }
+		        }
+		    });
+
+
+}
 
 		RefreshOpenEnOceanNodeTable = function () {
 		    $('#modal').show();
@@ -1171,38 +1217,7 @@ define(['app'], function (app) {
 		                //		                var szConfig = "";
 		                //		                $("#hardwarecontent #configuration").html(szConfig);
 		                //$("#hardwarecontent #configuration").i18n();
-		                oTableLink.fnClearTable();
-		                var statusImg = '<img src="images/' + status + '.png" />';
-		                var healButton = '<img src="images/heal.png" onclick="ZWaveHealNode(' + '1' + ')" class="lcursor" title="' + $.t("Heal node") + '" />';
-
-		                $.ajax({
-		                    url: "json.htm?type=enocean&hwid=" + $.devIdx + "&cmd=GetLinkTable" + "&sensorid=" + DeviceID,
-		                    async: false,
-		                    dataType: 'json',
-		                    success: function (data) {
-		                        if (typeof data.result != 'undefined') {
-
-		                            $.each(data.result, function (i, item) {
-		                                var itemChecker = '<input type="checkbox" class="noscheck" name="Check-' + i + ' id="Check-' + i + '" value="' + i + '" />';
-
-		                                var n = "" + i; if (i <= 9) n = "0" + n;
-		                                var addId = oTableLink.fnAddData({
-		                                    //		                        "Name": item.Name,
-		                                    "entry": DeviceID,
-		                                    "0": n,
-		                                    "1": item.Profile,
-		                                    "2": item.Name,
-		                                    "3": item.SenderId,
-		                                    "4": item.Channel,
-		                                    //		                                    "4": statusImg + '&nbsp;&nbsp;' + healButton,
-		                                    "5": itemChecker,
-
-		                                });
-		                            });
-		                        }
-		                    }
-		                });
-
+		                refreshLinkTable(DeviceID);
 
 		            }
 		        }
@@ -1242,6 +1257,37 @@ define(['app'], function (app) {
 
 		    RefreshOpenEnOceanNodeTable();
 		}
+
+		EnOceanSetCode = function () {
+		    bootbox.dialog({
+		        message: $.t("Please enter the code protection:") + "<input type='text' id='add_node' data-toggle='tooltip' title='NodeId or NodeId.Instance'></input><br>",
+		        title: 'Set Code  ' ,
+		        buttons: {
+		            main: {
+		                label: $.t("Save"),
+		                className: "btn-primary",
+		                callback: function () {
+		                    var addnode = $("#add_node").val();
+		                    $http({
+		                        url: "json.htm?type=enocean&hwid=" + $.devIdx + "&cmd=SetCode" + "&code=" + addnode ,
+		                        async: true,
+		                        dataType: 'json'
+		                    }).then(function successCallback(response) {
+		                        //RefreshGroupTable();
+		                    }, function errorCallback(response) {
+		                    });
+		                }
+		            },
+		            nothanks: {
+		                label: $.t("Cancel"),
+		                className: "btn-cancel",
+		                callback: function () {
+		                }
+		            }
+		        }
+		    });
+		};
+
 
 	}
 });
