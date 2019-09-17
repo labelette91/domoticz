@@ -189,12 +189,12 @@ int CEnOcean::UpdateDeviceAddress(unsigned int  DeviceId)
 	}
 //test if deviceId exist in in database
 //return 0 if not found
-int CEnOcean::DeviceExist( unsigned int Deviceid)
+int CEnOcean::SensorExist( unsigned int Deviceid)
 {
-return DeviceExist((char *)DeviceIDToString(Deviceid).c_str());
+return SensorExist((char *)DeviceIDToString(Deviceid).c_str());
 }
 
-int CEnOcean::DeviceExist(char * szDeviceID)
+int CEnOcean::SensorExist(char * szDeviceID)
 {
 
 	std::vector<std::vector<std::string> > result;
@@ -233,14 +233,12 @@ void CEnOcean::UpdateProfileSensors(char * szDeviceID, int rorg,  int profile, i
 void CEnOcean::AddSensors(unsigned int DeviceID, int manufacturer, int profile, int ttype)
 {
 
-	if (!DeviceExist(DeviceID))
+	if (!SensorExist(DeviceID))
 	{
 		// If not found, add it to the database
 		CreateSensors(DeviceID, 0,manufacturer, profile, ttype);
 		_log.Log(LOG_NORM, "EnOcean: Sender_ID 0x%08X inserted in the database", DeviceID);
 	}
-	else
-		_log.Log(LOG_NORM, "EnOcean: Sender_ID 0x%08X already in the database", DeviceID);
 }
 
 void CEnOcean::AddSensors(unsigned int DeviceID, int manufacturer, int profile, int ttype , int OffsetAddr )
@@ -291,7 +289,7 @@ unsigned int DeviceIdCharToInt(std::string &DeviceID) {
 	return ID;
 }
 
-bool CEnOcean::getProfile(std::string szDeviceID, int &Manufacturer, int &Rorg, int &Profile, int &Type)
+bool CEnOcean::getProfileFromDb(std::string szDeviceID, int &Manufacturer, int &Rorg, int &Profile, int &Type)
 {
 	Rorg = Profile = Type = Manufacturer = 0;
 
@@ -308,9 +306,9 @@ bool CEnOcean::getProfile(std::string szDeviceID, int &Manufacturer, int &Rorg, 
 	}
 	return false;
 }
-bool CEnOcean::getProfile(unsigned int DeviceID, int &Manufacturer, int &Rorg, int &Profile, int &Type)
+bool CEnOcean::getProfileFromDb(unsigned int DeviceID, int &Manufacturer, int &Rorg, int &Profile, int &Type)
 {
-	return getProfile(DeviceIDToString(DeviceID), Manufacturer, Rorg, Profile, Type);
+	return getProfileFromDb(DeviceIDToString(DeviceID), Manufacturer, Rorg, Profile, Type);
 }
 
 //---------------------------------------------------------------------------

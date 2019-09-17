@@ -712,7 +712,7 @@ bool CEnOceanESP3::WriteToHardware(const char *pdata, const unsigned char /*leng
 			return false;
 		}
 		int Manufacturer, Rorg, Func, iType;
-		if (!getProfile(sID, Manufacturer, Rorg, Func, iType))
+		if (!getProfileFromDb(sID, Manufacturer, Rorg, Func, iType))
 		{
 			_log.Log(LOG_NORM, "EnOcean: Need Teach-In for %08X", sID);
 			return false;
@@ -1269,20 +1269,20 @@ void CEnOceanESP3::ParseRadioDatagram()
  					}
 
 					// Search the sensor in database
-					if (DeviceExist(id) == 0)
+					if (SensorExist(id) == 0)
 					{
 						// If not found, add it to the database
 						CreateSensors(id, RORG_4BS, manufacturer, profile, ttype);
 					}
 					else
-						_log.Log(LOG_NORM, "EnOcean: Sender_ID 0x%08X already in the database", id);
+						_log.Debug(DEBUG_NORM, "EnOcean: Sender_ID 0x%08X already in the database", id);
 					ReloadVLDNodes();
 				}
 				else	// RORG_4BS_TEACHIN_LRN_BIT is 1 -> Data datagram
 				{
 					//Following sensors need to have had a teach-in
 					int Manufacturer, Rorg, Profile, iType;
-					if (!getProfile(id, Manufacturer, Rorg, Profile, iType))
+					if (!getProfileFromDb(id, Manufacturer, Rorg, Profile, iType))
 
 					{
 						_log.Log(LOG_NORM, "EnOcean: Need Teach-In for %s", szDeviceID);
@@ -1727,7 +1727,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 				long id = (ID_BYTE3 << 24) + (ID_BYTE2 << 16) + (ID_BYTE1 << 8) + ID_BYTE0;
 
 				int Manufacturer,Rorg, Profile, iType;
-				if (getProfile(id, Manufacturer,Rorg, Profile, iType) )
+				if (getProfileFromDb(id, Manufacturer,Rorg, Profile, iType) )
 				// if a button is attached to a module, we should ignore it else its datagram will conflict with status reported by the module using VLD datagram
 				{
 					// hardware device was already teached-in
@@ -1896,7 +1896,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 						// Record EnOcean device profile
 						{
 							// If not found, add it to the database
-							if (DeviceExist(id)==0)
+							if (SensorExist(id)==0)
 							{
 								CreateSensors(id , rorg, manID, func, type );
 
@@ -1943,7 +1943,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 
 							}
 							else
-								_log.Log(LOG_NORM, "EnOcean: Sender_ID 0x%08X already in the database", id);
+								_log.Debug(DEBUG_NORM, "EnOcean: Sender_ID 0x%08X already in the database", id);
 						}
 						else
 							_log.Log(LOG_NORM, "EnOcean: New hardware is not allowed. Turn on AcceptNewHardware in settings" );
@@ -1968,7 +1968,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 				//conpute sender ID
 				unsigned int senderId = DeviceArrayToInt(&m_buffer[senderOfs]);
 				int Manufacturer,Rorg, Func, iType;
-				if (!getProfile(senderId, Manufacturer,Rorg, Func, iType))
+				if (!getProfileFromDb(senderId, Manufacturer,Rorg, Func, iType))
 				{
 					_log.Log(LOG_NORM, "EnOcean: Need Teach-In for %08X", senderId );
 					return;

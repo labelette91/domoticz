@@ -196,9 +196,9 @@ public:
 
 	unsigned int getSenderAdressFromDeviceId(std::string devIDx);
 
-	int DeviceExist(unsigned int Deviceid);
+	int SensorExist(unsigned int Deviceid);
 
-	int DeviceExist(char * szDeviceID);
+	int SensorExist(char * szDeviceID);
 
 	void CreateSensors(char * szDeviceID, int rorg, int manufacturer, int profile, int ttype);
 
@@ -210,9 +210,9 @@ public:
 
 	static std::string DeviceIDToString(unsigned int DeviceID);
 
-	bool getProfile(std::string szDeviceID, int &Manufacturer, int &Rorg, int &Profile, int &Type);
+	bool getProfileFromDb(std::string szDeviceID, int &Manufacturer, int &Rorg, int &Profile, int &Type);
 
-	bool getProfile(unsigned int DeviceID , int &Manufacturer, int &Rorg, int &Profile, int &Type);
+	bool getProfileFromDb(unsigned int DeviceID , int &Manufacturer, int &Rorg, int &Profile, int &Type);
 
 	void UpdateProfileSensors(char * szDeviceID, int rorg, int profile, int ttype);
 
