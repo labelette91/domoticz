@@ -2042,7 +2042,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 					unsigned char ID_BYTE0 = m_buffer[m_DataSize - 2];
 					unsigned long id = (ID_BYTE3 << 24) + (ID_BYTE2 << 16) + (ID_BYTE1 << 8) + ID_BYTE0;
 
-					id = DeviceArrayToInt(&m_buffer[m_DataSize - 2]);
+					id = DeviceArrayToInt(&m_buffer[m_DataSize - 5]);
 
 					_tVLDNode* VLDNode = FindVLDNodes(id);
 					if (VLDNode != 0 )
@@ -2280,7 +2280,7 @@ namespace http {
 					std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
 					getDeviceIdUnit(cmd, deviceId, unit);
 					if (deviceId.empty())	return;
-					pEnocean->queryStatus(std::stoi(deviceId));
+					pEnocean->queryStatus(DeviceIdCharToInt(deviceId));
 				}
 
 			}
