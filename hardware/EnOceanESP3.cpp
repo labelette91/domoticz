@@ -478,6 +478,15 @@ void CEnOceanESP3::ReloadVLDNodes()
 	}
 }
 
+_tVLDNode * CEnOceanESP3::FindVLDNodes(unsigned int id)
+{
+	auto itt = m_VLDNodes.find(id);
+	if (itt != m_VLDNodes.end())
+	{
+		return &itt->second;
+	}
+	return 0;
+}
 void CEnOceanESP3::Do_Work()
 {
 	int msec_counter=0;
@@ -2033,11 +2042,13 @@ void CEnOceanESP3::ParseRadioDatagram()
 					unsigned char ID_BYTE0 = m_buffer[m_DataSize - 2];
 					unsigned long id = (ID_BYTE3 << 24) + (ID_BYTE2 << 16) + (ID_BYTE1 << 8) + ID_BYTE0;
 
-					auto itt = m_VLDNodes.find(id);
-					if (itt != m_VLDNodes.end())
+					id = DeviceArrayToInt(&m_buffer[m_DataSize - 2]);
+
+					_tVLDNode* VLDNode = FindVLDNodes(id);
+					if (VLDNode != 0 )
 					{
-						uint8_t Profile = itt->second.profile;
-						uint8_t iType = itt->second.type;
+						uint8_t Profile = VLDNode->profile;
+						uint8_t iType = VLDNode->type;
 
 						// D2-03-0A Push Button – Single Button
 						_log.Log(LOG_NORM, "EnOcean message VLD: Profile: %02X Type: %02X", Profile, iType);

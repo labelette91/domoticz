@@ -15,6 +15,14 @@ namespace Json
 };
 #define ENOCEAN3_READ_BUFFER_SIZE 65*1024
 
+typedef struct _tVLDNode
+{
+	int idx;
+	int manufacturer;
+	uint8_t profile;
+	uint8_t type;
+}_tVLDNode;
+
 class CEnOceanESP3: public CEnOcean
 {
 	enum _eEnOcean_Receive_State
@@ -23,13 +31,6 @@ class CEnOceanESP3: public CEnOcean
 		ERS_HEADER,
 		ERS_DATA,
 		ERS_CHECKSUM
-	};
-	struct _tVLDNode
-	{
-		int idx;
-		int manufacturer;
-		uint8_t profile;
-		uint8_t type;
 	};
 public:
 	CEnOceanESP3(const int ID, const std::string& devname, const int type);
@@ -53,6 +54,8 @@ private:
 	void readCallback(const char *data, size_t len);
 
 	void ReloadVLDNodes();
+	_tVLDNode * FindVLDNodes(unsigned int id);
+
 private:
 	_eEnOcean_Receive_State m_receivestate;
 	int m_wantedlength;
