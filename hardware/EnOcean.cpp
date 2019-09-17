@@ -399,7 +399,7 @@ void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m
 		int profile = m_buffer[4] * 65536 + (int)m_buffer[5] * 256 + (int)m_buffer[6];
 		unsigned int senderId = DeviceArrayToInt(&m_buffer[12]);
 		unsigned int RSSI = m_buffer[7];
-		addSensorProfile(senderId, profile);
+		Sensors.addSensorProfile(senderId, profile);
 
 		_log.Log(LOG_NORM, "EnOcean: Ping Answer SenderId: %08X Profile:%06X ", senderId, profile);
 	}
@@ -413,7 +413,7 @@ void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m
 
 		int profile = m_buffer[4] * 65536 + (int)m_buffer[5] * 256 + (int)m_buffer[6];
 		unsigned int senderId = DeviceArrayToInt(&m_buffer[11]);
-		addSensorProfile(senderId, profile);
+		Sensors.addSensorProfile(senderId, profile);
 
 		_log.Log(LOG_NORM, "EnOcean: QueryId Answer SenderId: %08X Profile:%06X ", senderId, profile);
 	}
@@ -427,7 +427,7 @@ void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m
 		int manuf = m_buffer[5];
 		unsigned int senderId = DeviceArrayToInt(&m_buffer[14]);
 		_log.Log(LOG_NORM, "EnOcean: getProductId Answer SenderId: %08X Manufacturer:%s  ", senderId, Get_EnoceanManufacturer(manuf));
-		addSensorManuf(senderId, manuf);
+		Sensors.addSensorManuf(senderId, manuf);
 		ping(senderId);
 	}
 	//get link table medatadate cmd 0210 : taille current / max  table
@@ -441,7 +441,7 @@ void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m
 		int maxSize = m_buffer[8];
 		unsigned int senderId = DeviceArrayToInt(&m_buffer[13]);
 		_log.Log(LOG_NORM, "EnOcean: Get Link table medatadata Answer SenderId: %08X Size:%d Max:%d ", senderId, currentSize, maxSize);
-		setLinkTableMedadata(senderId, currentSize, maxSize);
+		Sensors.setLinkTableMedadata(senderId, currentSize, maxSize);
 	}
 	//get all link table
 	else if (fct == RC_GET_TABLE_RESPONSE)
@@ -468,11 +468,11 @@ void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m
 			uint entryProfile = DeviceArrayToInt(&m_buffer[10 + i * 9]);
 			int  channel = m_buffer[13 + i * 9];
 			entryProfile /= 256;
-			addLinkTable(senderId, offs, entryProfile, entryId, channel);
+			Sensors.addLinkTable(senderId, offs, entryProfile, entryId, channel);
 			_log.Log(LOG_NORM, "EnOcean: ADD Link table Entry SenderId: %08X  entry %02d EntryId: %08X Profile %06X Channel:%d", senderId, offs, entryId, entryProfile, channel);
 
 		}
-		printTableLink();
+		Sensors.printTableLink();
 	}
 	//query function
 	else if (fct == QUERY_FUNCTION_ANSWER)
@@ -912,15 +912,6 @@ void CEnOcean::getProductId(unsigned int destination )
 
 }
 
-void CEnOcean::addSensorManuf(uint SensorId, uint Manuf)
-{
-	m_sensors[SensorId].Manufacturer = Manuf;
-}
-
-void CEnOcean::addSensorProfile(uint SensorId, uint Profile)
-{
-	m_sensors[SensorId].Profile = Profile;
-}
 
 void CEnOcean::getLinkTableMedadata(uint destID)
 {
@@ -946,11 +937,6 @@ void CEnOcean::getLinkTableMedadata(uint destID)
 
 }
 
-void CEnOcean::setLinkTableMedadata(uint SensorId, int csize, int MaxSize)
-{
-	m_sensors[SensorId].CurrentSize = csize;
-	m_sensors[SensorId].MaxSize = MaxSize;
-}
 
 void CEnOcean::queryFunction(uint destID)
 {
@@ -1033,28 +1019,7 @@ void CEnOcean::getallLinkTable(uint SensorId, int begin, int end)
 
 }
 
-void CEnOcean::addLinkTable(uint DeviceId, int entry, int profile, uint sensorId, int channel)
-{
-	if (entry < SIZE_LINK_TABLE) {
-		m_sensors[DeviceId].LinkTable[entry].Profile = profile;
-		m_sensors[DeviceId].LinkTable[entry].SenderId = sensorId;
-		m_sensors[DeviceId].LinkTable[entry].Channel = channel;
-	}
 
-}
-
-void CEnOcean::printTableLink()
-{
-	for (T_SENSOR_MAP::iterator itt = m_sensors.begin(); itt != m_sensors.end(); itt++)
-	{
-
-		_log.Log(LOG_NORM, "EnOcean: Print Link Table DeviceId:%08X  Profile:%0X Manufacturer:%d CurrentSize:%d MaxSize:%d", itt->first, itt->second.Profile, itt->second.Manufacturer, itt->second.CurrentSize, itt->second.MaxSize);
-		for (int i = 0; i < itt->second.CurrentSize; i++)
-			_log.Log(LOG_NORM, "                      Entry:%d Id:%08X Profile:%X Channel:%d", i, itt->second.LinkTable[i].SenderId, itt->second.LinkTable[i].Profile, itt->second.LinkTable[i].Channel);
-
-	}
-
-}
 
 //teachin from ID database
 void CEnOcean::TeachIn(std::string& sidx)
@@ -1150,14 +1115,6 @@ void CEnOcean::GetNodeList(http::server::WebEmSession & session, const http::ser
 
 
 
-std::string string_format(const char * fmt, ...) {
-	va_list ap;
-	char buf[1024];
-	va_start(ap, fmt);
-	int n = vsnprintf((char *)buf, sizeof(buf), fmt, ap);
-
-	return buf;
-}
 
 void CEnOcean::GetLinkTable(http::server::WebEmSession & session, const http::server::request& req, Json::Value &root)
 {
@@ -1173,19 +1130,7 @@ addLinkTable(0x1a65428, 0, 0xD0500, 0xABCDEF, 1);
 	addLinkTable(0x1a65428, 2, 0xD0500, 0x1234567, 1);
 	addLinkTable(0x1a65428, 3, 0xD0500, 0x2345678, 1);
 */
-	{
-		if (m_sensors.find(DeviceId)!= m_sensors.end())
-		for (int entry = 0; entry <  m_sensors[DeviceId].MaxSize; entry++)
-		{
-				root["result"][entry]["Profile"]  = string_format("%06X", m_sensors[DeviceId].LinkTable[entry].Profile) ;
-				root["result"][entry]["SenderId"] = string_format("%07X", m_sensors[DeviceId].LinkTable[entry].SenderId);
-				root["result"][entry]["Channel"] = string_format("%d", m_sensors[DeviceId].LinkTable[entry].Channel);
-
-				root["result"][entry]["Name"] = GetDeviceNameFromId(m_sensors[DeviceId].LinkTable[entry].SenderId);
-
-			
-		}
-	}
+	Sensors.GetLinkTable(DeviceId, root);
 }
 
 std::string GetLighting2StringId(unsigned int id )
@@ -1207,7 +1152,7 @@ bool CEnOcean::CheckIsGatewayAdress(unsigned int deviceid)
 }
 
 
-std::string  CEnOcean::GetDeviceNameFromId( unsigned int ID )
+std::string  GetDeviceNameFromId( unsigned int ID )
 {
 	char szDeviceID[20];
 	sprintf(szDeviceID, "%07X", (unsigned int)ID );
@@ -1270,10 +1215,6 @@ bool CEnOcean::waitRemote_man_answer(int premote_man_answer, int timeout )
 	return (timeout == 0);
 }
 
-int  CEnOcean::getTableLinkCurrentSize(unsigned int DeviceId)
-{
-	return  m_sensors[DeviceId].CurrentSize;
-}
 
 
 
@@ -1304,3 +1245,11 @@ int   getType(int EEP)
 	return (EEP ) & 0xFF;
 }
 
+std::string string_format(const char * fmt, ...) {
+	va_list ap;
+	char buf[1024];
+	va_start(ap, fmt);
+	int n = vsnprintf((char *)buf, sizeof(buf), fmt, ap);
+
+	return buf;
+}

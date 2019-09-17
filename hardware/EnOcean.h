@@ -5,6 +5,7 @@
 #include "DomoticzHardware.h"
 #include "../main/WebServer.h"
 #include "../json/json.h"
+#include "../main/Logger.h"
 
 #define MAX_BASE_ADDRESS 128
 
@@ -101,6 +102,33 @@ typedef enum
 }FCT_CODE;
 
 
+//static functions ************************************************************************
+
+//convert id from  buffer[] to unsigned int
+unsigned int DeviceArrayToInt(unsigned char m_buffer[]);
+void         DeviceIntToArray(unsigned int sID, unsigned char buf[]);
+
+unsigned int DeviceIdCharToInt(std::string &DeviceID);
+std::string GetLighting2StringId(unsigned int id);
+
+bool TypFnAToB(const char * st, unsigned char bin[], int  *trame_len);
+const char* Get_EnoceanManufacturer(unsigned long ID);
+const char* Get_Enocean4BSType(const int Org, const int Func, const int Type);
+
+void ToSensorsId(std::string &DeviceId);
+
+const char* Get_Enocean4BSDesc(const int Org, const int Func, const int Type);
+
+void ProfileToRorgFuncType(int EEP, int & Rorg, int & Func, int & Type);
+int RorgFuncTypeToProfile(int Rorg, int Func, int Type);
+int getRorg(int EEP);
+int getFunc(int EEP);
+int getType(int EEP);
+std::string  GetDeviceNameFromId(unsigned int ID);
+std::string string_format(const char * fmt, ...);
+
+
+//********************************************************************************************
 #define SIZE_LINK_TABLE 24 
 
 typedef struct {
@@ -110,6 +138,10 @@ typedef struct {
 }T_LINK_TABLE;
 
 typedef struct _T_SENSOR {
+	unsigned int	DeviceId ;
+	unsigned int	DbId;
+	unsigned int	Address ;
+
 	unsigned int	Profile;
 	int				Manufacturer;
 	int				CurrentSize;
@@ -132,6 +164,70 @@ typedef struct _T_SENSOR {
 }T_SENSOR;
 
 typedef 	std::map<unsigned int, T_SENSOR > T_SENSOR_MAP;
+
+
+class T_SENSORS {
+public:
+	T_SENSOR_MAP m_sensors;
+
+	void addSensorManuf(uint SensorId, uint Manuf)
+	{
+		m_sensors[SensorId].Manufacturer = Manuf;
+	}
+
+	void addSensorProfile(uint SensorId, uint Profile)
+	{
+		m_sensors[SensorId].Profile = Profile;
+	}
+	void setLinkTableMedadata(uint SensorId, int csize, int MaxSize)
+	{
+		m_sensors[SensorId].CurrentSize = csize;
+		m_sensors[SensorId].MaxSize = MaxSize;
+	}
+	void addLinkTable(uint DeviceId, int entry, int profile, uint sensorId, int channel)
+	{
+		if (entry < SIZE_LINK_TABLE) {
+			m_sensors[DeviceId].LinkTable[entry].Profile = profile;
+			m_sensors[DeviceId].LinkTable[entry].SenderId = sensorId;
+			m_sensors[DeviceId].LinkTable[entry].Channel = channel;
+		}
+
+	}
+
+	void printTableLink()
+	{
+		for (T_SENSOR_MAP::iterator itt = m_sensors.begin(); itt != m_sensors.end(); itt++)
+		{
+
+			_log.Log(LOG_NORM, "EnOcean: Print Link Table DeviceId:%08X  Profile:%0X Manufacturer:%d CurrentSize:%d MaxSize:%d", itt->first, itt->second.Profile, itt->second.Manufacturer, itt->second.CurrentSize, itt->second.MaxSize);
+			for (int i = 0; i < itt->second.CurrentSize; i++)
+				_log.Log(LOG_NORM, "                      Entry:%d Id:%08X Profile:%X Channel:%d", i, itt->second.LinkTable[i].SenderId, itt->second.LinkTable[i].Profile, itt->second.LinkTable[i].Channel);
+
+		}
+
+	}
+	int  getTableLinkCurrentSize(unsigned int DeviceId)
+	{
+		return  m_sensors[DeviceId].CurrentSize;
+	}
+	void GetLinkTable(unsigned int  DeviceId, Json::Value &root)
+	{
+		{
+			if (m_sensors.find(DeviceId) != m_sensors.end())
+				for (int entry = 0; entry < m_sensors[DeviceId].MaxSize; entry++)
+				{
+					root["result"][entry]["Profile"] = string_format("%06X", m_sensors[DeviceId].LinkTable[entry].Profile);
+					root["result"][entry]["SenderId"] = string_format("%07X", m_sensors[DeviceId].LinkTable[entry].SenderId);
+					root["result"][entry]["Channel"] = string_format("%d", m_sensors[DeviceId].LinkTable[entry].Channel);
+
+					root["result"][entry]["Name"] = GetDeviceNameFromId(m_sensors[DeviceId].LinkTable[entry].SenderId);
+
+
+				}
+		}
+	}
+
+};
 
 //Profile descriptor from eep.xml
 typedef struct {
@@ -250,29 +346,23 @@ public:
 	void ping(unsigned int destID);
 	void action(unsigned int destID);
 	void getProductId(unsigned int destination=0xFFFFFFFF);
-	void addSensorManuf(uint SensorId, uint Manuf);
-	void addSensorProfile(uint SensorId, uint Profile);
 	void getLinkTableMedadata(uint SensorId);
-	void setLinkTableMedadata(uint SensorId, int csize, int maxsize);
 	void queryFunction(uint SensorId);
 
 	void queryStatus(uint destID);
 
 	void getallLinkTable(uint SensorId, int begin, int end);
-	void addLinkTable(uint DeviceId, int entry, int profile, uint sensorId, int channel);
-	void printTableLink();
 
-	std::string  GetDeviceNameFromId(unsigned int ID);
 	unsigned int GetLockCode();
 	void  SetLockCode(std::string scode);
 	void setRemote_man_answer(int premote_man_answer);
 	int  getRemote_man_answer();
 	bool CEnOcean::waitRemote_man_answer(int premote_man_answer, int timeout);
-	int getTableLinkCurrentSize(unsigned int DeviceId);
 
 public:	unsigned long m_id_base;
 	int m_Seq;
-	T_SENSOR_MAP m_sensors;
+
+	T_SENSORS Sensors;
 
 	//remote management
 	//remote management function reception 
@@ -284,21 +374,6 @@ public:	unsigned long m_id_base;
 	std::vector<int> m_RMCC_queue;
 
 };
-
-//convert id from  buffer[] to unsigned int
-unsigned int DeviceArrayToInt(unsigned char m_buffer[]);
-void         DeviceIntToArray(unsigned int sID, unsigned char buf[]);
-
-unsigned int DeviceIdCharToInt(std::string &DeviceID);
-std::string GetLighting2StringId(unsigned int id);
-
-bool TypFnAToB(const char * st, unsigned char bin[], int  *trame_len);
-const char* Get_EnoceanManufacturer(unsigned long ID);
-const char* Get_Enocean4BSType(const int Org, const int Func, const int Type);
-
-void ToSensorsId(std::string &DeviceId);
-
-const char* Get_Enocean4BSDesc(const int Org, const int Func, const int Type);
 
 
 #endif

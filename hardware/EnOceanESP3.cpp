@@ -2273,7 +2273,7 @@ namespace http {
 
 				pEnocean->unlock(DeviceId, pEnocean->GetLockCode());
 				pEnocean->getLinkTableMedadata(DeviceId);
-				pEnocean->getallLinkTable(DeviceId, 0, pEnocean->getTableLinkCurrentSize( DeviceId)-1 );
+				pEnocean->getallLinkTable(DeviceId, 0, pEnocean->Sensors.getTableLinkCurrentSize( DeviceId)-1 );
 			}
 			else if (cmd == "QueryStatus") {
 				for ( int i = 0; i < nbParam; i++) {
