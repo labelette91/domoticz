@@ -493,6 +493,17 @@ void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m
 		}
 
 	}
+	else if (fct == QUERY_STATUS_ANSWER)
+	{	
+		bool  CodeIsSet = m_buffer[2] & 0x80;
+		int   LastSeq   = m_buffer[2] & 0x3 ;
+		int lastFunc  = m_buffer[3]*256 + m_buffer[4];
+		int lastReturnCode= m_buffer[5] ;
+
+		unsigned int senderId = DeviceArrayToInt(&m_buffer[12]);
+		_log.Log(LOG_NORM, "EnOcean: QUERY STATUS ANSWER SenderId: %08X CodeIsSet:%d LastSeq:%d lastFunc:%04X lastReturnCode:%d ", senderId, CodeIsSet, LastSeq, lastFunc, lastReturnCode);
+	}
+
 	setRemote_man_answer(fct);
 
 }
@@ -943,7 +954,7 @@ void CEnOcean::setLinkTableMedadata(uint SensorId, int csize, int MaxSize)
 	m_sensors[SensorId].MaxSize = MaxSize;
 }
 
-void CEnOcean::getProductFunction(uint destID)
+void CEnOcean::queryFunction(uint destID)
 {
 	unsigned char buff[16];
 	unsigned char opt[16];
@@ -961,7 +972,30 @@ void CEnOcean::getProductFunction(uint destID)
 					 //optionnal data
 	setDestination(opt, destID);
 
-	_log.Debug(DEBUG_NORM, "EnOcean: send getProductFunction %08X ", destID);
+	_log.Debug(DEBUG_NORM, "EnOcean: send queryFunction %08X ", destID);
+	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
+
+}
+
+void CEnOcean::queryStatus(uint destID)
+{
+	unsigned char buff[16];
+	unsigned char opt[16];
+	//C5 80 00 7F F0 08 00 00 00 00 00 00 00 00 8F
+
+	memset(buff, 0, sizeof(buff));
+	setRorg(buff);
+
+	buff[2] = 0x00;			//data len = 0
+	buff[3] = 0x7F;			//mamanufacturer 7FF
+	buff[4] = 0xF0;
+	buff[5] = QUERY_STATUS;			//function 008
+	buff[14] = 0x8F; //status
+
+					 //optionnal data
+	setDestination(opt, destID);
+
+	_log.Debug(DEBUG_NORM, "EnOcean: send queryStatus %08X ", destID);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
 }

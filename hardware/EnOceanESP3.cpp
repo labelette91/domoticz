@@ -2205,7 +2205,7 @@ namespace http {
 
 
 			std::string arg;
-			for (unsigned int i = 0; i < nbParam; i++) {
+			for ( int i = 0; i < nbParam; i++) {
 				arg += http::server::request::findValue(&req, std::to_string(i).c_str())+"-";
 			}
 
@@ -2219,7 +2219,7 @@ namespace http {
 
 				unsigned int code = pEnocean->GetLockCode();
 
-				for (unsigned int i = 0; i < nbParam; i++) {
+				for ( int i = 0; i < nbParam; i++) {
 					std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
 					getDeviceIdUnit(cmd, deviceId, unit);
 					if (deviceId.empty())	return;
@@ -2240,7 +2240,7 @@ namespace http {
 			}
 
 			else if (cmd == "TeachIn") {
-				for (unsigned int i = 0; i < nbParam; i++) {
+				for ( int i = 0; i < nbParam; i++) {
 					std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
 					getDeviceIdUnit(cmd, deviceId, unit);
 					if (deviceId.empty())	return;
@@ -2264,6 +2264,16 @@ namespace http {
 				pEnocean->getLinkTableMedadata(DeviceId);
 				pEnocean->getallLinkTable(DeviceId, 0, pEnocean->getTableLinkCurrentSize( DeviceId)-1 );
 			}
+			else if (cmd == "QueryStatus") {
+				for ( int i = 0; i < nbParam; i++) {
+					std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
+					getDeviceIdUnit(cmd, deviceId, unit);
+					if (deviceId.empty())	return;
+					pEnocean->queryStatus(std::stoi(deviceId));
+				}
+
+			}
+
 			else
 				return;
 
@@ -2385,7 +2395,7 @@ void CEnOceanESP3::testParsingData(int sec_counter)
 
 //			if (sec_counter == 10)	getLinkTableMedadata(0x01A65428);
 //			if (sec_counter == 12)	getallLinkTable(0x01A65428,0,3);
-//			if (sec_counter == 4)	getProductFunction(0x01A65428);
+//			if (sec_counter == 4)	queryFunction(0x01A65428);
 
 	char * VLD_BLINDS_D2_05_00_position = "D2 00 00 00 04 05 85 87 4A 00 "; //         01 FF FF FF FF 2E";
 	char * VLD_switch_uti				= "D4 A0 02 46 00 12 01 D2 01 A6 54 28 00 ""; //01 FF FF FF FF 33"; //teach-in request received from 01A65428 (manufacturer: 046). number of channels: 2, device profile: D2-01-12

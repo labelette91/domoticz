@@ -254,7 +254,9 @@ public:
 	void addSensorProfile(uint SensorId, uint Profile);
 	void getLinkTableMedadata(uint SensorId);
 	void setLinkTableMedadata(uint SensorId, int csize, int maxsize);
-	void getProductFunction(uint SensorId);
+	void queryFunction(uint SensorId);
+
+	void queryStatus(uint destID);
 
 	void getallLinkTable(uint SensorId, int begin, int end);
 	void addLinkTable(uint DeviceId, int entry, int profile, uint sensorId, int channel);
