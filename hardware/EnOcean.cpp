@@ -1274,3 +1274,33 @@ int  CEnOcean::getTableLinkCurrentSize(unsigned int DeviceId)
 {
 	return  m_sensors[DeviceId].CurrentSize;
 }
+
+
+
+void  ProfileToRorgFuncType(int EEP, int &Rorg, int &Func, int &Type)
+{
+	Type = EEP & 0xff;
+	EEP >>= 8;
+	Func = EEP & 0xff;
+	EEP >>= 8;
+	Rorg = EEP & 0xff;
+}
+
+int RorgFuncTypeToProfile( int Rorg, int Func, int Type)
+{
+	return (Rorg * 256 * 256 + Func * 256 + Type);
+}
+
+int   getRorg(int EEP)
+{
+	return ( EEP >> 16 ) & 0xFF ;
+}
+int   getFunc(int EEP)
+{
+	return (EEP >> 8) & 0xFF;
+}
+int   getType(int EEP)
+{
+	return (EEP ) & 0xFF;
+}
+
