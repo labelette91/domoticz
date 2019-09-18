@@ -198,14 +198,14 @@ int CEnOcean::SensorExist(char * szDeviceID)
 
 }
 //create sensor in database
-void CEnOcean::CreateSensors(char * szDeviceID, int rorg , int manufacturer, int profile, int ttype)
+void CEnOcean::CreateSensors(char * szDeviceID, int rorg , int manufacturer, int profile, int ttype,  int OffsetAddr )
 {
-	m_sql.safe_query("INSERT INTO EnoceanSensors (HardwareID, DeviceID, Manufacturer, Rorg,Profile, [Type]) VALUES (%d,'%q',%d,%d,%d,%d)", m_HwdID, szDeviceID, manufacturer, rorg,profile, ttype);
+	m_sql.safe_query("INSERT INTO EnoceanSensors (HardwareID, DeviceID, Manufacturer, Rorg,Profile, [Type],Address) VALUES (%d,'%q',%d,%d,%d,%d)", m_HwdID, szDeviceID, manufacturer, rorg,profile, ttype, OffsetAddr);
 
 }
-void CEnOcean::CreateSensors(unsigned int DeviceID, int rorg, int manufacturer, int profile, int ttype)
+void CEnOcean::CreateSensors(unsigned int DeviceID, int rorg, int manufacturer, int profile, int ttype, int OffsetAddr)
 {
-	CreateSensors((char *)DeviceIDToString(DeviceID).c_str(), rorg, manufacturer, profile, ttype);
+	CreateSensors((char *)DeviceIDToString(DeviceID).c_str(), rorg, manufacturer, profile, ttype, OffsetAddr);
 }
 //update profile  sensor in database
 void CEnOcean::UpdateProfileSensors(char * szDeviceID, int rorg,  int profile, int ttype)
@@ -213,21 +213,15 @@ void CEnOcean::UpdateProfileSensors(char * szDeviceID, int rorg,  int profile, i
 	m_sql.safe_query("UPDATE EnoceanSensors SET  Rorg=%d , Profile=%d , Type=%d  WHERE (DeviceID = '%s' )", rorg, profile, ttype, szDeviceID);
 
 }
-void CEnOcean::AddSensors(unsigned int DeviceID, int manufacturer, int profile, int ttype)
+void CEnOcean::AddSensors(unsigned int DeviceID, int rorg, int manufacturer, int profile, int ttype,  int OffsetAddr)
 {
 
 	if (!SensorExist(DeviceID))
 	{
 		// If not found, add it to the database
-		CreateSensors(DeviceID, 0,manufacturer, profile, ttype);
+		CreateSensors(DeviceID, rorg,manufacturer, profile, ttype, OffsetAddr);
 		_log.Log(LOG_NORM, "EnOcean: Sender_ID 0x%08X inserted in the database", DeviceID);
 	}
-}
-void CEnOcean::AddSensors(unsigned int DeviceID, int manufacturer, int profile, int ttype , int OffsetAddr )
-{
-	AddSensors(DeviceID, manufacturer, profile, ttype);
-
-	UpdateBaseAddress(DeviceIDToString(DeviceID).c_str(),  OffsetAddr );
 }
 bool CEnOcean::getProfileFromDb(std::string szDeviceID, int &Manufacturer, int &Rorg, int &Profile, int &Type)
 {

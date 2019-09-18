@@ -2,6 +2,7 @@
 #define	CEnOceanRMCC_H
 
 #include "EnOcean.h"
+#include "../json/json.h"
 
 #include <string>
 
@@ -56,9 +57,9 @@ public:
 
 	void TeachIn(std::string & deviceId, std::string & unit);
 
-	void GetNodeList(http::server::WebEmSession & session, const http::server::request & req, Json::Value & root);
+	void GetNodeList(Json::Value & root);
 
-	void GetLinkTable(http::server::WebEmSession & session, const http::server::request & req, Json::Value & root);
+	void GetLinkTable(Json::Value & root, std::string &DeviceId);
 
 	unsigned int GetLockCode();
 

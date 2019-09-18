@@ -3,8 +3,6 @@
 
 #include "ASyncSerial.h"
 #include "DomoticzHardware.h"
-#include "../main/WebServer.h"
-#include "../json/json.h"
 
 #define MAX_BASE_ADDRESS 128
 
@@ -194,13 +192,11 @@ public:
 
 	int SensorExist(char * szDeviceID);
 
-	void CreateSensors(char * szDeviceID, int rorg, int manufacturer, int profile, int ttype);
+	void CreateSensors(char *     szDeviceID, int rorg, int manufacturer, int profile, int ttype, int OffsetAddr);
 
-	void CreateSensors(unsigned int DeviceID, int rorg, int manufacturer, int profile, int ttype);
+	void CreateSensors(unsigned int DeviceID, int rorg, int manufacturer, int profile, int ttype, int OffsetAddr);
 
-	void AddSensors(unsigned int DeviceID, int manufacturer, int profile, int ttype);
-
-	void AddSensors(unsigned int DeviceID, int manufacturer, int profile, int ttype, int OffsetAddr);
+	void AddSensors   (unsigned int DeviceID, int rorg, int manufacturer, int profile, int ttype, int OffsetAddr);
 
 	static std::string DeviceIDToString(unsigned int DeviceID);
 

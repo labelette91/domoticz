@@ -32,10 +32,15 @@ void CEnOceanRMCC::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , i
 		//	55 00 0F 07 01 2B         C5 80 00 7F F0 06 00 00 00 00 00 00 00 00 8F        03 01 A6 54 28 FF 00 83
 		//response
 		//	55 00 08 0A 07 C6         06 06 07 FF D2 01 12 2D                             05 01 33 BE 01 A6 54 28 2D 00 34
-		int profile = m_buffer[4] * 65536 + (int)m_buffer[5] * 256 + (int)m_buffer[6];
+		int rorg = m_buffer[4];
+		int func = m_buffer[5];
+		int type = m_buffer[6];
+
+		int profile = RorgFuncTypeToProfile(rorg,func,type );
 		unsigned int senderId = DeviceArrayToInt(&m_buffer[12]);
 		unsigned int RSSI = m_buffer[7];
 		Sensors.addSensorProfile(senderId, profile);
+		AddSensors(senderId, rorg, Sensors.Find(senderId)->Manufacturer, func, type, 0);
 
 		_log.Log(LOG_NORM, "EnOcean: Ping Answer SenderId: %08X Profile:%06X ", senderId, profile);
 	}
@@ -46,10 +51,15 @@ void CEnOceanRMCC::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , i
 //		    queryid send cmd EEP : 00000000 Mask : 0
 //			Send :                                  : 55 00 0F 07 01 2B C5 80 01 FF F0 04 00 00 00 00 00 00 00 00 8F 03 FF FF FF FF FF 00 EE
 //			Recv PACKET_REMOTE_MAN_COMMAND(07 / 0A) : 06 04 07 FF D2 05 00 - FF FF FF FF 05 85 87 4A 3D 00 Opt Size : 10
+		int rorg = m_buffer[4];
+		int func = m_buffer[5];
+		int type = m_buffer[6];
+		int profile = RorgFuncTypeToProfile(rorg, func, type);
 
-		int profile = m_buffer[4] * 65536 + (int)m_buffer[5] * 256 + (int)m_buffer[6];
 		unsigned int senderId = DeviceArrayToInt(&m_buffer[11]);
 		Sensors.addSensorProfile(senderId, profile);
+		AddSensors(senderId, rorg, Sensors.Find(senderId)->Manufacturer, func, type, 0);
+
 
 		_log.Log(LOG_NORM, "EnOcean: QueryId Answer SenderId: %08X Profile:%06X ", senderId, profile);
 	}
@@ -445,9 +455,8 @@ void CEnOceanRMCC::TeachIn(std::string& deviceId , std::string& unit )
 		unlock(SenderAdress, GetLockCode() );
 		remoteLearning(SenderAdress, true, channel - 1);
 }
-void CEnOceanRMCC::GetNodeList(http::server::WebEmSession & session, const http::server::request& req, Json::Value &root)
+void CEnOceanRMCC::GetNodeList(Json::Value &root)
 {
-	//int nbParam = req.parameters.size() - 3;
 	root["status"] = "OK";
 	root["title"] = "EnOceanNodes";
 
@@ -503,12 +512,10 @@ void CEnOceanRMCC::GetNodeList(http::server::WebEmSession & session, const http:
 		}
 	}
 }
-void CEnOceanRMCC::GetLinkTable(http::server::WebEmSession & session, const http::server::request& req, Json::Value &root)
+void CEnOceanRMCC::GetLinkTable(Json::Value &root, std::string &DeviceIds )
 {
-	int nbParam = req.parameters.size() - 3;
 	root["status"] = "OK";
 	root["title"] = "EnOceanLinkTable";
-	std::string DeviceIds = http::server::request::findValue(&req, "sensorid");
 	unsigned int  DeviceId = DeviceIdCharToInt(DeviceIds);
 
 /*

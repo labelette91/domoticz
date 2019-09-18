@@ -1272,7 +1272,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 					if (SensorExist(id) == 0)
 					{
 						// If not found, add it to the database
-						CreateSensors(id, RORG_4BS, manufacturer, profile, ttype);
+						CreateSensors(id, RORG_4BS, manufacturer, profile, ttype,0);
 					}
 					else
 						_log.Debug(DEBUG_NORM, "EnOcean: Sender_ID 0x%08X already in the database", id);
@@ -1895,10 +1895,10 @@ void CEnOceanESP3::ParseRadioDatagram()
 						if (m_sql.m_bAcceptNewHardware)
 						// Record EnOcean device profile
 						{
-							// If not found, add it to the database
-							if (SensorExist(id)==0)
+							// If device as not been already teachin 
+							if (getUnitFromDeviceId(id)==0)
 							{
-								CreateSensors(id , rorg, manID, func, type );
+								AddSensors(id , rorg, manID, func, type ,0 );
 
 								//allocate base adress 1..127
 								int OffsetId = UpdateDeviceAddress(id);
@@ -2224,7 +2224,7 @@ namespace http {
 
 			//retrieve the list od Device Id
 			if (cmd == "GetNodeList")
-				pEnocean->GetNodeList(session, req, root);
+				pEnocean->GetNodeList(root);
 
 			else if (cmd == "SendCode") {
 
@@ -2247,7 +2247,9 @@ namespace http {
 
 			}
 			else if (cmd == "GetLinkTable") {
-				pEnocean->GetLinkTable(session, req, root);
+				std::string DeviceIds = http::server::request::findValue(&req, "sensorid");
+				if (!DeviceIds.empty())
+					pEnocean->GetLinkTable(root, DeviceIds);
 			}
 
 			else if (cmd == "TeachIn") {
