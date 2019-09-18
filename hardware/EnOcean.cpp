@@ -1130,7 +1130,18 @@ addLinkTable(0x1a65428, 0, 0xD0500, 0xABCDEF, 1);
 	addLinkTable(0x1a65428, 2, 0xD0500, 0x1234567, 1);
 	addLinkTable(0x1a65428, 3, 0xD0500, 0x2345678, 1);
 */
-	Sensors.GetLinkTable(DeviceId, root);
+	T_SENSOR* sensors = Sensors.Find(DeviceId);
+
+	if (sensors)
+		for (int entry = 0; entry < sensors->MaxSize; entry++)
+		{
+			root["result"][entry]["Profile"]  = string_format("%06X", sensors->LinkTable[entry].Profile);
+			root["result"][entry]["SenderId"] = string_format("%07X", sensors->LinkTable[entry].SenderId);
+			root["result"][entry]["Channel"]  = string_format("%d"  , sensors->LinkTable[entry].Channel);
+
+			root["result"][entry]["Name"] = GetDeviceNameFromId(sensors->LinkTable[entry].SenderId);
+
+		}
 }
 
 std::string GetLighting2StringId(unsigned int id )
