@@ -21,6 +21,7 @@ typedef struct _T_SENSOR {
 
 	unsigned int	Profile;
 	int				Manufacturer;
+	uint			Reference;
 	int				CurrentSize;
 	int				MaxSize;
 	T_LINK_TABLE	LinkTable[SIZE_LINK_TABLE];
@@ -47,9 +48,11 @@ class T_SENSORS {
 public:
 	T_SENSOR_MAP m_sensors;
 
-	void addSensorManuf(uint SensorId, uint Manuf)
+	void addSensorManuf(uint SensorId, uint Manuf, uint ref)
 	{
 		m_sensors[SensorId].Manufacturer = Manuf;
+		m_sensors[SensorId].Reference    = ref;
+	
 	}
 
 	void addSensorProfile(uint SensorId, uint Profile)

@@ -70,10 +70,12 @@ void CEnOceanRMCC::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , i
 		//55 00 0F 07 01 2B         C5 80 00 7F F2 27 00 00 00 00 00 00 00 00 8F        03 FF FF FF FF FF 00             55
 		//reponse  manu 46 procuct ref 00010003
 		//55 00 0A 0A 07 10         08 27 07 FF 00 46 00 01 00 03                       FF FF FF FF 01 A6 54 28 2C 00     B3
-		int manuf = m_buffer[5];
+		int manuf = m_buffer[4]*256 + m_buffer[5];
+		unsigned int reference  = DeviceArrayToInt(&m_buffer[6]) ;
+
 		unsigned int senderId = DeviceArrayToInt(&m_buffer[14]);
-		_log.Log(LOG_NORM, "EnOcean: getProductId Answer SenderId: %08X Manufacturer:%s  ", senderId, Get_EnoceanManufacturer(manuf));
-		Sensors.addSensorManuf(senderId, manuf);
+		_log.Log(LOG_NORM, "EnOcean: getProductId Answer SenderId: %08X Manufacturer:%s Ref:%08X  ", senderId, Get_EnoceanManufacturer(manuf) , reference );
+		Sensors.addSensorManuf(senderId, manuf, reference );
 		ping(senderId);
 	}
 	//get link table medatadate cmd 0210 : taille current / max  table
