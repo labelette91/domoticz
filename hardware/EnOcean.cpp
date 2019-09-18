@@ -17,8 +17,6 @@
 
 CEnOcean::CEnOcean() {
 	m_id_base = 0;
-	m_Seq = 0 ;
-
 };
 //return true if base adress reading
 bool CEnOcean::IsRunning()
@@ -30,11 +28,9 @@ bool CEnOcean::IsRunning()
 unsigned int CEnOcean::GetAdress(int unitid) {
 	return(m_id_base + unitid);
 }
-
 unsigned int CEnOcean::GetOffsetAdress(int unitid) {
 	return ( unitid- m_id_base) ;
 }
-
 uint64_t CEnOcean::CreateDevice(const int HardwareID, const char* ID, const int  unitCode, const unsigned char devType, const unsigned char subType, const unsigned char signallevel, const unsigned char batterylevel, const int nValue, const char* sValue, std::string &devname, int SwitchType , const std::string & deviceoptions)
 {
 	uint64_t ulID = 0;
@@ -81,7 +77,6 @@ uint64_t CEnOcean::CreateDevice(const int HardwareID, const char* ID, const int 
 	}
 	return ulID;
 }
-
 //return the unit that correspond to the offset from controler base adress
 int CEnOcean::getUnitFromDeviceId(unsigned int devIDx )
 {
@@ -102,8 +97,6 @@ int CEnOcean::getUnitFromDeviceId(std::string devIDx  )
 	else
 	return 0 ;
 }
-
-
 //return the sender adress fro enOcean deviceId 0x12345678
 unsigned int CEnOcean::getSenderAdressFromDeviceId(std::string devIDx)
 {
@@ -111,7 +104,6 @@ unsigned int CEnOcean::getSenderAdressFromDeviceId(std::string devIDx)
 	unsigned int SenderAdress = GetAdress(unitId);
 	return SenderAdress;
 }
-
 unsigned int CEnOcean::getSenderAdressFromDeviceId(unsigned int devIDx)
 {
 	return getSenderAdressFromDeviceId(DeviceIDToString(devIDx));
@@ -122,7 +114,6 @@ void CEnOcean::UpdateBaseAddress(std::string DeviceId , int offsetID ) {
 	m_sql.safe_query("UPDATE EnoceanSensors SET %s=%d   WHERE (DeviceID = '%s' )", "Address" , offsetID , DeviceId.c_str() );
 
 }
-
 //find a base adress for enOcean device DeviceId : 0x12345678 
 int CEnOcean::UpdateDeviceAddress(std::string DeviceId) {
 	std::vector<std::vector<std::string> > result;
@@ -182,7 +173,6 @@ int CEnOcean::UpdateDeviceAddress(std::string DeviceId) {
 	return 0;
 
 }
-
 int CEnOcean::UpdateDeviceAddress(unsigned int  DeviceId) 
 	{
 		return (UpdateDeviceAddress(DeviceIDToString(DeviceId)) );
@@ -193,7 +183,6 @@ int CEnOcean::SensorExist( unsigned int Deviceid)
 {
 return SensorExist((char *)DeviceIDToString(Deviceid).c_str());
 }
-
 int CEnOcean::SensorExist(char * szDeviceID)
 {
 
@@ -208,7 +197,6 @@ int CEnOcean::SensorExist(char * szDeviceID)
 
 
 }
-
 //create sensor in database
 void CEnOcean::CreateSensors(char * szDeviceID, int rorg , int manufacturer, int profile, int ttype)
 {
@@ -219,17 +207,12 @@ void CEnOcean::CreateSensors(unsigned int DeviceID, int rorg, int manufacturer, 
 {
 	CreateSensors((char *)DeviceIDToString(DeviceID).c_str(), rorg, manufacturer, profile, ttype);
 }
-
-
 //update profile  sensor in database
 void CEnOcean::UpdateProfileSensors(char * szDeviceID, int rorg,  int profile, int ttype)
 {
 	m_sql.safe_query("UPDATE EnoceanSensors SET  Rorg=%d , Profile=%d , Type=%d  WHERE (DeviceID = '%s' )", rorg, profile, ttype, szDeviceID);
 
 }
-
-
-
 void CEnOcean::AddSensors(unsigned int DeviceID, int manufacturer, int profile, int ttype)
 {
 
@@ -240,55 +223,12 @@ void CEnOcean::AddSensors(unsigned int DeviceID, int manufacturer, int profile, 
 		_log.Log(LOG_NORM, "EnOcean: Sender_ID 0x%08X inserted in the database", DeviceID);
 	}
 }
-
 void CEnOcean::AddSensors(unsigned int DeviceID, int manufacturer, int profile, int ttype , int OffsetAddr )
 {
 	AddSensors(DeviceID, manufacturer, profile, ttype);
 
 	UpdateBaseAddress(DeviceIDToString(DeviceID).c_str(),  OffsetAddr );
 }
-
-std::string CEnOcean::DeviceIDToString(unsigned int DeviceID)
-{
-	char szDeviceID[20];
-	sprintf(szDeviceID, "%8X", (unsigned int)DeviceID);
-	return szDeviceID;
-}
-
-//add leading 0 
-void ToSensorsId(std::string &DeviceId)
-{
-	while (DeviceId.size() < 8)
-		DeviceId = '0' + DeviceId;
-}
-
-//convert device ID id from  buffer[] to unsigned int
-unsigned int DeviceArrayToInt(unsigned char m_buffer[])
-{
-	unsigned int id = (m_buffer[0] << 24) + (m_buffer[1] << 16) + (m_buffer[2] << 8) + m_buffer[3];
-	return id;
-}
-
-//convert device ID id from   unsigned int to buffer[]  
-void  DeviceIntToArray(unsigned int sID, unsigned char buf[])
-{
-
-buf[0] = (sID >> 24) & 0xff;
-buf[1] = (sID >> 16) & 0xff;
-buf[2] = (sID >> 8) & 0xff;
-buf[3] = sID & 0xff;
-}
-
-
-//convert divice ID string to long
-unsigned int DeviceIdCharToInt(std::string &DeviceID) {
-	unsigned int ID;
-	std::stringstream s_strid;
-	s_strid << std::hex << DeviceID;
-	s_strid >> ID;
-	return ID;
-}
-
 bool CEnOcean::getProfileFromDb(std::string szDeviceID, int &Manufacturer, int &Rorg, int &Profile, int &Type)
 {
 	Rorg = Profile = Type = Manufacturer = 0;
@@ -310,7 +250,289 @@ bool CEnOcean::getProfileFromDb(unsigned int DeviceID, int &Manufacturer, int &R
 {
 	return getProfileFromDb(DeviceIDToString(DeviceID), Manufacturer, Rorg, Profile, Type);
 }
+//send F6 01 01 : rocker button for teach in
+void CEnOcean::SendRpsTeachIn(unsigned int sID)
+{
+	unsigned char buff[16];
 
+	//F6 10 ff 99 df 01 30
+	//F6 00 ff 99 df 01 20
+
+	buff[0] = RORG_RPS;
+	buff[1] = 0x10;// rocker 0 press
+	buff[2] = (sID >> 24) & 0xff;		// Sender ID
+	buff[3] = (sID >> 16) & 0xff;
+	buff[4] = (sID >> 8) & 0xff;
+	buff[5] = sID & 0xff;
+	buff[6] = 0x30;
+	sendFrameQueue(PACKET_RADIO, buff, 7, NULL, 0);
+
+	//Next command is send a bit later (button release)
+	buff[1] = 0;				// no button press
+	buff[6] = S_RPS_T21;	// release button			// b5=T21, b4=NU, b3-b0= RepeaterCount
+
+	sendFrameQueue(PACKET_RADIO, buff, 7, NULL, 0);
+
+}
+//send data              1BS D5 00 FF 99 DF 01 00
+//opt                                             03 FF FF FF FF FF 00
+//esp3     55 00 07 07 01 7A D5 00 FF 99 DF 01 00 03 FF FF FF FF FF 00 64
+void CEnOcean::Send1BSTeachIn(unsigned int sID)
+{
+	unsigned char buff[16];
+
+	buff[0] = RORG_1BS;
+	buff[1] = 0;
+	buff[2] = (sID >> 24) & 0xff;		// Sender ID
+	buff[3] = (sID >> 16) & 0xff;
+	buff[4] = (sID >> 8) & 0xff;
+	buff[5] = sID & 0xff;
+	buff[6] = 0;
+
+	//optionnal data
+	unsigned char opt[16];
+	opt[0] = 0x03; //subtel
+	opt[1] = 0xff;
+	opt[2] = 0xff;
+	opt[3] = 0xff;
+	opt[4] = 0xff;
+	opt[5] = 0xff;
+	opt[6] = 00;//RSI 
+
+	sendFrameQueue(PACKET_RADIO, buff, 7, opt, 7);
+
+}
+// A5 02 00 00 00 FF 99 DF 01 30
+void CEnOcean::Send4BSTeachIn(unsigned int sID)
+{
+	if (isOpen()) {
+
+		unsigned char buf[100];
+		buf[0] = RORG_4BS;
+		buf[1] = 0x2;
+		buf[2] = 0;
+		buf[3] = 0;
+		buf[4] = 0x0; // DB0.3=0 -> teach in with no EEP
+
+		buf[5] = (sID >> 24) & 0xff;
+		buf[6] = (sID >> 16) & 0xff;
+		buf[7] = (sID >> 8) & 0xff;
+		buf[8] = sID & 0xff;
+
+		buf[9] = 0x30; // status
+
+		sendFrame(PACKET_RADIO, buf, 10, NULL, 0);
+	}
+}
+void CEnOcean::sendVld(unsigned int sID, int channel, int value)
+{
+	unsigned char buff[16];
+
+	buff[0] = RORG_VLD; //vld
+	buff[1] = 0x01;
+	buff[2] = channel;
+	buff[3] = value;
+	buff[4] = (sID >> 24) & 0xff;		// Sender ID
+	buff[5] = (sID >> 16) & 0xff;
+	buff[6] = (sID >> 8) & 0xff;
+	buff[7] = sID & 0xff;
+	buff[8] = 0; //status
+
+	//optionnal data
+	unsigned char opt[16];
+	opt[0] = 0x03; //subtel
+	opt[1] = 0xff;
+	opt[2] = 0xff;
+	opt[3] = 0xff;
+	opt[4] = 0xff;
+	opt[5] = 0xff;
+	opt[6] = 00;//RSI 
+
+	//D2 01 00 00 FF 99 DF 01 00
+	//03 FF FF FF FF FF 00
+
+	sendFrameQueue(PACKET_RADIO, buff, 9, opt, 7);
+}
+//send a VLD datagramm with payload : data to device Id sID
+void CEnOcean::sendVld(unsigned int sID, unsigned char *data , int DataLen )
+{
+	unsigned char buffer[64];
+
+	if (DataLen > MAX_DATA_PAYLOAD)
+		return;
+
+	unsigned char *buff = buffer ;
+	*buff++ = RORG_VLD; //vld
+	for (int i = 0; i < DataLen; i++)
+		*buff++ = *data++;
+
+	*buff++ = (sID >> 24) & 0xff;		// Sender ID
+	*buff++ = (sID >> 16) & 0xff;
+	*buff++ = (sID >> 8) & 0xff;
+	*buff++ = sID & 0xff;
+	*buff++ = 0; //status
+
+				 //optionnal data
+	unsigned char opt[16];
+	opt[0] = 0x03; //subtel
+	opt[1] = 0xff;
+	opt[2] = 0xff;
+	opt[3] = 0xff;
+	opt[4] = 0xff;
+	opt[5] = 0xff;
+	opt[6] = 00;//RSI 
+
+				//D2 01 00 00 FF 99 DF 01 00
+				//03 FF FF FF FF FF 00
+
+	sendFrameQueue(PACKET_RADIO, buffer, 6+DataLen, opt, 7);
+}
+extern uint32_t SetRawValues(uint8_t * data, T_DATAFIELD * OffsetDes, va_list value);
+//send a VLD datagramm of the command described by descriptor OffsetDes detailed in EEP profile.to device Id sID
+// the argument are variable length
+//it shall correspond to each offset Data detailed in EnOcean_Equipment_Profiles_EEP_v2.x.x_public.
+//the list  parameter shall end with value END_ARG_DATA
+//return is the size of the daya payload in byte 
+// or 0 : if an error occured : not enough parameters passed
+//example :
+//sendVld(unitBaseAddr, D20500_CMD_2, channel, 2, END_ARG_DATA);
+// send a stop command = 2 to channel 9 for EEP : D2-05-00 ; Blinds control
+//sendVld(unitBaseAddr, D20500_CMD_1, 100, 127, 0, 0, 0 , 1, END_ARG_DATA);
+// send a got position and angle command = 1 to 
+// POS=100 % 
+// ANG=127 : dont change 
+// REPO=0 goto ditectly 
+// LOCK=0  dont change  , 
+// channel 0
+// CMD = 1 goto command for EEP : D2-05-00 ; Blinds control
+uint32_t CEnOcean::sendVld(unsigned int unitBaseAddr, T_DATAFIELD * OffsetDes,  ...)
+{
+	uint8_t  data[MAX_DATA_PAYLOAD+2];
+	va_list value;
+
+	/* Initialize the va_list structure */
+	va_start(value, OffsetDes);
+
+	memset(data, 0, sizeof(data));
+
+	uint32_t DataSize = SetRawValues(data, OffsetDes,  value);
+	if (DataSize)
+		sendVld(unitBaseAddr, data, DataSize);
+
+	va_end(value);
+
+	return  DataSize;
+
+}
+T_DATAFIELD remote_sysex[] = {
+{  0 , 2 , "SEQ"       ,   0 ,   0 ,   0 ,   0 , "SEQ"},
+{  2 , 6 , "IDX"       ,   0 ,   0 ,   0 ,   0 , "IDX"},
+{  8 , 9 , "LEN"       ,   0 ,   0 ,   0 ,   0 , ""},
+{  17, 11, "MAN"       ,   0 ,   0 ,   0 ,   0 , ""},
+{  28, 12, "FN"        ,   0 ,   0 ,   0 ,   0 , ""},
+
+															   //Value: 0x01 = Configuration data valid 
+{  0 , 0 , 0          , 0           }
+};
+//return true if adress is in range 
+bool CEnOcean::CheckIsGatewayAdress(unsigned int deviceid)
+{
+	if ((deviceid > m_id_base) && (deviceid < m_id_base + MAX_BASE_ADDRESS))
+		return true;
+	else
+		return false;
+
+}
+
+//static function librairy
+
+std::string CEnOcean::DeviceIDToString(unsigned int DeviceID)
+{
+	char szDeviceID[20];
+	sprintf(szDeviceID, "%8X", (unsigned int)DeviceID);
+	return szDeviceID;
+}
+//add leading 0 
+void ToSensorsId(std::string &DeviceId)
+{
+	while (DeviceId.size() < 8)
+		DeviceId = '0' + DeviceId;
+}
+//convert device ID id from  buffer[] to unsigned int
+unsigned int DeviceArrayToInt(unsigned char m_buffer[])
+{
+	unsigned int id = (m_buffer[0] << 24) + (m_buffer[1] << 16) + (m_buffer[2] << 8) + m_buffer[3];
+	return id;
+}
+//convert device ID id from   unsigned int to buffer[]  
+void  DeviceIntToArray(unsigned int sID, unsigned char buf[])
+{
+
+	buf[0] = (sID >> 24) & 0xff;
+	buf[1] = (sID >> 16) & 0xff;
+	buf[2] = (sID >> 8) & 0xff;
+	buf[3] = sID & 0xff;
+}
+//convert divice ID string to long
+unsigned int DeviceIdCharToInt(std::string &DeviceID) {
+	unsigned int ID;
+	std::stringstream s_strid;
+	s_strid << std::hex << DeviceID;
+	s_strid >> ID;
+	return ID;
+}
+std::string GetLighting2StringId(unsigned int id )
+{
+	char szTmp[300];
+
+	sprintf(szTmp, "%07X", id );
+	return szTmp;
+}
+std::string  GetDeviceNameFromId( unsigned int ID )
+{
+	char szDeviceID[20];
+	sprintf(szDeviceID, "%07X", (unsigned int)ID );
+
+	std::vector<std::vector<std::string> > result;
+	result = m_sql.safe_query("SELECT Name  FROM DeviceStatus WHERE ( instr(DeviceID, '%q' ) <> 0) ", szDeviceID );
+	if (result.size() != 0)
+	{
+		return result[0][0];
+	}
+	return "" ;
+}
+void  ProfileToRorgFuncType(int EEP, int &Rorg, int &Func, int &Type)
+{
+	Type = EEP & 0xff;
+	EEP >>= 8;
+	Func = EEP & 0xff;
+	EEP >>= 8;
+	Rorg = EEP & 0xff;
+}
+int RorgFuncTypeToProfile( int Rorg, int Func, int Type)
+{
+	return (Rorg * 256 * 256 + Func * 256 + Type);
+}
+int   getRorg(int EEP)
+{
+	return ( EEP >> 16 ) & 0xFF ;
+}
+int   getFunc(int EEP)
+{
+	return (EEP >> 8) & 0xFF;
+}
+int   getType(int EEP)
+{
+	return (EEP ) & 0xFF;
+}
+std::string string_format(const char * fmt, ...) {
+	va_list ap;
+	char buf[1024];
+	va_start(ap, fmt);
+	int n = vsnprintf((char *)buf, sizeof(buf), fmt, ap);
+
+	return buf;
+}
 //---------------------------------------------------------------------------
 // TypFnAToB    : Convertit une chaîne hexadécimale ascii en un tableau binaire
 // Input  Arg.  : Chaîne hexadécimale ascii
@@ -321,15 +543,14 @@ bool CEnOcean::getProfileFromDb(unsigned int DeviceID, int &Manufacturer, int &R
 // Remark       : Le tableau de destination doit être suffisement dimensionné
 //                La conversion s'arrête sur tout caractère non hexa
 //---------------------------------------------------------------------------
-
 int HexToBin(char c)
 {
 	int h = (unsigned char)(c - '0');
-	if (h>9)
+	if (h > 9)
 		h = (unsigned char)(h - 7);
-	if (h>15)
+	if (h > 15)
 		h = (unsigned char)(h - 32);
-	if (h>15)
+	if (h > 15)
 		return 0;
 	return h;
 
@@ -382,669 +603,6 @@ bool TypFnAToB(const char * st, unsigned char bin[], int  *trame_len)
 	*trame_len = i;
 	return true;
 };
-
-
-
-void CEnOcean::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m_DataSize, int m_OptionalDataSize )
-{
-	//get function
-	int fct = m_buffer[0] * 256 + m_buffer[1];
-	//ping response
-	if (fct == PING_ANSWER)
-	{
-		// ping
-		//	55 00 0F 07 01 2B         C5 80 00 7F F0 06 00 00 00 00 00 00 00 00 8F        03 01 A6 54 28 FF 00 83
-		//response
-		//	55 00 08 0A 07 C6         06 06 07 FF D2 01 12 2D                             05 01 33 BE 01 A6 54 28 2D 00 34
-		int profile = m_buffer[4] * 65536 + (int)m_buffer[5] * 256 + (int)m_buffer[6];
-		unsigned int senderId = DeviceArrayToInt(&m_buffer[12]);
-		unsigned int RSSI = m_buffer[7];
-		Sensors.addSensorProfile(senderId, profile);
-
-		_log.Log(LOG_NORM, "EnOcean: Ping Answer SenderId: %08X Profile:%06X ", senderId, profile);
-	}
-	//query  response
-	else if ( (fct == QUERYID_ANSWER) || (fct == QUERYID_ANSWER_EXT) )
-	{
-		// queryId 
-//		    queryid send cmd EEP : 00000000 Mask : 0
-//			Send :                                  : 55 00 0F 07 01 2B C5 80 01 FF F0 04 00 00 00 00 00 00 00 00 8F 03 FF FF FF FF FF 00 EE
-//			Recv PACKET_REMOTE_MAN_COMMAND(07 / 0A) : 06 04 07 FF D2 05 00 - FF FF FF FF 05 85 87 4A 3D 00 Opt Size : 10
-
-		int profile = m_buffer[4] * 65536 + (int)m_buffer[5] * 256 + (int)m_buffer[6];
-		unsigned int senderId = DeviceArrayToInt(&m_buffer[11]);
-		Sensors.addSensorProfile(senderId, profile);
-
-		_log.Log(LOG_NORM, "EnOcean: QueryId Answer SenderId: %08X Profile:%06X ", senderId, profile);
-	}
-	//product id  response
-	else if (fct == RC_GET_PRODUCT_RESPONSE)
-	{
-		//get product id  cmd 227 
-		//55 00 0F 07 01 2B         C5 80 00 7F F2 27 00 00 00 00 00 00 00 00 8F        03 FF FF FF FF FF 00             55
-		//reponse  manu 46 procuct ref 00010003
-		//55 00 0A 0A 07 10         08 27 07 FF 00 46 00 01 00 03                       FF FF FF FF 01 A6 54 28 2C 00     B3
-		int manuf = m_buffer[5];
-		unsigned int senderId = DeviceArrayToInt(&m_buffer[14]);
-		_log.Log(LOG_NORM, "EnOcean: getProductId Answer SenderId: %08X Manufacturer:%s  ", senderId, Get_EnoceanManufacturer(manuf));
-		Sensors.addSensorManuf(senderId, manuf);
-		ping(senderId);
-	}
-	//get link table medatadate cmd 0210 : taille current / max  table
-	else if (fct == RC_GET_METADATA_RESPONSE)
-	{
-		//get link table medatadate cmd 0210 : taille current/ max  table
-		//55 00 0F 07 01 2B         C5 40 00 7F F2 10 00 00 00 00 00 00 00 00 8F        03 01 A6 54 28 FF 00  AD
-		//response curren size 03 max x18=24
-		//55 00 09 0A 07 AD         08 10 07 FF 50 00 00 03 18                          FF FF FF FF 01 A6 54 28 2D 00 08
-		int currentSize = m_buffer[7];
-		int maxSize = m_buffer[8];
-		unsigned int senderId = DeviceArrayToInt(&m_buffer[13]);
-		_log.Log(LOG_NORM, "EnOcean: Get Link table medatadata Answer SenderId: %08X Size:%d Max:%d ", senderId, currentSize, maxSize);
-		Sensors.setLinkTableMedadata(senderId, currentSize, maxSize);
-	}
-	//get all link table
-	else if (fct == RC_GET_TABLE_RESPONSE)
-	{
-		//get all link table
-		//55 00 0F 07 01 2B         C5 40 01 FF F2 11 00 00 17 00 00 00 00 00 8F        03 01 A6 54 28 FF 00 56
-		//response                                        ID DEVICE ID   PROFILE  CHN
-		//                          0  1    2  3     4    5  6  7  8  9  10 11 12 13
-		//55 00 20 0A 07 D4         08 11   07 FF    00   00 FF 99 DF 01 D5 00 01 00   01 FF 99 DF 02 F6 02 01 00   02 FF 99 DF 02 F6 02 01 01       FF FF FF FF 01 A6 54 28 2E 00 FB
-		//55 00 20 0A 07 D4         08 11   07 FF    00   03 00 00 00 00 FF FF FF 00   04 00 00 00 00 FF FF FF 00   05 00 00 00 00 FF FF FF 00       FF FF FF FF 01 A6 54 28 2E 00 8F
-		//55 00 20 0A 07 D4         08 11   07 FF    00   06 00 00 00 00 FF FF FF 00   07 00 00 00 00 FF FF FF 00   08 00 00 00 00 FF FF FF 00       FF FF FF FF 01 A6 54 28 2E 00 DE
-		//55 00 20 0A 07 D4         08 11   07 FF    00   09 00 00 00 00 FF FF FF 00   0A 00 00 00 00 FF FF FF 00   0B 00 00 00 00 FF FF FF 00       FF FF FF FF 01 A6 54 28 2E 00 F4
-		//55 00 20 0A 07 D4         08 11   07 FF    00   0C 00 00 00 00 FF FF FF 00   0D 00 00 00 00 FF FF FF 00   0E 00 00 00 00 FF FF FF 00       FF FF FF FF 01 A6 54 28 2E 00 E1
-		//55 00 20 0A 07 D4         08 11   07 FF    00   0F 00 00 00 00 FF FF FF 00   10 00 00 00 00 FF FF FF 00   11 00 00 00 00 FF FF FF 00       FF FF FF FF 01 A6 54 28 2E 00 BC
-		//55 00 20 0A 07 D4         08 11   07 FF    00   15 00 00 00 00 FF FF FF 00   16 00 00 00 00 FF FF FF 00   17 00 00 00 00 FF FF FF 00       FF FF FF FF 01 A6 54 28 2E 00 66
-
-		unsigned int senderId = DeviceArrayToInt(&m_buffer[m_DataSize + 4]);
-		int nb = m_DataSize - 5;
-		nb /= 9;
-		for (int i = 0; i < nb; i++) {
-
-			int  offs = m_buffer[5 + i * 9];
-			uint entryId = DeviceArrayToInt(&m_buffer[6 + i * 9]);
-			uint entryProfile = DeviceArrayToInt(&m_buffer[10 + i * 9]);
-			int  channel = m_buffer[13 + i * 9];
-			entryProfile /= 256;
-			Sensors.addLinkTable(senderId, offs, entryProfile, entryId, channel);
-			_log.Log(LOG_NORM, "EnOcean: ADD Link table Entry SenderId: %08X  entry %02d EntryId: %08X Profile %06X Channel:%d", senderId, offs, entryId, entryProfile, channel);
-
-		}
-		Sensors.printTableLink();
-	}
-	//query function
-	else if (fct == QUERY_FUNCTION_ANSWER)
-	{
-		//query function
-		//55 00 0F 07 01 2B	C5 80 00 7F F0 07 00 00 00 00 00 00 00 00 8F 				03 01 A6 54 28 FF 00     8D  opt 7
-		//55 00 34 0A 07 DD 06 07 07 FF 02 24 07 FF 02 27 07 FF 02 20 07 FF 02 10 07 FF 02 11 07 FF 02 12 07 FF 02 30 07 FF 02 31 07 FF 02 32 07 FF 02 33 07 FF 02 26 07 FF 00 00 00 00      FF FF FF FF 01 A6 54 28 2C 00     2E opt 10
-		unsigned int senderId = DeviceArrayToInt(&m_buffer[m_DataSize + 4]);
-		int nb = m_DataSize - 4;
-		nb /= 4;
-		for (int i = 0; i < nb; i++) {
-
-			int  function = m_buffer[4 + i * 4] * 256 + m_buffer[5 + i * 4];
-			if (function)
-				_log.Log(LOG_NORM, "EnOcean: QUERY FUNCTION answer SenderId: %08X Function :%0X  ", senderId, function);
-		}
-
-	}
-	else if (fct == QUERY_STATUS_ANSWER)
-	{	
-		bool  CodeIsSet = m_buffer[2] & 0x80;
-		int   LastSeq   = m_buffer[2] & 0x3 ;
-		int lastFunc  = m_buffer[3]*256 + m_buffer[4];
-		int lastReturnCode= m_buffer[5] ;
-
-		unsigned int senderId = DeviceArrayToInt(&m_buffer[12]);
-		_log.Log(LOG_NORM, "EnOcean: QUERY STATUS ANSWER SenderId: %08X CodeIsSet:%d LastSeq:%d lastFunc:%04X lastReturnCode:%d ", senderId, CodeIsSet, LastSeq, lastFunc, lastReturnCode);
-	}
-
-	setRemote_man_answer(fct);
-
-}
-
-//send F6 01 01 : rocker button for teach in
-void CEnOcean::SendRpsTeachIn(unsigned int sID)
-{
-	unsigned char buff[16];
-
-	//F6 10 ff 99 df 01 30
-	//F6 00 ff 99 df 01 20
-
-	buff[0] = RORG_RPS;
-	buff[1] = 0x10;// rocker 0 press
-	buff[2] = (sID >> 24) & 0xff;		// Sender ID
-	buff[3] = (sID >> 16) & 0xff;
-	buff[4] = (sID >> 8) & 0xff;
-	buff[5] = sID & 0xff;
-	buff[6] = 0x30;
-	sendFrameQueue(PACKET_RADIO, buff, 7, NULL, 0);
-
-	//Next command is send a bit later (button release)
-	buff[1] = 0;				// no button press
-	buff[6] = S_RPS_T21;	// release button			// b5=T21, b4=NU, b3-b0= RepeaterCount
-
-	sendFrameQueue(PACKET_RADIO, buff, 7, NULL, 0);
-
-}
-
-//send data              1BS D5 00 FF 99 DF 01 00
-//opt                                             03 FF FF FF FF FF 00
-//esp3     55 00 07 07 01 7A D5 00 FF 99 DF 01 00 03 FF FF FF FF FF 00 64
-void CEnOcean::Send1BSTeachIn(unsigned int sID)
-{
-	unsigned char buff[16];
-
-	buff[0] = RORG_1BS;
-	buff[1] = 0;
-	buff[2] = (sID >> 24) & 0xff;		// Sender ID
-	buff[3] = (sID >> 16) & 0xff;
-	buff[4] = (sID >> 8) & 0xff;
-	buff[5] = sID & 0xff;
-	buff[6] = 0;
-
-	//optionnal data
-	unsigned char opt[16];
-	opt[0] = 0x03; //subtel
-	opt[1] = 0xff;
-	opt[2] = 0xff;
-	opt[3] = 0xff;
-	opt[4] = 0xff;
-	opt[5] = 0xff;
-	opt[6] = 00;//RSI 
-
-	sendFrameQueue(PACKET_RADIO, buff, 7, opt, 7);
-
-}
-// A5 02 00 00 00 FF 99 DF 01 30
-void CEnOcean::Send4BSTeachIn(unsigned int sID)
-{
-	if (isOpen()) {
-
-		unsigned char buf[100];
-		buf[0] = RORG_4BS;
-		buf[1] = 0x2;
-		buf[2] = 0;
-		buf[3] = 0;
-		buf[4] = 0x0; // DB0.3=0 -> teach in with no EEP
-
-		buf[5] = (sID >> 24) & 0xff;
-		buf[6] = (sID >> 16) & 0xff;
-		buf[7] = (sID >> 8) & 0xff;
-		buf[8] = sID & 0xff;
-
-		buf[9] = 0x30; // status
-
-		sendFrame(PACKET_RADIO, buf, 10, NULL, 0);
-	}
-}
-
-void CEnOcean::sendVld(unsigned int sID, int channel, int value)
-{
-	unsigned char buff[16];
-
-	buff[0] = RORG_VLD; //vld
-	buff[1] = 0x01;
-	buff[2] = channel;
-	buff[3] = value;
-	buff[4] = (sID >> 24) & 0xff;		// Sender ID
-	buff[5] = (sID >> 16) & 0xff;
-	buff[6] = (sID >> 8) & 0xff;
-	buff[7] = sID & 0xff;
-	buff[8] = 0; //status
-
-	//optionnal data
-	unsigned char opt[16];
-	opt[0] = 0x03; //subtel
-	opt[1] = 0xff;
-	opt[2] = 0xff;
-	opt[3] = 0xff;
-	opt[4] = 0xff;
-	opt[5] = 0xff;
-	opt[6] = 00;//RSI 
-
-	//D2 01 00 00 FF 99 DF 01 00
-	//03 FF FF FF FF FF 00
-
-	sendFrameQueue(PACKET_RADIO, buff, 9, opt, 7);
-}
-
-//send a VLD datagramm with payload : data to device Id sID
-void CEnOcean::sendVld(unsigned int sID, unsigned char *data , int DataLen )
-{
-	unsigned char buffer[64];
-
-	if (DataLen > MAX_DATA_PAYLOAD)
-		return;
-
-	unsigned char *buff = buffer ;
-	*buff++ = RORG_VLD; //vld
-	for (int i = 0; i < DataLen; i++)
-		*buff++ = *data++;
-
-	*buff++ = (sID >> 24) & 0xff;		// Sender ID
-	*buff++ = (sID >> 16) & 0xff;
-	*buff++ = (sID >> 8) & 0xff;
-	*buff++ = sID & 0xff;
-	*buff++ = 0; //status
-
-				 //optionnal data
-	unsigned char opt[16];
-	opt[0] = 0x03; //subtel
-	opt[1] = 0xff;
-	opt[2] = 0xff;
-	opt[3] = 0xff;
-	opt[4] = 0xff;
-	opt[5] = 0xff;
-	opt[6] = 00;//RSI 
-
-				//D2 01 00 00 FF 99 DF 01 00
-				//03 FF FF FF FF FF 00
-
-	sendFrameQueue(PACKET_RADIO, buffer, 6+DataLen, opt, 7);
-}
-
-extern uint32_t SetRawValues(uint8_t * data, T_DATAFIELD * OffsetDes, va_list value);
-
-//send a VLD datagramm of the command described by descriptor OffsetDes detailed in EEP profile.to device Id sID
-
-// the argument are variable length
-//it shall correspond to each offset Data detailed in EnOcean_Equipment_Profiles_EEP_v2.x.x_public.
-//the list  parameter shall end with value END_ARG_DATA
-//return is the size of the daya payload in byte 
-// or 0 : if an error occured : not enough parameters passed
-//example :
-//sendVld(unitBaseAddr, D20500_CMD_2, channel, 2, END_ARG_DATA);
-// send a stop command = 2 to channel 9 for EEP : D2-05-00 ; Blinds control
-
-//sendVld(unitBaseAddr, D20500_CMD_1, 100, 127, 0, 0, 0 , 1, END_ARG_DATA);
-// send a got position and angle command = 1 to 
-// POS=100 % 
-// ANG=127 : dont change 
-// REPO=0 goto ditectly 
-// LOCK=0  dont change  , 
-// channel 0
-// CMD = 1 goto command for EEP : D2-05-00 ; Blinds control
-
-
-uint32_t CEnOcean::sendVld(unsigned int unitBaseAddr, T_DATAFIELD * OffsetDes,  ...)
-{
-	uint8_t  data[MAX_DATA_PAYLOAD+2];
-	va_list value;
-
-	/* Initialize the va_list structure */
-	va_start(value, OffsetDes);
-
-	memset(data, 0, sizeof(data));
-
-	uint32_t DataSize = SetRawValues(data, OffsetDes,  value);
-	if (DataSize)
-		sendVld(unitBaseAddr, data, DataSize);
-
-	va_end(value);
-
-	return  DataSize;
-
-}
-
-
-void CEnOcean::setRorg(unsigned char * buff)
-{
-	buff[0] = RORG_SYS_EX;
-
-	m_Seq++;
-	if (m_Seq > 3) m_Seq = 1;
-	buff[1] = m_Seq << 6;       //SEQ 40/80/C0
-
-}
-
-void setDestination(unsigned char * opt, unsigned int destID)
-{
-	//optionnal data
-	opt[0] = 0x03; //subtel
-	DeviceIntToArray(destID, &opt[1]);
-	opt[5] = 0xff;
-	opt[6] = 00;//RSI 
-
-}
-
-T_DATAFIELD remote_sysex[] = {
-{  0 , 2 , "SEQ"       ,   0 ,   0 ,   0 ,   0 , "SEQ"},
-{  2 , 6 , "IDX"       ,   0 ,   0 ,   0 ,   0 , "IDX"},
-{  8 , 9 , "LEN"       ,   0 ,   0 ,   0 ,   0 , ""},
-{  17, 11, "MAN"       ,   0 ,   0 ,   0 ,   0 , ""},
-{  28, 12, "FN"        ,   0 ,   0 ,   0 ,   0 , ""},
-
-															   //Value: 0x01 = Configuration data valid 
-{  0 , 0 , 0          , 0           }
-};
-
-
-void CEnOcean::remoteLearning(unsigned int destID, bool StartLearning, int channel)
-{
-	unsigned char buff[16];
-	unsigned char opt[16];
-
-	memset(buff, 0, sizeof(buff));
-	setRorg(buff);
-
-	buff[2] = 0x01;			//data len = 2
-	buff[3] = 0x7F;		//mamanufacturer 7FF
-	buff[4] = 0xF2;			//function 220
-	buff[5] = 0x20;
-
-	//payload 4 bytes
-	if (StartLearning)buff[6] = 0; else buff[6] = 0x80;
-	buff[7] = channel;
-
-	buff[14] = 0x8F; //status
-
-	//optionnal data
-	setDestination(opt, destID);
-
-	_log.Debug(DEBUG_NORM, "EnOcean: send remoteLearning to %08X ",destID);
-	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
-}
-
-void CEnOcean::unlock(unsigned int destID, unsigned int code)
-{
-	unsigned char buff[16];
-	unsigned char opt[16];
-
-	memset(buff, 0, sizeof(buff));
-	setRorg(buff);
-
-	buff[2] = 0x02;			//data len = 4
-	buff[3] = 0x7F;			//mamanufacturer 7FF
-	buff[4] = 0xF0;
-	buff[5] = 0x01;			//function 001
-	buff[14] = 0x8F; //status
-
-	DeviceIntToArray(code, &buff[6]);
-
-	//optionnal data
-	setDestination(opt, destID);
-
-	_log.Debug(DEBUG_NORM, "EnOcean: unlock send cmd code:%08X",code);
-	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
-}
-
-void CEnOcean::lock(unsigned int destID, unsigned int code)
-{
-	unsigned char buff[16];
-	unsigned char opt[16];
-
-	memset(buff, 0, sizeof(buff));
-	setRorg(buff);
-
-	buff[2] = 0x02;			//data len = 4
-	buff[3] = 0x7F;			//mamanufacturer 7FF
-	buff[4] = 0xF0;
-	buff[5] = 0x02;			//function 002
-	buff[14] = 0x8F; //status
-
-	DeviceIntToArray(code, &buff[6]);
-
-	//optionnal data
-	setDestination(opt, destID);
-
-	_log.Debug(DEBUG_NORM, "EnOcean: lock send cmd ");
-	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
-
-}
-
-void CEnOcean::setcode(unsigned int destID, unsigned int code)
-{
-	unsigned char buff[16];
-	unsigned char opt[16];
-
-	memset(buff, 0, sizeof(buff));
-	setRorg(buff);
-
-	buff[2] = 0x02;			//data len = 4
-	buff[3] = 0x7F;			//mamanufacturer 7FF
-	buff[4] = 0xF0;
-	buff[5] = 0x03;			//function 003
-	buff[14] = 0x8F; //status
-
-	DeviceIntToArray(code, &buff[6]);
-
-	//optionnal data
-	setDestination(opt, destID);
-
-	_log.Debug(DEBUG_NORM, "EnOcean: setcode send cmd to %08X , %d", destID, code);
-	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
-
-}
-
-void CEnOcean::queryid(unsigned int EEP, unsigned int mask )
-{
-	unsigned char buff[16];
-	unsigned char opt[16];
-
-	memset(buff, 0, sizeof(buff));
-	setRorg(buff);
-
-	buff[2] = 0x01;			//data len = 3
-	buff[3] = 0xFF;			//mamanufacturer 7FF
-	buff[4] = 0xF0;
-	buff[5] = 0x04;			//function 004
-	buff[6] = 0;
-	buff[7] = 0;
-	buff[8] = 0;
-
-	buff[14] = 0x8F; //status
-
-	//optionnal data : alway broadcast
-	setDestination(opt, 0xFFFFFFFF);
-
-	_log.Debug(DEBUG_NORM, "EnOcean: queryid send cmd EEP: %08X Mask: %d", EEP, mask);
-	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
-
-}
-
-void CEnOcean::ping(unsigned int destID)
-{
-	unsigned char buff[16];
-	unsigned char opt[16];
-
-	memset(buff, 0, sizeof(buff));
-	setRorg(buff);
-
-	buff[2] = 0x00;			//data len = 0
-	buff[3] = 0x7F;			//mamanufacturer 7FF
-	buff[4] = 0xF0;
-	buff[5] = 0x06;			//function 006
-	buff[14] = 0x8F; //status
-
-	//optionnal data
-	setDestination(opt, destID);
-
-	_log.Debug(DEBUG_NORM, "EnOcean: Ping cmd send to %08X ", destID);
-	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
-
-}
-
-void CEnOcean::action(unsigned int destID)
-{
-	unsigned char buff[16];
-	unsigned char opt[16];
-
-	memset(buff, 0, sizeof(buff));
-	setRorg(buff);
-
-	buff[2] = 0x00;			//data len = 0
-	buff[3] = 0x7F;			//mamanufacturer 7FF
-	buff[4] = 0xF0;
-	buff[5] = 0x05;			//function 005
-	buff[14] = 0x8F;		//status
-
-					 //optionnal data
-	setDestination(opt, destID);
-
-	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
-	_log.Debug(DEBUG_NORM, "EnOcean: send action %08X ", destID);
-
-}
-
-void CEnOcean::getProductId(unsigned int destination )
-{
-	unsigned char buff[16];
-	unsigned char opt[16];
-
-	memset(buff, 0, sizeof(buff));
-	setRorg(buff);
-
-	buff[2] = 0x00;			//data len = 0
-	buff[3] = 0x7F;			//mamanufacturer 7FF
-	buff[4] = 0xF2;
-	buff[5] = 0x27;			//function 227
-	buff[14] = 0x8F;		//status
-
-							//optionnal data
-	setDestination(opt, destination);
-
-	_log.Debug(DEBUG_NORM, "EnOcean: getProductId cmd send to %08X", destination );
-	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
-
-}
-
-
-void CEnOcean::getLinkTableMedadata(uint destID)
-{
-	unsigned char buff[16];
-	unsigned char opt[16];
-
-	memset(buff, 0, sizeof(buff));
-	setRorg(buff);
-
-	buff[2] = 0x00;			//data len = 0
-	buff[3] = 0x7F;			//mamanufacturer 7FF
-	buff[4] = 0xF2;
-	buff[5] = 0x10;			//function 210
-	buff[14] = 0x8F; //status
-
-					 //optionnal data
-	setDestination(opt, destID);
-
-	_log.Debug(DEBUG_NORM, "EnOcean: send getLinkTableMedadata %08X ", destID);
-	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
-
-	waitRemote_man_answer(RC_GET_METADATA_RESPONSE,30 );
-
-}
-
-
-void CEnOcean::queryFunction(uint destID)
-{
-	unsigned char buff[16];
-	unsigned char opt[16];
-	//C5 80 00 7F F0 07 00 00 00 00 00 00 00 00 8F
-
-	memset(buff, 0, sizeof(buff));
-	setRorg(buff);
-
-	buff[2] = 0x00;			//data len = 0
-	buff[3] = 0x7F;			//mamanufacturer 7FF
-	buff[4] = 0xF0;
-	buff[5] = 0x07;			//function 007
-	buff[14] = 0x8F; //status
-
-					 //optionnal data
-	setDestination(opt, destID);
-
-	_log.Debug(DEBUG_NORM, "EnOcean: send queryFunction %08X ", destID);
-	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
-
-}
-
-void CEnOcean::queryStatus(uint destID)
-{
-	unsigned char buff[16];
-	unsigned char opt[16];
-	//C5 80 00 7F F0 08 00 00 00 00 00 00 00 00 8F
-
-	memset(buff, 0, sizeof(buff));
-	setRorg(buff);
-
-	buff[2] = 0x00;			//data len = 0
-	buff[3] = 0x7F;			//mamanufacturer 7FF
-	buff[4] = 0xF0;
-	buff[5] = QUERY_STATUS;			//function 008
-	buff[14] = 0x8F; //status
-
-					 //optionnal data
-	setDestination(opt, destID);
-
-	_log.Debug(DEBUG_NORM, "EnOcean: send queryStatus %08X ", destID);
-	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
-
-}
-
-
-void CEnOcean::getallLinkTable(uint SensorId, int begin, int end)
-{
-	unsigned char buff[16];
-	unsigned char opt[16];
-
-	memset(buff, 0, sizeof(buff));
-	setRorg(buff);
-
-	buff[2] = 0x01;			//data len = 3
-	buff[3] = 0xFF;			//mamanufacturer 7FF
-	buff[4] = 0xF2;
-	buff[5] = 0x11;			//function 211
-
-	buff[7] = begin;		//end offset table 
-	buff[8] = end;		//end offset table 
-
-	buff[14] = 0x8F; //status
-
-					 //optionnal data
-	setDestination(opt, SensorId);
-
-	_log.Debug(DEBUG_NORM, "EnOcean: send getallLinkTable %08X begin :%d End:%d ", SensorId, begin,  end );
-	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
-
-	//Number of table entry to received
-	//3 entry by response datagramm
-	int NbAnswer = ( ( end - begin + 1 ) + 2 ) / 3 ;
-
-	//wait for all the table response
-	for (int i=0;i< NbAnswer;i++)
-		waitRemote_man_answer(RC_GET_TABLE_RESPONSE, 30);
-
-}
-
-
-
-//teachin from ID database
-void CEnOcean::TeachIn(std::string& sidx)
-{
-	std::vector<std::vector<std::string> > result;
-	result = m_sql.safe_query("SELECT DeviceID,Unit  FROM DeviceStatus WHERE (ID='%s')  ", sidx.c_str());
-	if (result.size() > 0)
-	{
-		TeachIn(result[0][0], result[0][1]);
-	}
-
-}
-//teachin from senderId / unit 
-void CEnOcean::TeachIn(std::string& deviceId , std::string& unit )
-{
-		int channel = atoi(unit.c_str());
-		//get sender adress from db
-		unsigned int SenderAdress = DeviceIdCharToInt(deviceId);
-
-		_log.Log(LOG_NORM, "EnOcean: send remoteLearning to device %s channel:%d", deviceId.c_str(), channel);
-
-		unlock(SenderAdress, GetLockCode() );
-		remoteLearning(SenderAdress, true, channel - 1);
-}
-
 std::string IntToString(int val, int nbDigit)
 {
 	char fmt[16];
@@ -1053,214 +611,12 @@ std::string IntToString(int val, int nbDigit)
 	sprintf(intStr, fmt, val);
 	return intStr;
 }
-
-void CEnOcean::GetNodeList(http::server::WebEmSession & session, const http::server::request& req, Json::Value &root)
+void setDestination(unsigned char * opt, unsigned int destID)
 {
-	int nbParam = req.parameters.size() - 3;
-	root["status"] = "OK";
-	root["title"] = "EnOceanNodes";
+	//optionnal data
+	opt[0] = 0x03; //subtel
+	DeviceIntToArray(destID, &opt[1]);
+	opt[5] = 0xff;
+	opt[6] = 00;//RSI 
 
-	std::vector<std::vector<std::string> > result;
-	result = m_sql.safe_query("SELECT D.Name, D.Type, d.SubType, d.SwitchType, d.Unit, d.DeviceId, E.Rorg, E.Profile, E.Type, E.Manufacturer, E.Address FROM DeviceStatus as d LEFT OUTER JOIN EnoceanSensors as e ON(instr(E.DeviceID, D.DeviceId) <> 0)  WHERE (D.HardwareID==%d) ", m_HwdID);
-
-	if (result.size() > 0)
-	{
-		std::vector<std::vector<std::string> >::const_iterator itt;
-		int ii = 0;
-		for (itt = result.begin(); itt != result.end(); ++itt)
-		{
-			std::vector<std::string> sd = *itt;
-
-			//					unsigned int homeID = boost::lexical_cast<unsigned int>(sd[1]);
-			{
-
-				root["result"][ii]["Name"] = sd[00];
-				root["result"][ii]["Type"] = sd[01];
-				root["result"][ii]["SubType"] = sd[02];
-				root["result"][ii]["SwitchType"] = sd[03];
-				root["result"][ii]["TypeName"] = RFX_Type_SubType_Desc(atoi(sd[01].c_str()), atoi(sd[02].c_str()));
-				root["result"][ii]["Unit"] = sd[04];
-				root["result"][ii]["DeviceID"] = sd[05];
-				int rorg = atoi(sd[6].c_str());
-				int func = atoi(sd[7].c_str());
-				int type = atoi(sd[8].c_str());
-
-				root["result"][ii]["Profile"] = IntToString(rorg, 2) + "-" + IntToString(func, 2) + "-" + IntToString(type, 2);
-				root["result"][ii]["Manufacturer"] = sd[9];
-				std::string man = Get_EnoceanManufacturer(atoi(sd[9].c_str()));
-				if (man[0] == '>') man = "Unkown";
-				root["result"][ii]["Manufacturer_name"] = man ;
-				
-				root["result"][ii]["BaseAddress"] = DeviceIDToString( GetAdress(atoi(sd[10].c_str())));
-				std::string typ = Get_Enocean4BSType(rorg, func, type);
-				if (typ[0] == '>') typ = "Unkown";
-
-				root["result"][ii]["EnoTypeName"] = typ;
-
-				root["result"][ii]["Description"] = Get_Enocean4BSDesc(rorg, func, type);
-
-
-				char szDate[80] = "";
-				//struct tm loctime;
-				//						localtime_r(&pNode->LastSeen, &loctime);
-				//strftime(szDate, 80, "%Y-%m-%d %X", &loctime);
-
-				root["result"][ii]["LastUpdate"] = szDate;
-
-				ii++;
-			}
-		}
-	}
-}
-
-
-
-
-void CEnOcean::GetLinkTable(http::server::WebEmSession & session, const http::server::request& req, Json::Value &root)
-{
-	int nbParam = req.parameters.size() - 3;
-	root["status"] = "OK";
-	root["title"] = "EnOceanLinkTable";
-	std::string DeviceIds = http::server::request::findValue(&req, "sensorid");
-	unsigned int  DeviceId = DeviceIdCharToInt(DeviceIds);
-
-/*
-addLinkTable(0x1a65428, 0, 0xD0500, 0xABCDEF, 1);
-	addLinkTable(0x1a65428, 1, 0xD0500, 0x1a65428, 1);
-	addLinkTable(0x1a65428, 2, 0xD0500, 0x1234567, 1);
-	addLinkTable(0x1a65428, 3, 0xD0500, 0x2345678, 1);
-*/
-	T_SENSOR* sensors = Sensors.Find(DeviceId);
-
-	if (sensors)
-		for (int entry = 0; entry < sensors->MaxSize; entry++)
-		{
-			root["result"][entry]["Profile"]  = string_format("%06X", sensors->LinkTable[entry].Profile);
-			root["result"][entry]["SenderId"] = string_format("%07X", sensors->LinkTable[entry].SenderId);
-			root["result"][entry]["Channel"]  = string_format("%d"  , sensors->LinkTable[entry].Channel);
-
-			root["result"][entry]["Name"] = GetDeviceNameFromId(sensors->LinkTable[entry].SenderId);
-
-		}
-}
-
-std::string GetLighting2StringId(unsigned int id )
-{
-	char szTmp[300];
-
-	sprintf(szTmp, "%07X", id );
-	return szTmp;
-}
-
-//return true if adress is in range 
-bool CEnOcean::CheckIsGatewayAdress(unsigned int deviceid)
-{
-	if ((deviceid > m_id_base) && (deviceid < m_id_base + MAX_BASE_ADDRESS))
-		return true;
-	else
-		return false;
-
-}
-
-
-std::string  GetDeviceNameFromId( unsigned int ID )
-{
-	char szDeviceID[20];
-	sprintf(szDeviceID, "%07X", (unsigned int)ID );
-
-	std::vector<std::vector<std::string> > result;
-	result = m_sql.safe_query("SELECT Name  FROM DeviceStatus WHERE ( instr(DeviceID, '%q' ) <> 0) ", szDeviceID );
-	if (result.size() != 0)
-	{
-		return result[0][0];
-	}
-	return "" ;
-}
-
-unsigned int CEnOcean::GetLockCode()
-{
-	std::string scode;
-	m_sql.GetPreferencesVar("EnOceanLockCode", scode);
-	unsigned int code = DeviceIdCharToInt(scode);
-	return code;
-}
-void  CEnOcean::SetLockCode(std::string scode)
-{
-	m_sql.UpdatePreferencesVar("EnOceanLockCode", scode);
-}
-
-void CEnOcean::setRemote_man_answer(int premote_man_answer) 
-{ 
-	std::lock_guard<std::mutex> l(m_RMCC_Mutex);
-	m_RMCC_queue.push_back(premote_man_answer);
-};
-
-int CEnOcean::getRemote_man_answer() 
-{ 
-	int remote_man_answer=0;
-
-	//if a response as been received
-	if (m_RMCC_queue.size() > 0)
-	{
-		std::lock_guard<std::mutex> l(m_RMCC_Mutex);
-
-		remote_man_answer = m_RMCC_queue.front();
-
-		m_RMCC_queue.erase(m_RMCC_queue.begin());
-	}
-
-	return remote_man_answer; 
-};
-
-//return true if time out
-bool CEnOcean::waitRemote_man_answer(int premote_man_answer, int timeout )
-{
-	while ( (getRemote_man_answer() != premote_man_answer) && (timeout>0) )
-	{
-		Sleep(1000);
-		timeout--;
-	}
-	if (timeout == 0) 
-		_log.Debug(DEBUG_NORM, "EnOcean: TIMEOUT waiting answer %04X ", premote_man_answer);
-
-	return (timeout == 0);
-}
-
-
-
-
-void  ProfileToRorgFuncType(int EEP, int &Rorg, int &Func, int &Type)
-{
-	Type = EEP & 0xff;
-	EEP >>= 8;
-	Func = EEP & 0xff;
-	EEP >>= 8;
-	Rorg = EEP & 0xff;
-}
-
-int RorgFuncTypeToProfile( int Rorg, int Func, int Type)
-{
-	return (Rorg * 256 * 256 + Func * 256 + Type);
-}
-
-int   getRorg(int EEP)
-{
-	return ( EEP >> 16 ) & 0xFF ;
-}
-int   getFunc(int EEP)
-{
-	return (EEP >> 8) & 0xFF;
-}
-int   getType(int EEP)
-{
-	return (EEP ) & 0xFF;
-}
-
-std::string string_format(const char * fmt, ...) {
-	va_list ap;
-	char buf[1024];
-	va_start(ap, fmt);
-	int n = vsnprintf((char *)buf, sizeof(buf), fmt, ap);
-
-	return buf;
 }

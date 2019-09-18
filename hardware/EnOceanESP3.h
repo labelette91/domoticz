@@ -3,7 +3,7 @@
 #include <vector>
 #include "ASyncSerial.h"
 #include "DomoticzHardware.h"
-#include "EnOcean.h"
+#include "EnOceanRMCC.h"
 #include <map>
 #include "../webserver/cWebem.h"
 #include "../webserver/request.hpp"
@@ -23,7 +23,7 @@ typedef struct _tVLDNode
 	uint8_t type;
 }_tVLDNode;
 
-class CEnOceanESP3: public CEnOcean
+class CEnOceanESP3: public CEnOceanRMCC
 {
 	enum _eEnOcean_Receive_State
 	{

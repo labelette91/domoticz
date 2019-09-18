@@ -5,7 +5,6 @@
 #include "DomoticzHardware.h"
 #include "../main/WebServer.h"
 #include "../json/json.h"
-#include "../main/Logger.h"
 
 #define MAX_BASE_ADDRESS 128
 
@@ -107,25 +106,22 @@ typedef enum
 //convert id from  buffer[] to unsigned int
 unsigned int DeviceArrayToInt(unsigned char m_buffer[]);
 void         DeviceIntToArray(unsigned int sID, unsigned char buf[]);
-
 unsigned int DeviceIdCharToInt(std::string &DeviceID);
-std::string GetLighting2StringId(unsigned int id);
-
-bool TypFnAToB(const char * st, unsigned char bin[], int  *trame_len);
-const char* Get_EnoceanManufacturer(unsigned long ID);
-const char* Get_Enocean4BSType(const int Org, const int Func, const int Type);
-
-void ToSensorsId(std::string &DeviceId);
-
-const char* Get_Enocean4BSDesc(const int Org, const int Func, const int Type);
-
-void ProfileToRorgFuncType(int EEP, int & Rorg, int & Func, int & Type);
-int RorgFuncTypeToProfile(int Rorg, int Func, int Type);
-int getRorg(int EEP);
-int getFunc(int EEP);
-int getType(int EEP);
+std::string  GetLighting2StringId(unsigned int id);
+bool         TypFnAToB(const char * st, unsigned char bin[], int  *trame_len);
+const char*  Get_EnoceanManufacturer(unsigned long ID);
+const char*  Get_Enocean4BSType(const int Org, const int Func, const int Type);
+void         ToSensorsId(std::string &DeviceId);
+const char*  Get_Enocean4BSDesc(const int Org, const int Func, const int Type);
+void         ProfileToRorgFuncType(int EEP, int & Rorg, int & Func, int & Type);
+int          RorgFuncTypeToProfile(int Rorg, int Func, int Type);
+int          getRorg(int EEP);
+int          getFunc(int EEP);
+int          getType(int EEP);
 std::string  GetDeviceNameFromId(unsigned int ID);
-std::string string_format(const char * fmt, ...);
+std::string  string_format(const char * fmt, ...);
+std::string  IntToString(int val, int nbDigit);
+void         setDestination(unsigned char * opt, unsigned int destID);
 
 
 #include "sensors.h"
@@ -149,6 +145,7 @@ typedef struct {
 class CEnOcean : public AsyncSerial, public CDomoticzHardwareBase
 {
 	friend class CEnOceanESP3;
+	friend class CEnOceanRMCC;
 
 public:
     /**
@@ -213,12 +210,6 @@ public:
 
 	void UpdateProfileSensors(char * szDeviceID, int rorg, int profile, int ttype);
 
-	void TeachIn(std::string& idx);
-	void CEnOcean::TeachIn(std::string& deviceId, std::string& unit);
-
-	void GetNodeList(http::server::WebEmSession & session, const http::server::request& req, Json::Value &root);
-	void GetLinkTable(http::server::WebEmSession & session, const http::server::request& req, Json::Value &root);
-
 	bool CheckIsGatewayAdress(unsigned int id);
 
 private:
@@ -228,7 +219,6 @@ private:
 	virtual bool sendFrameQueue(unsigned char frametype, unsigned char *databuf, unsigned short datalen, unsigned char *optdata, unsigned char optdatalen) { return true; };
 
 public:
-	void parse_PACKET_REMOTE_MAN_COMMAND(unsigned char m_buffer[], int m_DataSize, int m_OptionalDataSize);
 	void sendVld(unsigned int sID, int channel, int value);
 	void sendVld(unsigned int sID, unsigned char *data, int DataLen);
 	uint32_t sendVld(unsigned int unitBaseAddr, T_DATAFIELD * OffsetDes,  ...);
@@ -237,42 +227,10 @@ public:
 	void SendRpsTeachIn(unsigned int sID);
 	void Send1BSTeachIn(unsigned int sID);
 	void Send4BSTeachIn(unsigned int sID);
-	void remoteLearning(unsigned int destID, bool StartLearning, int channel = 0);
-	void setRorg(unsigned char * buff);
-	void unlock(unsigned int destID, unsigned int code);
-	void lock(unsigned int destID, unsigned int code);
-	void setcode(unsigned int destID, unsigned int code);
-	void queryid(unsigned int destID, unsigned int mask);
-
-	void ping(unsigned int destID);
-	void action(unsigned int destID);
-	void getProductId(unsigned int destination=0xFFFFFFFF);
-	void getLinkTableMedadata(uint SensorId);
-	void queryFunction(uint SensorId);
-
-	void queryStatus(uint destID);
-
-	void getallLinkTable(uint SensorId, int begin, int end);
-
-	unsigned int GetLockCode();
-	void  SetLockCode(std::string scode);
-	void setRemote_man_answer(int premote_man_answer);
-	int  getRemote_man_answer();
-	bool CEnOcean::waitRemote_man_answer(int premote_man_answer, int timeout);
 
 public:	unsigned long m_id_base;
-	int m_Seq;
 
 	T_SENSORS Sensors;
-
-	//remote management
-	//remote management function reception 
-	int remote_man_answer;
-
-	//Remote Mannagement Control Command reception Mutex
-	std::mutex m_RMCC_Mutex;
-	//Remote Mannagement Control Command reception Queue
-	std::vector<int> m_RMCC_queue;
 
 };
 
