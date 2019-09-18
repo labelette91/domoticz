@@ -602,10 +602,15 @@ int CEnOceanRMCC::getRemote_man_answer()
 //return true if time out
 bool CEnOceanRMCC::waitRemote_man_answer(int premote_man_answer, int timeout)
 {
-	while ((getRemote_man_answer() != premote_man_answer) && (timeout > 0))
+	int remote_man_answer = getRemote_man_answer();
+	while (( remote_man_answer != premote_man_answer) && (timeout > 0))
 	{
-		Sleep(1000);
-		timeout--;
+		if (remote_man_answer == 0)
+		{
+			Sleep(1000);
+			timeout--;
+		}
+		remote_man_answer = getRemote_man_answer();
 	}
 	if (timeout == 0)
 		_log.Debug(DEBUG_NORM, "EnOcean: TIMEOUT waiting answer %04X :%s ", premote_man_answer, RMCC_Cmd_Desc(premote_man_answer));
