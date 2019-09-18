@@ -432,6 +432,29 @@ void CEnOceanRMCC::getallLinkTable(uint SensorId, int begin, int end)
 		waitRemote_man_answer(RC_GET_TABLE_RESPONSE, 30);
 
 }
+void CEnOceanRMCC::resetToDefaults(uint destID,int resetAction)
+{
+	unsigned char buff[16];
+	unsigned char opt[16];
+
+	memset(buff, 0, sizeof(buff));
+	setRorg(buff);
+
+	buff[2] = 0x00;			//data len = 1
+	buff[3] = 0xFF;			//mamanufacturer 7FF
+	buff[4] = 0xF2;
+	buff[5] = 0x24  ;			//function 224 RC_RESET_TO_DEFAULTS
+	buff[6] = resetAction ;
+	buff[14] = 0x8F; //status
+
+					 //optionnal data
+	setDestination(opt, destID);
+
+	_log.Debug(DEBUG_NORM, "EnOcean: send resetToDefaults %08X ", destID);
+	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
+
+}
+
 //teachin from ID database
 void CEnOceanRMCC::TeachIn(std::string& sidx)
 {
@@ -582,4 +605,79 @@ bool CEnOceanRMCC::waitRemote_man_answer(int premote_man_answer, int timeout)
 
 	return (timeout == 0);
 }
+
+
+
+typedef struct _STR_TABLE {
+	unsigned long    id;
+	const char   *str1;
+} STR_TABLE;
+
+const char *findTableIDSingle(const STR_TABLE *t, const unsigned long id)
+{
+	while (t->str1) {
+		if (t->id == id)
+			return t->str1;
+		t++;
+	}
+	return "Unknown";
+}
+
+const char *RMCC_Cmd_Desc(const int tType)
+{
+	static const STR_TABLE	Table[] =
+	{
+		{ UNLOCK                               ,"Unlock                                " },
+		{ LOCK                                 ,"Lock                                  " },
+		{ SETCODE                              ,"Set code                              " },
+		{ QUERYID                              ,"Query ID                              " },
+		{ QUERYID_ANSWER                       ,"Query ID answer                       " },
+		{ QUERYID_ANSWER_EXT                   ,"! Ext Query Id Answer                 " },
+		{ ACTION                               ,"Action                                " },
+		{ PING                                 ,"Ping                                  " },
+		{ PING_ANSWER                          ,"Ping answer                           " },
+		{ QUERY_FUNCTION                       ,"Query function                        " },
+		{ QUERY_FUNCTION_ANSWER                ,"Query function answer                 " },
+		{ QUERY_STATUS                         ,"Query status                          " },
+		{ QUERY_STATUS_ANSWER                  ,"Query status answer                   " },
+		{ REMOTE_LEARNIN                       ,"Remote learn in                       " },
+		{ REMOTE_FLASH_WRITE                   ,"Remote flash write                    " },
+		{ REMOTE_FLASH_READ                    ,"Remote flash read                     " },
+		{ REMOTE_FLASH_READ_ANSWER             ,"Remote flash read answer              " },
+		{ SMARTACK_READ                        ,"SmartACK read                         " },
+		{ SMARTACK_READ_MAILBOX_ANSWER         ,"SmartACK read mailbox answer          " },
+		{ SMARTACK_READ_LEARNED_SENSOR_ANSWER  ,"SmartACK read learned sensor answer   " },
+		{ SMARTACK_WRITE                       ,"SmartACK write                        " },
+		{ RC_ACK                               ,"Remote Commissioning Acknowledge      " },
+		{ RC_GET_METADATA                      ,"Get Link Table Metadata Query         " },
+		{ RC_GET_METADATA_RESPONSE             ,"Get Link Table Metadata Response      " },
+		{ RC_GET_TABLE                         ,"Get Link Table Query                  " },
+		{ RC_GET_TABLE_RESPONSE                ,"Get Link Table Response               " },
+		{ RC_SET_TABLE                         ,"Set Link Table Query                  " },
+		{ RC_GET_GP_TABLE                      ,"Get Link Table GP Entry Query         " },
+		{ RC_GET_GP_TABLE_RESPONSE             ,"Get Link Table GP Entry Response      " },
+		{ RC_SET_GP_TABLE                      ,"Set Link Table GP Entry Query         " },
+		{ RC_SET_LEARN_MODE                    ,"Remote Set Learn Mode                 " },
+		{ RC_TRIG_OUTBOUND_TEACH_REQ           ,"Trigger Outbound Remote Teach Request " },
+		{ RC_GET_DEVICE_CONFIG                 ,"Get Device Configuration Query        " },
+		{ RC_GET_DEVICE_CONFIG_RESPONSE        ,"Get Device Configuration Response     " },
+		{ RC_SET_DEVICE_CONFIG                 ,"Set Device Configuration Query        " },
+		{ RC_GET_LINK_BASED_CONFIG             ,"Get Link Based Configuration Query    " },
+		{ RC_GET_LINK_BASED_CONFIG_RESPONSE    ,"Get Link Based Configuration Response " },
+		{ RC_SET_LINK_BASED_CONFIG             ,"Set Link Based Configuration Query    " },
+		{ RC_APPLY_CHANGES                     ,"Apply Changes Command                 " },
+		{ RC_RESET_TO_DEFAULTS                 ,"Reset to Defaults                     " },
+		{ RC_RADIO_LINK_TEST_CONTROL           ,"Radio Link Test Control               " },
+		{ RC_GET_PRODUCT_ID                    ,"Get Product ID Query                  " },
+		{ RC_GET_PRODUCT_RESPONSE              ,"Get Product ID Response               " },
+		{ RC_GET_REPEATER_FUNCTIONS            ,"Get Repeater Functions Query          " },
+		{ RC_GET_REPEATER_FUNCTIONS_RESPONSE   ,"Get Repeater Functions Response       " },
+		{ RC_SET_REPEATER_FUNCTIONS            ,"Set Repeater Functions Query          " },
+		{ RC_SET_REPEATER_FILTER               ,"Set Repeater Filter Query             " },
+		{ 0, NULL  }
+
+	};
+	return findTableIDSingle(Table, tType);
+}
+
 

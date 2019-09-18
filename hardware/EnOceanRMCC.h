@@ -6,6 +6,12 @@
 
 #include <string>
 
+#define ResetConfigurationParameters   (1<<7)
+#define ResetSetIinboundLinkTable      (1<<6)
+#define ResetOutboundLinkTable         (1<<5)
+#define ResetToDefaults                (0xE )
+
+
 class CEnOceanRMCC : public CEnOcean
 {
 
@@ -53,6 +59,8 @@ public:
 
 	void getallLinkTable(uint SensorId, int begin, int end);
 
+	void resetToDefaults(uint destID, int resetAction);
+
 	void TeachIn(std::string & sidx);
 
 	void TeachIn(std::string & deviceId, std::string & unit);
@@ -72,5 +80,7 @@ public:
 	bool waitRemote_man_answer(int premote_man_answer, int timeout);
 
 };
+
+const char *RMCC_Cmd_Desc(const int tType);
 
 #endif
