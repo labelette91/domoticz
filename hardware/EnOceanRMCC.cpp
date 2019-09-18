@@ -133,7 +133,7 @@ void CEnOceanRMCC::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , i
 
 			int  function = m_buffer[4 + i * 4] * 256 + m_buffer[5 + i * 4];
 			if (function)
-				_log.Log(LOG_NORM, "EnOcean: QUERY FUNCTION answer SenderId: %08X Function :%0X  ", senderId, function);
+				_log.Log(LOG_NORM, "EnOcean: QUERY FUNCTION answer SenderId: %08X Function :%0X = %s ", senderId, function, RMCC_Cmd_Desc(function));
 		}
 
 	}

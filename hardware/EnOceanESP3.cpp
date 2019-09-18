@@ -2293,8 +2293,16 @@ namespace http {
 					if (!deviceId.empty())	
 						pEnocean->resetToDefaults(DeviceIdCharToInt(deviceId), ResetToDefaults );
 				}
-
 			}
+			else if (cmd == "QueryFunction") {
+				for (int i = 0; i < nbParam; i++) {
+					std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
+					getDeviceIdUnit(cmd, deviceId, unit);
+					if (!deviceId.empty())
+						pEnocean->queryFunction(DeviceIdCharToInt(deviceId) );
+				}
+			}
+
 
 
 			else
