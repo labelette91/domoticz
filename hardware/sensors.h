@@ -30,7 +30,12 @@ typedef struct _T_SENSOR {
 	{
 		CurrentSize = 0;
 		MaxSize = 0;
-		for (int i = 0; i < SIZE_LINK_TABLE; i++)
+		initEntry(0);
+	}
+
+	void initEntry(int deb)
+	{
+		for (int i = deb; i < SIZE_LINK_TABLE; i++)
 		{
 			LinkTable[i].Profile = 0xFFFFFF;
 			LinkTable[i].SenderId = 0;
@@ -63,6 +68,7 @@ public:
 	{
 		m_sensors[SensorId].CurrentSize = csize;
 		m_sensors[SensorId].MaxSize = MaxSize;
+		m_sensors[SensorId].initEntry(csize);
 	}
 	void addLinkTable(uint DeviceId, int entry, int profile, uint sensorId, int channel)
 	{

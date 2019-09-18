@@ -9,7 +9,7 @@
 #define ResetConfigurationParameters   (1<<7)
 #define ResetSetIinboundLinkTable      (1<<6)
 #define ResetOutboundLinkTable         (1<<5)
-#define ResetToDefaults                (0xE )
+#define ResetToDefaults                (0xE0 )
 
 
 class CEnOceanRMCC : public CEnOcean

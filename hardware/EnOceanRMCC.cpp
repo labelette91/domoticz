@@ -354,7 +354,7 @@ void CEnOceanRMCC::getLinkTableMedadata(uint destID)
 	_log.Debug(DEBUG_NORM, "EnOcean: send getLinkTableMedadata %08X ", destID);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
-	waitRemote_man_answer(RC_GET_METADATA_RESPONSE,30 );
+	waitRemote_man_answer(RC_GET_METADATA_RESPONSE,5 );
 
 }
 void CEnOceanRMCC::queryFunction(uint destID)
@@ -431,7 +431,7 @@ void CEnOceanRMCC::getallLinkTable(uint SensorId, int begin, int end)
 
 	//wait for all the table response
 	for (int i=0;i< NbAnswer;i++)
-		waitRemote_man_answer(RC_GET_TABLE_RESPONSE, 30);
+		waitRemote_man_answer(RC_GET_TABLE_RESPONSE, 5);
 
 }
 void CEnOceanRMCC::resetToDefaults(uint destID,int resetAction)
@@ -486,8 +486,12 @@ void CEnOceanRMCC::GetNodeList(Json::Value &root)
 	root["title"] = "EnOceanNodes";
 
 	std::vector<std::vector<std::string> > result;
-	result = m_sql.safe_query("SELECT D.Name, D.Type, d.SubType, d.SwitchType, d.Unit, d.DeviceId, E.Rorg, E.Profile, E.Type, E.Manufacturer, E.Address FROM DeviceStatus as d LEFT OUTER JOIN EnoceanSensors as e ON(instr(E.DeviceID, D.DeviceId) <> 0)  WHERE (D.HardwareID==%d) ", m_HwdID);
+//	result = m_sql.safe_query("SELECT D.Name, D.Type, d.SubType, d.SwitchType, d.Unit, d.DeviceId, E.Rorg, E.Profile, E.Type, E.Manufacturer, E.Address FROM DeviceStatus   as d LEFT OUTER JOIN EnoceanSensors as e ON(instr(E.DeviceID, D.DeviceId) <> 0)  WHERE (D.HardwareID==%d) ", m_HwdID);
+//	result = m_sql.safe_query("SELECT D.Name, D.Type, d.SubType, d.SwitchType, d.Unit, d.DeviceId, E.Rorg, E.Profile, E.Type, E.Manufacturer, E.Address FROM EnoceanSensors AS E LEFT OUTER JOIN DeviceStatus   as d ON(instr(E.DeviceID, D.DeviceId) <> 0) and (D.HardwareID == E.HardwareID) ");
 
+//	result = m_sql.safe_query("SELECT * FROM  EnoceanSensors as e LEFT OUTER JOIN DeviceStatus as d ON(instr(E.DeviceID, D.DeviceId) <> 0) and (D.HardwareID == E.HardwareID)");
+	result = m_sql.safe_query("SELECT e.DeviceId, E.Rorg, E.Profile, E.Type, E.Manufacturer, E.Address , D.Name, D.Type, d.SubType, d.SwitchType, d.Unit FROM EnoceanSensors AS E LEFT OUTER JOIN DeviceStatus   as d ON(instr(E.DeviceID, D.DeviceId) <> 0) and (D.HardwareID == E.HardwareID) ");
+	//                                 0          1         2        3        4              5            6       7         8        9            10
 	if (result.size() > 0)
 	{
 		std::vector<std::vector<std::string> >::const_iterator itt;
@@ -499,30 +503,31 @@ void CEnOceanRMCC::GetNodeList(Json::Value &root)
 			//					unsigned int homeID = boost::lexical_cast<unsigned int>(sd[1]);
 			{
 
-				root["result"][ii]["Name"] = sd[00];
-				root["result"][ii]["Type"] = sd[01];
-				root["result"][ii]["SubType"] = sd[02];
-				root["result"][ii]["SwitchType"] = sd[03];
-				root["result"][ii]["TypeName"] = RFX_Type_SubType_Desc(atoi(sd[01].c_str()), atoi(sd[02].c_str()));
-				root["result"][ii]["Unit"] = sd[04];
-				root["result"][ii]["DeviceID"] = sd[05];
-				int rorg = atoi(sd[6].c_str());
-				int func = atoi(sd[7].c_str());
-				int type = atoi(sd[8].c_str());
+				root["result"][ii]["DeviceID"] = sd[00];
+				int rorg = atoi(sd[1].c_str());
+				int func = atoi(sd[2].c_str());
+				int type = atoi(sd[3].c_str());
 
 				root["result"][ii]["Profile"] = IntToString(rorg, 2) + "-" + IntToString(func, 2) + "-" + IntToString(type, 2);
-				root["result"][ii]["Manufacturer"] = sd[9];
+				root["result"][ii]["Manufacturer"] = sd[4];
 				std::string man = Get_EnoceanManufacturer(atoi(sd[9].c_str()));
 				if (man[0] == '>') man = "Unkown";
 				root["result"][ii]["Manufacturer_name"] = man ;
 				
-				root["result"][ii]["BaseAddress"] = DeviceIDToString( GetAdress(atoi(sd[10].c_str())));
+				root["result"][ii]["BaseAddress"] = DeviceIDToString( GetAdress(atoi(sd[5].c_str())));
 				std::string typ = Get_Enocean4BSType(rorg, func, type);
 				if (typ[0] == '>') typ = "Unkown";
 
 				root["result"][ii]["EnoTypeName"] = typ;
 
 				root["result"][ii]["Description"] = Get_Enocean4BSDesc(rorg, func, type);
+
+				root["result"][ii]["Name"] = sd[6];
+				root["result"][ii]["Type"] = sd[7];
+				root["result"][ii]["SubType"] = sd[8];
+				root["result"][ii]["SwitchType"] = sd[9];
+				root["result"][ii]["TypeName"] = RFX_Type_SubType_Desc(atoi(sd[8].c_str()), atoi(sd[9].c_str()));
+				root["result"][ii]["Unit"] = sd[10];
 
 
 				char szDate[80] = "";
@@ -603,7 +608,7 @@ bool CEnOceanRMCC::waitRemote_man_answer(int premote_man_answer, int timeout)
 		timeout--;
 	}
 	if (timeout == 0)
-		_log.Debug(DEBUG_NORM, "EnOcean: TIMEOUT waiting answer %04X ", premote_man_answer);
+		_log.Debug(DEBUG_NORM, "EnOcean: TIMEOUT waiting answer %04X :%s ", premote_man_answer, RMCC_Cmd_Desc(premote_man_answer));
 
 	return (timeout == 0);
 }

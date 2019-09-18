@@ -200,7 +200,8 @@ int CEnOcean::SensorExist(char * szDeviceID)
 //create sensor in database
 void CEnOcean::CreateSensors(char * szDeviceID, int rorg , int manufacturer, int profile, int ttype,  int OffsetAddr )
 {
-	m_sql.safe_query("INSERT INTO EnoceanSensors (HardwareID, DeviceID, Manufacturer, Rorg,Profile, [Type],Address) VALUES (%d,'%q',%d,%d,%d,%d)", m_HwdID, szDeviceID, manufacturer, rorg,profile, ttype, OffsetAddr);
+	m_sql.safe_query("INSERT INTO EnoceanSensors (HardwareID, DeviceID, Manufacturer, Rorg,Profile, [Type],Address) VALUES (%d,'%q',%d,%d,%d,%d,%d)", m_HwdID, szDeviceID, manufacturer, rorg,profile, ttype, OffsetAddr);
+	_log.Log(LOG_NORM, "EnOcean: Sender_ID %s inserted in the database", szDeviceID);
 
 }
 void CEnOcean::CreateSensors(unsigned int DeviceID, int rorg, int manufacturer, int profile, int ttype, int OffsetAddr)
@@ -220,7 +221,6 @@ void CEnOcean::AddSensors(unsigned int DeviceID, int rorg, int manufacturer, int
 	{
 		// If not found, add it to the database
 		CreateSensors(DeviceID, rorg,manufacturer, profile, ttype, OffsetAddr);
-		_log.Log(LOG_NORM, "EnOcean: Sender_ID 0x%08X inserted in the database", DeviceID);
 	}
 }
 bool CEnOcean::getProfileFromDb(std::string szDeviceID, int &Manufacturer, int &Rorg, int &Profile, int &Type)
@@ -443,7 +443,7 @@ bool CEnOcean::CheckIsGatewayAdress(unsigned int deviceid)
 std::string CEnOcean::DeviceIDToString(unsigned int DeviceID)
 {
 	char szDeviceID[20];
-	sprintf(szDeviceID, "%8X", (unsigned int)DeviceID);
+	sprintf(szDeviceID, "%08X", (unsigned int)DeviceID);
 	return szDeviceID;
 }
 //add leading 0 

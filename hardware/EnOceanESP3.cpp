@@ -1993,7 +1993,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 						if (pos >= 100)	pos = 0;
 
  						SendSwitch(senderId, unitcode+1, -1 , bon , pos , "");
-
+						return;
 					}
 				}
 
@@ -2170,11 +2170,18 @@ void getDeviceIdUnit(std::string &cmd , std::string &deviceId , std::string &Uni
 {
 	std::vector<std::string> splitresults;
 	StringSplit(cmd, ";", splitresults);
+	deviceId = "0";
+	Unit = "1";
 	if (splitresults.size()==2 )
 	{
 	deviceId = splitresults[0];
 	Unit = splitresults[1];
 	}
+	if (splitresults.size() == 1)
+	{
+		deviceId = splitresults[0];
+	}
+
 }
 
 void getDeviceIdUnit(std::string &cmd, unsigned &pdeviceId, unsigned &pUnit)
@@ -2275,7 +2282,9 @@ namespace http {
 
 				pEnocean->unlock(DeviceId, pEnocean->GetLockCode());
 				pEnocean->getLinkTableMedadata(DeviceId);
-				pEnocean->getallLinkTable(DeviceId, 0, pEnocean->Sensors.getTableLinkCurrentSize( DeviceId)-1 );
+				int TableSize = pEnocean->Sensors.getTableLinkCurrentSize(DeviceId);
+				if (TableSize)
+				pEnocean->getallLinkTable(DeviceId, 0, TableSize -1 );
 			}
 			else if (cmd == "QueryStatus") {
 				for ( int i = 0; i < nbParam; i++) {
