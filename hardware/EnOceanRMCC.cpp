@@ -141,10 +141,10 @@ void CEnOceanRMCC::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , i
 	}
 	else if (fct == QUERY_STATUS_ANSWER)
 	{	
-		bool  CodeIsSet = m_buffer[2] & 0x80;
-		int   LastSeq   = m_buffer[2] & 0x3 ;
-		int lastFunc  = m_buffer[3]*256 + m_buffer[4];
-		int lastReturnCode= m_buffer[5] ;
+		bool  CodeIsSet = m_buffer[4] & 0x80;
+		int   LastSeq   = m_buffer[4] & 0x3 ;
+		int lastFunc    = m_buffer[5]*256 + m_buffer[6];
+		int lastReturnCode= m_buffer[7] ;
 
 		unsigned int senderId = DeviceArrayToInt(&m_buffer[12]);
 		_log.Log(LOG_NORM, "EnOcean: QUERY STATUS ANSWER SenderId: %08X CodeIsSet:%d LastSeq:%d lastFunc:%04X lastReturnCode:%d ", senderId, CodeIsSet, LastSeq, lastFunc, lastReturnCode);

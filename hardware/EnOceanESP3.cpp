@@ -2245,6 +2245,30 @@ namespace http {
 				}
 
 			}
+			else if (cmd == "Lock") {
+
+				unsigned int code = pEnocean->GetLockCode();
+
+				for (int i = 0; i < nbParam; i++) {
+					std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
+					getDeviceIdUnit(cmd, deviceId, unit);
+					if (deviceId.empty())	return;
+					pEnocean->lock(DeviceIdCharToInt(deviceId), code);
+				}
+
+			}
+			else if (cmd == "UnLock") {
+
+				unsigned int code = pEnocean->GetLockCode();
+
+				for (int i = 0; i < nbParam; i++) {
+					std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
+					getDeviceIdUnit(cmd, deviceId, unit);
+					if (deviceId.empty())	return;
+					pEnocean->unlock(DeviceIdCharToInt(deviceId), code);
+				}
+
+			}
 			else if (cmd == "SetCode") {
 				//
 				std::string code = request::findValue(&req, "code");

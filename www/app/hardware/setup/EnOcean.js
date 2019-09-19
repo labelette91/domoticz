@@ -138,10 +138,13 @@ define(['app'], function (app) {
 		    oTableLink.fnClearTable();
 		    var statusImg = '<img src="images/' + status + '.png" />';
 		    var healButton = '<img src="images/heal.png" onclick="ZWaveHealNode(' + '1' + ')" class="lcursor" title="' + $.t("Heal node") + '" />';
+            var payload = {};
+            payload[cnt] = DeviceID + ";" + "1" ;
 
 		    $.ajax({
 		        url: "json.htm?type=enocean&hwid=" + $.devIdx + "&cmd=GetLinkTable" + "&sensorid=" + DeviceID,
-		        async: false,
+                data: payload,
+                async: false,
 		        dataType: 'json',
 		        success: function (data) {
 		            if (typeof data.result != 'undefined') {
