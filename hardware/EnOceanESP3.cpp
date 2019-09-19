@@ -1210,7 +1210,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 				unsigned int senderId = DeviceArrayToInt(&m_buffer[2]);
 				bool cmnd = (UpDown == 1) ? true : false;
 				SendSwitch(senderId, 1, -1, cmnd, 0, "");
-
+				AddSensors(senderId, 0xd5, 0x7ff, 00, 01, 0);
 
 			}
 			break;
@@ -1818,6 +1818,8 @@ void CEnOceanESP3::ParseRadioDatagram()
 							);
 
 						sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, NULL, 255);
+						AddSensors(id, 0xF6, 0x7ff, 02, 01, 0);
+
 					}
 				}
 				else
@@ -1864,6 +1866,8 @@ void CEnOceanESP3::ParseRadioDatagram()
 
 
 						sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, NULL, 255);
+						AddSensors(id, 0xF6, 0x7ff, 02, 01, 0);
+
 					}
 				}
 			}

@@ -90,6 +90,10 @@ void CEnOceanRMCC::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , i
 		unsigned int senderId = DeviceArrayToInt(&m_buffer[13]);
 		_log.Log(LOG_NORM, "EnOcean: Get Link table medatadata Answer SenderId: %08X Size:%d Max:%d ", senderId, currentSize, maxSize);
 		Sensors.setLinkTableMedadata(senderId, currentSize, maxSize);
+		//if no link content , delete internal base Adresse
+		if (currentSize == 0)
+			if (SensorExist(senderId))
+				UpdateBaseAddress(DeviceIDToString(senderId),0 );
 	}
 	//get all link table
 	else if (fct == RC_GET_TABLE_RESPONSE)
