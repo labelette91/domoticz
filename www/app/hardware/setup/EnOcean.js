@@ -37,7 +37,7 @@ define(['app'], function (app) {
 		        payload[i] = data[0];
 		    }
 
-		    var deviceIdSelected = oTable.fnGetData(anSelected[0])[0] ;
+		    var deviceIdSelected = {} ;
 		    
 		    var totalselected = $('#nodestable input:checkbox:checked').length;
 		    if (totalselected < MinimumSelected) {
@@ -50,6 +50,7 @@ define(['app'], function (app) {
 		        lineNo = $(this).val();
 		        var data = oTable.fnGetData(lineNo);
 		        payload[cnt] = data[0] + ";" + data[1];
+		        deviceIdSelected[cnt] = data[0];
 		        cnt++;
 		    });
 
@@ -64,8 +65,8 @@ define(['app'], function (app) {
 		            if (data.status == "ERR")
 		                bootbox.alert($.t('Error funcion '+cmd ));
 
-		            if (cmd == "RefreshLinkTable")
-		                refreshLinkTable(deviceIdSelected);
+		            if (cmd == "GetLinkTable")
+		                refreshLinkTable(deviceIdSelected[0]);
 		            if (typeof data.result != 'undefined') {
 
 		            }
@@ -139,10 +140,10 @@ define(['app'], function (app) {
 		    var statusImg = '<img src="images/' + status + '.png" />';
 		    var healButton = '<img src="images/heal.png" onclick="ZWaveHealNode(' + '1' + ')" class="lcursor" title="' + $.t("Heal node") + '" />';
             var payload = {};
-            payload[cnt] = DeviceID + ";" + "1" ;
+            payload[0] = DeviceID + ";1" ;
 
 		    $.ajax({
-		        url: "json.htm?type=enocean&hwid=" + $.devIdx + "&cmd=GetLinkTable" + "&sensorid=" + DeviceID,
+		        url: "json.htm?type=enocean&hwid=" + $.devIdx + "&cmd=GetLinkTableList" ,
                 data: payload,
                 async: false,
 		        dataType: 'json',

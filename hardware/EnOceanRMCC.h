@@ -67,7 +67,7 @@ public:
 
 	void GetNodeList(Json::Value & root);
 
-	void GetLinkTable(Json::Value & root, std::string &DeviceId);
+	void GetLinkTableList(Json::Value & root, std::string &DeviceId);
 
 	unsigned int GetLockCode();
 

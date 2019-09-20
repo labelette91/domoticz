@@ -1741,7 +1741,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 				}
 
 				// Whether we use the ButtonID reporting with ON/OFF
-				bool useButtonIDs = true;
+				bool useButtonIDs = 0;
 
 				if (STATUS & S_RPS_NU)
 				{
@@ -2199,15 +2199,45 @@ void getDeviceIdUnit(std::string &cmd, unsigned &pdeviceId, unsigned &pUnit)
 
 }
 
+
+
+
+
 //Webserver helpers
 namespace http {
 	namespace server {
+		std::string getDeviceId(const request& req, int argNb)
+		{
+			std::string cmd = http::server::request::findValue(&req, std::to_string(argNb).c_str());
+
+			std::vector<std::string> splitresults;
+			StringSplit(cmd, ";", splitresults);
+			if (splitresults.size() >= 1)
+				return splitresults[0];
+			else
+				return "";
+
+		}
+		std::string getDeviceUnit(const request& req, int argNb)
+		{
+			std::string cmd = http::server::request::findValue(&req, std::to_string(argNb).c_str());
+
+			std::vector<std::string> splitresults;
+			StringSplit(cmd, ";", splitresults);
+			if (splitresults.size() >= 2)
+				return splitresults[1];
+			else
+				return "1";
+
+		}
+
+
 		void CWebServer::RType_OpenEnOcean(WebEmSession & session, const request& req, Json::Value &root)
 		{
 			std::string deviceId;
 			std::string  unit   ;
 
-			unsigned int  DeviceId,  Unit;
+//			unsigned int  DeviceId,  Unit;
 
 			root["status"] = "ERR";
 			root["title"] = "teachin";
@@ -2242,9 +2272,7 @@ namespace http {
 				unsigned int code = pEnocean->GetLockCode();
 
 				for ( int i = 0; i < nbParam; i++) {
-					std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
-					getDeviceIdUnit(cmd, deviceId, unit);
-					if (deviceId.empty())	return;
+					deviceId = getDeviceId(req, i) ;  if (deviceId.empty())	return;
 					pEnocean->setcode(DeviceIdCharToInt(deviceId), code);
 				}
 
@@ -2254,9 +2282,7 @@ namespace http {
 				unsigned int code = pEnocean->GetLockCode();
 
 				for (int i = 0; i < nbParam; i++) {
-					std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
-					getDeviceIdUnit(cmd, deviceId, unit);
-					if (deviceId.empty())	return;
+					deviceId = getDeviceId(req, i);  if (deviceId.empty())	return;
 					pEnocean->lock(DeviceIdCharToInt(deviceId), code);
 				}
 
@@ -2266,9 +2292,7 @@ namespace http {
 				unsigned int code = pEnocean->GetLockCode();
 
 				for (int i = 0; i < nbParam; i++) {
-					std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
-					getDeviceIdUnit(cmd, deviceId, unit);
-					if (deviceId.empty())	return;
+					deviceId = getDeviceId(req, i);  if (deviceId.empty())	return;
 					pEnocean->unlock(DeviceIdCharToInt(deviceId), code);
 				}
 
@@ -2281,17 +2305,15 @@ namespace http {
 				pEnocean->SetLockCode(code);
 
 			}
-			else if (cmd == "GetLinkTable") {
-				std::string DeviceIds = http::server::request::findValue(&req, "sensorid");
-				if (!DeviceIds.empty())
-					pEnocean->GetLinkTable(root, DeviceIds);
+			else if (cmd == "GetLinkTableList") {
+				deviceId = getDeviceId(req, 0);  if (deviceId.empty())	return;
+				pEnocean->GetLinkTableList(root, deviceId);
 			}
 
 			else if (cmd == "TeachIn") {
 				for ( int i = 0; i < nbParam; i++) {
-					std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
-					getDeviceIdUnit(cmd, deviceId, unit);
-					if (deviceId.empty())	return;
+					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
+					unit     = getDeviceUnit(req, i);  
 					pEnocean->TeachIn(deviceId, unit);
 				}
 
@@ -2304,10 +2326,9 @@ namespace http {
 				pEnocean->unlock(0xFFFFFFFF, pEnocean->GetLockCode());
 				pEnocean->queryid(0,0);
 			}
-			else if (cmd == "RefreshLinkTable") {
-				std::string device = http::server::request::findValue(&req, std::to_string(0).c_str());
-				getDeviceIdUnit(device, DeviceId, Unit);
-
+			else if (cmd == "GetLinkTable") {
+				deviceId = getDeviceId(req, 0);    if (deviceId.empty())	return;
+				int DeviceId = DeviceIdCharToInt(deviceId);
 				pEnocean->unlock(DeviceId, pEnocean->GetLockCode());
 				pEnocean->getLinkTableMedadata(DeviceId);
 				int TableSize = pEnocean->Sensors.getTableLinkCurrentSize(DeviceId);
@@ -2316,27 +2337,21 @@ namespace http {
 			}
 			else if (cmd == "QueryStatus") {
 				for ( int i = 0; i < nbParam; i++) {
-					std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
-					getDeviceIdUnit(cmd, deviceId, unit);
-					if (deviceId.empty())	return;
+					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
 					pEnocean->queryStatus(DeviceIdCharToInt(deviceId));
 				}
 
 			}
 			else if (cmd == "ResetToDefaults") {
 				for (int i = 0; i < nbParam; i++) {
-					std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
-					getDeviceIdUnit(cmd, deviceId, unit);
-					if (!deviceId.empty())	
-						pEnocean->resetToDefaults(DeviceIdCharToInt(deviceId), ResetToDefaults );
+					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
+					pEnocean->resetToDefaults(DeviceIdCharToInt(deviceId), ResetToDefaults );
 				}
 			}
 			else if (cmd == "QueryFunction") {
 				for (int i = 0; i < nbParam; i++) {
-					std::string cmd = http::server::request::findValue(&req, std::to_string(i).c_str());
-					getDeviceIdUnit(cmd, deviceId, unit);
-					if (!deviceId.empty())
-						pEnocean->queryFunction(DeviceIdCharToInt(deviceId) );
+					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
+					pEnocean->queryFunction(DeviceIdCharToInt(deviceId) );
 				}
 			}
 

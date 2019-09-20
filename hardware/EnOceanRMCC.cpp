@@ -25,6 +25,7 @@ void CEnOceanRMCC::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , i
 {
 	//get function
 	int fct = m_buffer[0] * 256 + m_buffer[1];
+	_log.Debug(DEBUG_NORM, "EnOcean: received function :%03X :%s", fct, RMCC_Cmd_Desc(fct) );
 	//ping response
 	if (fct == PING_ANSWER)
 	{
@@ -179,7 +180,7 @@ void CEnOceanRMCC::remoteLearning(unsigned int destID, bool StartLearning, int c
 	//optionnal data
 	setDestination(opt, destID);
 
-	_log.Debug(DEBUG_NORM, "EnOcean: send remoteLearning to %08X ",destID);
+	_log.Debug(DEBUG_NORM, "EnOcean: send remoteLearning to %08X channel %d",destID, channel);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 }
 void CEnOceanRMCC::unlock(unsigned int destID, unsigned int code)
@@ -201,8 +202,9 @@ void CEnOceanRMCC::unlock(unsigned int destID, unsigned int code)
 	//optionnal data
 	setDestination(opt, destID);
 
-	_log.Debug(DEBUG_NORM, "EnOcean: unlock send cmd code:%08X",code);
+	_log.Debug(DEBUG_NORM, "EnOcean: unlock send cmd to %08X code:%08X", destID,code);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
+	waitRemote_man_answer(RC_ACK, 5);
 }
 void CEnOceanRMCC::lock(unsigned int destID, unsigned int code)
 {
@@ -223,7 +225,7 @@ void CEnOceanRMCC::lock(unsigned int destID, unsigned int code)
 	//optionnal data
 	setDestination(opt, destID);
 
-	_log.Debug(DEBUG_NORM, "EnOcean: lock send cmd ");
+	_log.Debug(DEBUG_NORM, "EnOcean: lock send cmd to %08X code:%08X", destID, code);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
 }
@@ -546,7 +548,7 @@ void CEnOceanRMCC::GetNodeList(Json::Value &root)
 		}
 	}
 }
-void CEnOceanRMCC::GetLinkTable(Json::Value &root, std::string &DeviceIds )
+void CEnOceanRMCC::GetLinkTableList(Json::Value &root, std::string &DeviceIds )
 {
 	root["status"] = "OK";
 	root["title"] = "EnOceanLinkTable";
