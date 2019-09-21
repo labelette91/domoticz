@@ -26,7 +26,7 @@ define(['app'], function (app) {
 			EditEnOcean($ctrl.hardware.idx, $ctrl.hardware.Name, 1, 2, 3, 4, 5, 6);
 		};
 
-		EnOceanCmd = function (cmd,MinimumSelected) {
+		EnOceanCmd = function (cmd, MinIdSelected, MaxIdSelected , MinEntrySelected,MaxEntrySelected) {
 
 		    //		    $.ajax({ type: 'POST', url: url + "api/" + topic, data: payload, async: true });
 		    var oTable = $('#nodestable').dataTable();
@@ -40,10 +40,31 @@ define(['app'], function (app) {
 		    var deviceIdSelected = {} ;
 		    
 		    var totalselected = $('#nodestable input:checkbox:checked').length;
-		    if (totalselected < MinimumSelected) {
+		    if (totalselected < MinIdSelected)  {
 		        bootbox.alert($.t('No Devices selected !'));
 		        return;
 		    }
+		    if (totalselected > MaxIdSelected)  {
+		        bootbox.alert($.t('Maximum ' + MaxIdSelected + ' Devices selected !'));
+		        return;
+		    }
+
+            //number entry selected
+		    totalLinkSelected = 0;
+		    $('#inboundlinktable input:checkbox:checked').each(function () {
+		        totalLinkSelected++;
+		    });
+
+		    if (totalLinkSelected < MinEntrySelected) {
+		        bootbox.alert($.t('No Entry selected !'));
+		        return;
+		    }
+		    if (totalLinkSelected > MaxEntrySelected) {
+		        bootbox.alert($.t('Maximum ' + MaxEntrySelected + ' ; selected !'));
+		        return;
+		    }
+
+
 		    payload = {};
 		    var cnt = 0;
 		    $('#nodestable input:checkbox:checked').each(function () {
@@ -57,13 +78,11 @@ define(['app'], function (app) {
 
 
 		    oLinkTable = $('#inboundlinktable').dataTable();
-		    anLinkSelected = 0 ;
 		    var selectedEntry ="" ;
 		    $('#inboundlinktable input:checkbox:checked').each(function () {
 		        lineNo = $(this).val();
 		        var entry = oLinkTable.fnGetData(lineNo);
 		        selectedEntry = selectedEntry + entry[0] + ';';
-		        anLinkSelected++;
 		    });
 
 		    payload["entry"] = selectedEntry;

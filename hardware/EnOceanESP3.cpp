@@ -2387,7 +2387,7 @@ namespace http {
 					entry = getLinkEntry(req, entryNb);
 					while (!entry.empty())
 					{
-						pEnocean->setLinkEntryTable(DeviceIdCharToInt(deviceId), std::stoi(entry,0,0),0,0xFFFFFF,0 ) ;
+						pEnocean->setLinkEntryTable(DeviceIdCharToInt(deviceId), std::stoi(entry,0,0),0,0,0 ) ;
 						entryNb++;
 						entry = getLinkEntry(req, entryNb);
 

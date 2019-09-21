@@ -32,7 +32,6 @@ typedef struct _T_SENSOR {
 		CurrentSize = 0;
 		MaxSize = 0;
 		initEntry(0);
-		NbValidId = 0;
 	}
 
 	#define EMPTY_PROFILE 0xFFFFFF 
@@ -40,6 +39,7 @@ typedef struct _T_SENSOR {
 
 	void initEntry(int deb)
 	{
+		NbValidId = 0;
 		for (int i = deb; i < SIZE_LINK_TABLE; i++)
 		{
 			LinkTable[i].Profile  = EMPTY_PROFILE ;
