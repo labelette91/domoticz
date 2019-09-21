@@ -2265,11 +2265,11 @@ namespace http {
 
 			if (pEnocean == NULL)
 				return;
-			int nbParam = req.parameters.size() - 4;
+			int nbSelectedDevice = req.parameters.size() - 4;
 
 
 			std::string arg;
-			for ( int i = 0; i < nbParam; i++) {
+			for ( int i = 0; i < nbSelectedDevice; i++) {
 				arg += http::server::request::findValue(&req, std::to_string(i).c_str())+"-";
 			}
 
@@ -2282,8 +2282,10 @@ namespace http {
 			else if (cmd == "SendCode") {
 
 				unsigned int code = pEnocean->GetLockCode();
+				if(nbSelectedDevice==0)
+					pEnocean->setcode(BROADCAST_ID, code);
 
-				for ( int i = 0; i < nbParam; i++) {
+				for ( int i = 0; i < nbSelectedDevice; i++) {
 					deviceId = getDeviceId(req, i) ;  if (deviceId.empty())	return;
 					pEnocean->setcode(DeviceIdCharToInt(deviceId), code);
 				}
@@ -2292,8 +2294,10 @@ namespace http {
 			else if (cmd == "Lock") {
 
 				unsigned int code = pEnocean->GetLockCode();
+				if (nbSelectedDevice == 0)
+					pEnocean->lock(BROADCAST_ID, code);
 
-				for (int i = 0; i < nbParam; i++) {
+				for (int i = 0; i < nbSelectedDevice; i++) {
 					deviceId = getDeviceId(req, i);  if (deviceId.empty())	return;
 					pEnocean->lock(DeviceIdCharToInt(deviceId), code);
 				}
@@ -2302,8 +2306,10 @@ namespace http {
 			else if (cmd == "UnLock") {
 
 				unsigned int code = pEnocean->GetLockCode();
+				if (nbSelectedDevice == 0)
+					pEnocean->unlock(BROADCAST_ID, code);
 
-				for (int i = 0; i < nbParam; i++) {
+				for (int i = 0; i < nbSelectedDevice; i++) {
 					deviceId = getDeviceId(req, i);  if (deviceId.empty())	return;
 					pEnocean->unlock(DeviceIdCharToInt(deviceId), code);
 				}
@@ -2323,7 +2329,7 @@ namespace http {
 			}
 
 			else if (cmd == "LearnIn") {
-				for ( int i = 0; i < nbParam; i++) {
+				for ( int i = 0; i < nbSelectedDevice; i++) {
 					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
 					unit     = getDeviceUnit(req, i);  
 					pEnocean->TeachIn(deviceId, unit, LEARN_IN );
@@ -2331,15 +2337,23 @@ namespace http {
 
 			}
 			else if (cmd == "LearnOut") {
-				for (int i = 0; i < nbParam; i++) {
+				for (int i = 0; i < nbSelectedDevice; i++) {
 					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
 					unit = getDeviceUnit(req, i);
 					pEnocean->TeachIn(deviceId, unit, LEARN_OUT);
 				}
 			}
 			else if (cmd == "GetProductId") {
-				pEnocean->unlock(0xFFFFFFFF, pEnocean->GetLockCode());
-				pEnocean->getProductId();
+				pEnocean->unlock(BROADCAST_ID, pEnocean->GetLockCode());
+
+				if (nbSelectedDevice == 0)
+					pEnocean->getProductId(BROADCAST_ID);
+
+				for (int i = 0; i < nbSelectedDevice; i++) {
+					deviceId = getDeviceId(req, i);  if (deviceId.empty())	return;
+					pEnocean->getProductId(DeviceIdCharToInt(deviceId));
+				}
+
 			}
 			else if (cmd == "QueryId") {
 				pEnocean->unlock(0xFFFFFFFF, pEnocean->GetLockCode());
@@ -2360,26 +2374,26 @@ namespace http {
 					}
 			}
 			else if (cmd == "QueryStatus") {
-				for ( int i = 0; i < nbParam; i++) {
+				for ( int i = 0; i < nbSelectedDevice; i++) {
 					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
 					pEnocean->queryStatus(DeviceIdCharToInt(deviceId));
 				}
 
 			}
 			else if (cmd == "ResetToDefaults") {
-				for (int i = 0; i < nbParam; i++) {
+				for (int i = 0; i < nbSelectedDevice; i++) {
 					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
 					pEnocean->resetToDefaults(DeviceIdCharToInt(deviceId), ResetToDefaults );
 				}
 			}
 			else if (cmd == "QueryFunction") {
-				for (int i = 0; i < nbParam; i++) {
+				for (int i = 0; i < nbSelectedDevice; i++) {
 					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
 					pEnocean->queryFunction(DeviceIdCharToInt(deviceId) );
 				}
 			}
 			else if (cmd == "DeleteEntrys") {
-				for (int i = 0; i < nbParam; i++) {
+				for (int i = 0; i < nbSelectedDevice; i++) {
 					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
 
 					int entryNb = 0;

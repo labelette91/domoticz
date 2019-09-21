@@ -10,6 +10,8 @@
 
 #define uint unsigned int
 
+#define BROADCAST_ID 0xFFFFFFFF
+
 typedef enum {
 	RORG_ST = 0x30, //Secure telegram
 	RORG_ST_WE = 0x31, //Secure telegram with encapsulation
