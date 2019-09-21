@@ -23,6 +23,7 @@ typedef struct _T_SENSOR {
 	int				Manufacturer;
 	uint			Reference;
 	int				CurrentSize;
+	int				NbValidId ;
 	int				MaxSize;
 	T_LINK_TABLE	LinkTable[SIZE_LINK_TABLE];
 
@@ -31,14 +32,18 @@ typedef struct _T_SENSOR {
 		CurrentSize = 0;
 		MaxSize = 0;
 		initEntry(0);
+		NbValidId = 0;
 	}
+
+	#define EMPTY_PROFILE 0xFFFFFF 
+	#define EMPTY_ID      0
 
 	void initEntry(int deb)
 	{
 		for (int i = deb; i < SIZE_LINK_TABLE; i++)
 		{
-			LinkTable[i].Profile = 0xFFFFFF;
-			LinkTable[i].SenderId = 0;
+			LinkTable[i].Profile  = EMPTY_PROFILE ;
+			LinkTable[i].SenderId = EMPTY_ID;
 			LinkTable[i].Channel = 0;
 
 		}
@@ -70,12 +75,14 @@ public:
 		m_sensors[SensorId].MaxSize = MaxSize;
 		m_sensors[SensorId].initEntry(csize);
 	}
-	void addLinkTable(uint DeviceId, int entry, int profile, uint sensorId, int channel)
+	void addLinkTableEntry(uint DeviceId, int entry, int profile, uint sensorId, int channel)
 	{
 		if (entry < SIZE_LINK_TABLE) {
 			m_sensors[DeviceId].LinkTable[entry].Profile = profile;
 			m_sensors[DeviceId].LinkTable[entry].SenderId = sensorId;
 			m_sensors[DeviceId].LinkTable[entry].Channel = channel;
+			if ((profile != EMPTY_PROFILE) && (sensorId != EMPTY_ID))
+				m_sensors[DeviceId].NbValidId++;
 		}
 
 	}
@@ -95,6 +102,10 @@ public:
 	int  getTableLinkCurrentSize(unsigned int DeviceId)
 	{
 		return  m_sensors[DeviceId].CurrentSize;
+	}
+	int  getTableLinkValidSensorIdSize(unsigned int DeviceId)
+	{
+		return  m_sensors[DeviceId].NbValidId;
 	}
 
 	T_SENSOR*  Find(unsigned int  DeviceId )

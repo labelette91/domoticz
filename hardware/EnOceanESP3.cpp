@@ -2351,8 +2351,13 @@ namespace http {
 				pEnocean->unlock(DeviceId, pEnocean->GetLockCode());
 				pEnocean->getLinkTableMedadata(DeviceId);
 				int TableSize = pEnocean->Sensors.getTableLinkCurrentSize(DeviceId);
+				int begin = 0;
 				if (TableSize)
-				pEnocean->getallLinkTable(DeviceId, 0, TableSize -1 );
+					while (TableSize != pEnocean->Sensors.getTableLinkValidSensorIdSize(DeviceId))
+					{
+						pEnocean->getallLinkTable(DeviceId, begin, begin + 2);
+						begin += 3;
+					}
 			}
 			else if (cmd == "QueryStatus") {
 				for ( int i = 0; i < nbParam; i++) {

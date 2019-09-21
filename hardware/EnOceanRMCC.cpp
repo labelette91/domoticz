@@ -130,7 +130,7 @@ void CEnOceanRMCC::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , i
 			uint entryProfile = DeviceArrayToInt(&m_buffer[10 + i * 9]);
 			int  channel = m_buffer[13 + i * 9];
 			entryProfile /= 256;
-			Sensors.addLinkTable(senderId, offs, entryProfile, entryId, channel);
+			Sensors.addLinkTableEntry(senderId, offs, entryProfile, entryId, channel);
 			_log.Log(LOG_NORM, "EnOcean: ADD Link table Entry SenderId: %08X  entry %02d EntryId: %08X Profile %06X Channel:%d", senderId, offs, entryId, entryProfile, channel);
 
 		}
@@ -618,10 +618,10 @@ void CEnOceanRMCC::GetLinkTableList(Json::Value &root, std::string &DeviceIds )
 	unsigned int  DeviceId = DeviceIdCharToInt(DeviceIds);
 
 /*
-addLinkTable(0x1a65428, 0, 0xD0500, 0xABCDEF, 1);
-	addLinkTable(0x1a65428, 1, 0xD0500, 0x1a65428, 1);
-	addLinkTable(0x1a65428, 2, 0xD0500, 0x1234567, 1);
-	addLinkTable(0x1a65428, 3, 0xD0500, 0x2345678, 1);
+addLinkTableEntry(0x1a65428, 0, 0xD0500, 0xABCDEF, 1);
+	addLinkTableEntry(0x1a65428, 1, 0xD0500, 0x1a65428, 1);
+	addLinkTableEntry(0x1a65428, 2, 0xD0500, 0x1234567, 1);
+	addLinkTableEntry(0x1a65428, 3, 0xD0500, 0x2345678, 1);
 */
 	T_SENSOR* sensors = Sensors.Find(DeviceId);
 
