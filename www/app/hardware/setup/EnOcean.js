@@ -55,6 +55,19 @@ define(['app'], function (app) {
 		    });
 
 
+
+		    oLinkTable = $('#inboundlinktable').dataTable();
+		    anLinkSelected = 0 ;
+		    var selectedEntry ="" ;
+		    $('#inboundlinktable input:checkbox:checked').each(function () {
+		        lineNo = $(this).val();
+		        var entry = oLinkTable.fnGetData(lineNo);
+		        selectedEntry = selectedEntry + entry[0] + ';';
+		        anLinkSelected++;
+		    });
+
+		    payload["entry"] = selectedEntry;
+
 		    $.ajax({
 		        //		        type: 'POST',
 		        url: "json.htm?type=enocean&hwid=" + $.devIdx + "&cmd=" + cmd,
@@ -63,7 +76,7 @@ define(['app'], function (app) {
 		        dataType: 'json',
 		        success: function (data) {
 		            if (data.status == "ERR")
-		                bootbox.alert($.t('Error funcion '+cmd ));
+		                bootbox.alert($.t('Error funcion '+cmd + ' : ' + data.message ));
 
 		            if (cmd == "GetLinkTable")
 		                refreshLinkTable(deviceIdSelected[0]);

@@ -2231,6 +2231,17 @@ namespace http {
 
 		}
 
+		std::string getLinkEntry(const request& req, int argNb)
+		{
+			std::string cmd = http::server::request::findValue(&req, "entry");
+
+			std::vector<std::string> splitresults;
+			StringSplit(cmd, ";", splitresults);
+			if (splitresults.size() >= (argNb+1) )
+				return splitresults[argNb];
+			else
+				return "";
+		}
 
 		void CWebServer::RType_OpenEnOcean(WebEmSession & session, const request& req, Json::Value &root)
 		{
@@ -2241,6 +2252,7 @@ namespace http {
 
 			root["status"] = "ERR";
 			root["title"] = "teachin";
+			root["message"] = "Undefined";
 
 			std::string hwid = request::findValue(&req, "hwid");
 			if (hwid.empty())
@@ -2253,7 +2265,7 @@ namespace http {
 
 			if (pEnocean == NULL)
 				return;
-			int nbParam = req.parameters.size() - 3;
+			int nbParam = req.parameters.size() - 4;
 
 
 			std::string arg;
@@ -2261,7 +2273,7 @@ namespace http {
 				arg += http::server::request::findValue(&req, std::to_string(i).c_str())+"-";
 			}
 
-			_log.Debug(DEBUG_NORM, "EnOcean: Server received cmd:%s Hwid:%s arg:%s", cmd.c_str(),hwid.c_str(),arg.c_str());
+			_log.Debug(DEBUG_NORM, "EnOcean: Server received cmd:%s Hwid:%s arg:%s Entry=%s ", cmd.c_str(),hwid.c_str(),arg.c_str(), request::findValue(&req, "entry").c_str() );
 
 			//retrieve the list od Device Id
 			if (cmd == "GetNodeList")
@@ -2310,13 +2322,20 @@ namespace http {
 				pEnocean->GetLinkTableList(root, deviceId);
 			}
 
-			else if (cmd == "TeachIn") {
+			else if (cmd == "LearnIn") {
 				for ( int i = 0; i < nbParam; i++) {
 					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
 					unit     = getDeviceUnit(req, i);  
-					pEnocean->TeachIn(deviceId, unit);
+					pEnocean->TeachIn(deviceId, unit, LEARN_IN );
 				}
 
+			}
+			else if (cmd == "LearnOut") {
+				for (int i = 0; i < nbParam; i++) {
+					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
+					unit = getDeviceUnit(req, i);
+					pEnocean->TeachIn(deviceId, unit, LEARN_OUT);
+				}
 			}
 			else if (cmd == "GetProductId") {
 				pEnocean->unlock(0xFFFFFFFF, pEnocean->GetLockCode());
@@ -2354,14 +2373,32 @@ namespace http {
 					pEnocean->queryFunction(DeviceIdCharToInt(deviceId) );
 				}
 			}
+			else if (cmd == "DeleteEntrys") {
+				for (int i = 0; i < nbParam; i++) {
+					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
 
+					int entryNb = 0;
+					std::string entry;
+					entry = getLinkEntry(req, entryNb);
+					while (!entry.empty())
+					{
+						pEnocean->setLinkEntryTable(DeviceIdCharToInt(deviceId), std::stoi(entry,0,0),0,0xFFFFFF,0 ) ;
+						entryNb++;
+						entry = getLinkEntry(req, entryNb);
 
-
+					}
+				}
+			}
 			else
 				return;
 
-			
-			root["status"] = "OK";
+			if (pEnocean->isCommStatusOk())
+				root["status"] = "OK";
+			else {
+				root["message"] = "Communication Timeout";
+				_log.Log(LOG_ERROR, "EnOcean: Server Error: %s  cmd:%s Hwid:%s arg:%s  Entry=%s", root["message"].asString().c_str(), cmd.c_str(), hwid.c_str(), arg.c_str() , request::findValue(&req, "entry").c_str() );
+				pEnocean->setCommStatus(COM_OK);
+			}
 
 
 		}
@@ -2467,9 +2504,9 @@ void CEnOceanESP3::testParsingData(int sec_counter)
 
 //	if (sec_counter == 2)	TestData("D2 32 01 00 00 00 01 30 "); //VLD D2  eep func D2-03-0A baterie 50% button 1
 
-//			if (sec_counter == 3)	remoteLearning(0x01A65428 , true ); //4BS data  :  eep func A-02-01
+//			if (sec_counter == 3)	remoteLearning(0x01A65428 , true ,LEARN_IN ); //4BS data  :  eep func A-02-01
 
-//			if (sec_counter == 5)	remoteLearning(0x01A65428, false); //4BS data  :  eep func A-02-01
+//			if (sec_counter == 5)	remoteLearning(0x01A65428, false, LEARN_IN); //4BS data  :  eep func A-02-01
 //			if (sec_counter == 2)	ping(0x01A65428); 
 //			if (sec_counter == 1)	unlock(0x01A65428,1);
 //			if (sec_counter == 2)	action(0x01A65428);

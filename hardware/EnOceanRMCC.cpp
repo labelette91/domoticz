@@ -10,7 +10,7 @@
 
 CEnOceanRMCC::CEnOceanRMCC() {
 	m_Seq = 0 ;
-
+	m_com_status = COM_OK;
 };
 void CEnOceanRMCC::setRorg(unsigned char * buff)
 {
@@ -21,6 +21,15 @@ void CEnOceanRMCC::setRorg(unsigned char * buff)
 	buff[1] = m_Seq << 6;       //SEQ 40/80/C0
 
 }
+void CEnOceanRMCC::setRorg(unsigned char * buff, int idx )
+{
+	buff[0] = RORG_SYS_EX;
+
+	buff[1] = (m_Seq << 6)  + idx ;       //SEQ 40/80/C0
+
+}
+
+
 void CEnOceanRMCC::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m_DataSize, int m_OptionalDataSize )
 {
 	//get function
@@ -158,7 +167,7 @@ void CEnOceanRMCC::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , i
 	setRemote_man_answer(fct);
 
 }
-void CEnOceanRMCC::remoteLearning(unsigned int destID, bool StartLearning, int channel)
+void CEnOceanRMCC::remoteLearning(unsigned int destID, int channel, T_LEARN_MODE Device_LRN_Mode )
 {
 	unsigned char buff[16];
 	unsigned char opt[16];
@@ -172,7 +181,7 @@ void CEnOceanRMCC::remoteLearning(unsigned int destID, bool StartLearning, int c
 	buff[5] = 0x20;
 
 	//payload 4 bytes
-	if (StartLearning)buff[6] = 0; else buff[6] = 0x80;
+	buff[6] = Device_LRN_Mode << 6;
 	buff[7] = channel;
 
 	buff[14] = 0x8F; //status
@@ -180,7 +189,7 @@ void CEnOceanRMCC::remoteLearning(unsigned int destID, bool StartLearning, int c
 	//optionnal data
 	setDestination(opt, destID);
 
-	_log.Debug(DEBUG_NORM, "EnOcean: send remoteLearning to %08X channel %d",destID, channel);
+	_log.Debug(DEBUG_NORM, "EnOcean: send remoteLearning to %08X channel %d Mode:%d",destID, channel,  Device_LRN_Mode);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 }
 void CEnOceanRMCC::unlock(unsigned int destID, unsigned int code)
@@ -363,6 +372,9 @@ void CEnOceanRMCC::getLinkTableMedadata(uint destID)
 	waitRemote_man_answer(RC_GET_METADATA_RESPONSE,5 );
 
 }
+
+
+
 void CEnOceanRMCC::queryFunction(uint destID)
 {
 	unsigned char buff[16];
@@ -440,6 +452,57 @@ void CEnOceanRMCC::getallLinkTable(uint SensorId, int begin, int end)
 		waitRemote_man_answer(RC_GET_TABLE_RESPONSE, 5);
 
 }
+
+void CEnOceanRMCC::setLinkEntryTable(uint SensorId, int begin , uint ID , int EEP , int channel )
+{
+	unsigned char buff[16];
+	unsigned char opt[16];
+	unsigned char sdid[16];
+	
+	DeviceIntToArray(ID, sdid);
+
+
+	memset(buff, 0, sizeof(buff));
+	setRorg(buff);
+
+	buff[2] = 0x05;			//data len = 10
+	buff[3] = 0x7F;			//mamanufacturer 7FF
+	buff[4] = 0xF2;
+	buff[5] = 0x12;			//function 212
+	buff[6] = 0x00;			//direction InBound bit 8 = 0 
+
+	unsigned char* ptc = &buff[7];
+	*ptc++ = begin;		//end offset table 
+	*ptc++ = sdid[0];
+	*ptc++ = sdid[1];
+	buff[14] = 0x8F; //status
+					 //optionnal data
+	setDestination(opt, SensorId);
+
+	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
+
+	memset(buff, 0, sizeof(buff));
+	setRorg(buff,1);
+
+	ptc    = &buff[2];
+	*ptc++ = sdid[2];
+	*ptc++ = sdid[3];
+
+	*ptc++ = getRorg(EEP);
+	*ptc++ = getFunc(EEP);
+	*ptc++ = getType(EEP);
+	*ptc++ = channel ;
+
+	buff[14] = 0x8F; //status
+
+	//optionnal data
+	setDestination(opt, SensorId);
+	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
+
+	_log.Debug(DEBUG_NORM, "EnOcean: send setLinkTable %08X begin :%d ID:%08X EEP:%06X Channel : %d", SensorId, begin,ID, EEP, channel);
+
+}
+
 void CEnOceanRMCC::resetToDefaults(uint destID,int resetAction)
 {
 	unsigned char buff[16];
@@ -464,27 +527,27 @@ void CEnOceanRMCC::resetToDefaults(uint destID,int resetAction)
 }
 
 //teachin from ID database
-void CEnOceanRMCC::TeachIn(std::string& sidx)
+void CEnOceanRMCC::TeachIn(std::string& sidx, T_LEARN_MODE Device_LRN_Mode )
 {
 	std::vector<std::vector<std::string> > result;
 	result = m_sql.safe_query("SELECT DeviceID,Unit  FROM DeviceStatus WHERE (ID='%s')  ", sidx.c_str());
 	if (result.size() > 0)
 	{
-		TeachIn(result[0][0], result[0][1]);
+		TeachIn(result[0][0], result[0][1],  Device_LRN_Mode);
 	}
 
 }
 //teachin from senderId / unit 
-void CEnOceanRMCC::TeachIn(std::string& deviceId , std::string& unit )
+void CEnOceanRMCC::TeachIn(std::string& deviceId, std::string& unit, T_LEARN_MODE Device_LRN_Mode )
 {
 		int channel = atoi(unit.c_str());
 		//get sender adress from db
 		unsigned int SenderAdress = DeviceIdCharToInt(deviceId);
 
-		_log.Log(LOG_NORM, "EnOcean: send remoteLearning to device %s channel:%d", deviceId.c_str(), channel);
+		_log.Log(LOG_NORM, "EnOcean: send remoteLearning to device %s channel:%d Mode:%d", deviceId.c_str(), channel,  Device_LRN_Mode);
 
 		unlock(SenderAdress, GetLockCode() );
-		remoteLearning(SenderAdress, true, channel - 1);
+		remoteLearning(SenderAdress, channel - 1, Device_LRN_Mode);
 }
 void CEnOceanRMCC::GetNodeList(Json::Value &root)
 {
@@ -615,6 +678,8 @@ int CEnOceanRMCC::getRemote_man_answer()
 bool CEnOceanRMCC::waitRemote_man_answer(int premote_man_answer, int timeout)
 {
 	int remote_man_answer = getRemote_man_answer();
+	setCommStatus(COM_OK);
+
 	while (( remote_man_answer != premote_man_answer) && (timeout > 0))
 	{
 		if (remote_man_answer == 0)
@@ -624,13 +689,28 @@ bool CEnOceanRMCC::waitRemote_man_answer(int premote_man_answer, int timeout)
 		}
 		remote_man_answer = getRemote_man_answer();
 	}
-	if (timeout == 0)
+	if (timeout == 0) {
+		setCommStatus(COM_TIMEOUT);
 		_log.Debug(DEBUG_NORM, "EnOcean: TIMEOUT waiting answer %04X :%s ", premote_man_answer, RMCC_Cmd_Desc(premote_man_answer));
+	}
 
 	return (timeout == 0);
 }
 
+void CEnOceanRMCC::setCommStatus(T_COM_STATUS status)
+{
+	m_com_status = status;
+}
+T_COM_STATUS CEnOceanRMCC::getCommStatus()
+{
+	return m_com_status ;
+}
 
+//return true if comm status = ok
+bool  CEnOceanRMCC::isCommStatusOk()
+{
+	return (m_com_status == COM_OK) ;
+}
 
 typedef struct _STR_TABLE {
 	unsigned long    id;

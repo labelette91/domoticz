@@ -487,7 +487,6 @@ void  DeviceIntToArray(unsigned int sID, unsigned char buf[])
 	buf[3] = sID & 0xff;
 }
 //convert divice ID string to long
-}
 
 unsigned int DeviceIdCharToInt(std::string &DeviceID) {
 	unsigned int ID;

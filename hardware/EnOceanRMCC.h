@@ -11,6 +11,22 @@
 #define ResetOutboundLinkTable         (1<<5)
 #define ResetToDefaults                (0xE0 )
 
+typedef enum T_COM_STATUS {
+
+	COM_OK = 0,
+	COM_TIMEOUT,
+
+
+}T_COM_STATUS;
+
+typedef enum T_LEARN_MODE {
+
+	LEARN_IN = 0,
+	LEARN_OUT   ,
+	LEARN_EXIT,
+
+}T_LEARN_MODE ;
+
 
 class CEnOceanRMCC : public CEnOcean
 {
@@ -20,6 +36,8 @@ public:
 	//remote management
 	//remote management function reception 
 	int remote_man_answer;
+
+	T_COM_STATUS m_com_status;
 
 	//Remote Mannagement Control Command reception Mutex
 	std::mutex m_RMCC_Mutex;
@@ -33,9 +51,11 @@ public:
 
 	void setRorg(unsigned char * buff);
 
+	void setRorg(unsigned char * buff, int idx);
+
 	void parse_PACKET_REMOTE_MAN_COMMAND(unsigned char m_buffer[], int m_DataSize, int m_OptionalDataSize);
 
-	void remoteLearning(unsigned int destID, bool StartLearning, int channel);
+	void remoteLearning(unsigned int destID, int channel, T_LEARN_MODE Device_LRN_Mode);
 
 	void unlock(unsigned int destID, unsigned int code);
 
@@ -59,11 +79,13 @@ public:
 
 	void getallLinkTable(uint SensorId, int begin, int end);
 
+	void setLinkEntryTable(uint SensorId, int begin, uint ID, int EEP, int channel);
+
 	void resetToDefaults(uint destID, int resetAction);
 
-	void TeachIn(std::string & sidx);
+	void TeachIn(std::string & sidx ,  T_LEARN_MODE Device_LRN_Mode);
 
-	void TeachIn(std::string & deviceId, std::string & unit);
+	void TeachIn(std::string & deviceId, std::string & unit, T_LEARN_MODE Device_LRN_Mode);
 
 	void GetNodeList(Json::Value & root);
 
@@ -79,6 +101,12 @@ public:
 
 	bool waitRemote_man_answer(int premote_man_answer, int timeout);
 
+	void setCommStatus(T_COM_STATUS status);
+
+	T_COM_STATUS getCommStatus();
+
+	bool isCommStatusOk();
+	
 };
 
 const char *RMCC_Cmd_Desc(const int tType);
