@@ -1927,7 +1927,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 								{
 									for (int nbc = 0; nbc < nb_channel; nbc++)
 									{
-										_log.Debug(DEBUG_NORM, "EnOcean: TEACH : 0xD2 Node 0x%08x UnitID: %02X cmd: %02X ", id, nbc + 1, light2_sOff);
+										_log.Debug(DEBUG_NORM, "EnOcean: TEACH Switch : 0xD2 Node 0x%08x UnitID: %02X cmd: %02X ", id, nbc + 1, light2_sOff);
 //										SendSwitch(id, nbc + 1, -1, light2_sOff, 0, DeviceIDToString(senderBaseAddr).c_str());
 										CreateDevice(m_HwdID, GetLighting2StringId(id).c_str(), nbc + 1, pTypeLighting2, sTypeAC, 0, -1, light2_sOff, "0", DeviceIDToString(id), STYPE_OnOff, "" );
 									}
@@ -1938,7 +1938,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 								{
 									for (int nbc = 0; nbc < nb_channel; nbc++)
 									{
-										_log.Debug(DEBUG_NORM, "EnOcean: TEACH : 0xD2 Node 0x%08x UnitID: %02X cmd: %02X ", id, nbc + 1, light2_sOff);
+										_log.Debug(DEBUG_NORM, "EnOcean: TEACH Blinds Switch : 0xD2 Node 0x%08x UnitID: %02X cmd: %02X ", id, nbc + 1, light2_sOff);
 //										SendSwitch(id, nbc + 1, -1, light2_sOff, 0, DeviceIDToString(senderBaseAddr).c_str());
 										CreateDevice(m_HwdID, GetLighting2StringId(id).c_str(), nbc + 1, pTypeLighting2, sTypeAC, 0, -1, light2_sOff, "0", DeviceIDToString(id), STYPE_BlindsPercentage , "" );
 									}
@@ -2408,6 +2408,21 @@ namespace http {
 					}
 				}
 			}
+			else if (cmd == "Ping") {
+				if (nbSelectedDevice == 0)
+					pEnocean->ping(BROADCAST_ID);
+				for (int i = 0; i < nbSelectedDevice; i++) {
+					deviceId = getDeviceId(req, i);  if (deviceId.empty())	return;
+					pEnocean->ping(DeviceIdCharToInt(deviceId));
+				}
+			}
+			else if (cmd == "Action") {
+				for (int i = 0; i < nbSelectedDevice; i++) {
+					deviceId = getDeviceId(req, i);  if (deviceId.empty())	return;
+					pEnocean->action(DeviceIdCharToInt(deviceId));
+				}
+			}
+
 			else
 				return;
 

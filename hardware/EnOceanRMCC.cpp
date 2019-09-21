@@ -579,7 +579,7 @@ void CEnOceanRMCC::GetNodeList(Json::Value &root)
 
 				root["result"][ii]["Profile"] = IntToString(rorg, 2) + "-" + IntToString(func, 2) + "-" + IntToString(type, 2);
 				root["result"][ii]["Manufacturer"] = sd[4];
-				std::string man = Get_EnoceanManufacturer(atoi(sd[9].c_str()));
+				std::string man = Get_EnoceanManufacturer(atoi(sd[4].c_str()));
 				if (man[0] == '>') man = "Unkown";
 				root["result"][ii]["Manufacturer_name"] = man ;
 				
@@ -596,6 +596,7 @@ void CEnOceanRMCC::GetNodeList(Json::Value &root)
 				root["result"][ii]["SubType"] = sd[8];
 				root["result"][ii]["SwitchType"] = sd[9];
 				root["result"][ii]["TypeName"] = RFX_Type_SubType_Desc(atoi(sd[8].c_str()), atoi(sd[9].c_str()));
+				if (sd[10].empty())sd[10] = "1";
 				root["result"][ii]["Unit"] = sd[10];
 
 
