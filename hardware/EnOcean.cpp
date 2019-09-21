@@ -28,8 +28,8 @@ bool CEnOcean::IsRunning()
 unsigned int CEnOcean::GetAdress(int unitid) {
 	return(m_id_base + unitid);
 }
-unsigned int CEnOcean::GetOffsetAdress(int unitid) {
-	return ( unitid- m_id_base) ;
+unsigned int CEnOcean::GetOffsetAdress(int senderid) {
+	return (senderid - m_id_base) ;
 }
 uint64_t CEnOcean::CreateDevice(const int HardwareID, const char* ID, const int  unitCode, const unsigned char devType, const unsigned char subType, const unsigned char signallevel, const unsigned char batterylevel, const int nValue, const char* sValue, std::string &devname, int SwitchType , const std::string & deviceoptions)
 {
@@ -108,6 +108,25 @@ unsigned int CEnOcean::getSenderAdressFromDeviceId(unsigned int devIDx)
 {
 	return getSenderAdressFromDeviceId(DeviceIDToString(devIDx));
 }
+
+
+//find  device DeviceId : 0x12345678  from a base adress 
+int CEnOcean::GetSenderIdFromAddress(int adsress) {
+	std::vector<std::vector<std::string> > result;
+	int deviceId = 0;
+	if (adsress)
+	{
+		result = m_sql.safe_query("SELECT DeviceId FROM EnoceanSensors WHERE (Address=%d ) and (HardwareId=%d)  ", adsress, m_HwdID);
+		if (result.size() > 0)
+		{
+			deviceId = DeviceIdCharToInt(result[0][0]);
+		}
+	}
+
+	return deviceId;
+}
+
+
 //DeviceId : ID of device in EnoceanSensor
 //offsetID : offset of device from controler base adress 0..127
 void CEnOcean::UpdateBaseAddress(std::string DeviceId , int offsetID ) {
@@ -468,13 +487,14 @@ void  DeviceIntToArray(unsigned int sID, unsigned char buf[])
 	buf[3] = sID & 0xff;
 }
 //convert divice ID string to long
+}
+
 unsigned int DeviceIdCharToInt(std::string &DeviceID) {
 	unsigned int ID;
-	std::stringstream s_strid;
-	s_strid << std::hex << DeviceID;
-	s_strid >> ID;
+	sscanf(DeviceID.c_str(), "%x", &ID);
 	return ID;
 }
+
 std::string GetLighting2StringId(unsigned int id )
 {
 	char szTmp[300];

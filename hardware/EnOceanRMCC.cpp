@@ -204,7 +204,7 @@ void CEnOceanRMCC::unlock(unsigned int destID, unsigned int code)
 
 	_log.Debug(DEBUG_NORM, "EnOcean: unlock send cmd to %08X code:%08X", destID,code);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
-	waitRemote_man_answer(RC_ACK, 5);
+	
 }
 void CEnOceanRMCC::lock(unsigned int destID, unsigned int code)
 {
@@ -566,10 +566,16 @@ addLinkTable(0x1a65428, 0, 0xD0500, 0xABCDEF, 1);
 		for (int entry = 0; entry < sensors->MaxSize; entry++)
 		{
 			root["result"][entry]["Profile"]  = string_format("%06X", sensors->LinkTable[entry].Profile);
-			root["result"][entry]["SenderId"] = string_format("%07X", sensors->LinkTable[entry].SenderId);
+			UINT32 SenderId = sensors->LinkTable[entry].SenderId;
+			root["result"][entry]["SenderId"] = string_format("%07X", SenderId);
 			root["result"][entry]["Channel"]  = string_format("%d"  , sensors->LinkTable[entry].Channel);
 
-			root["result"][entry]["Name"] = GetDeviceNameFromId(sensors->LinkTable[entry].SenderId);
+			if (CheckIsGatewayAdress(SenderId))
+			{
+				int unitCode = GetOffsetAdress(SenderId);
+				SenderId = GetSenderIdFromAddress(unitCode);
+			}
+			root["result"][entry]["Name"] = GetDeviceNameFromId(SenderId);
 
 		}
 }

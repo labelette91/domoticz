@@ -186,6 +186,8 @@ public:
 
 	unsigned int getSenderAdressFromDeviceId(unsigned int devIDx);
 
+	int GetSenderIdFromAddress(int adsress);
+
 	unsigned int getSenderAdressFromDeviceId(std::string devIDx);
 
 	int SensorExist(unsigned int Deviceid);
