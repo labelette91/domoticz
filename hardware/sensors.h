@@ -69,6 +69,11 @@ public:
 	{
 		m_sensors[SensorId].Profile = Profile;
 	}
+	void setSensorAddress(uint SensorId, uint Address)
+	{
+		m_sensors[SensorId].Address = Address;
+	}
+
 	void setLinkTableMedadata(uint SensorId, int csize, int MaxSize)
 	{
 		m_sensors[SensorId].CurrentSize = csize;
@@ -99,9 +104,22 @@ public:
 		}
 
 	}
+	int  getTableLinkMaxSize(unsigned int DeviceId)
+	{
+		T_SENSOR* ms = Find(DeviceId);
+		if (ms)
+			return  ms->MaxSize;
+		else
+			return  0;
+	}
 	int  getTableLinkCurrentSize(unsigned int DeviceId)
 	{
-		return  m_sensors[DeviceId].CurrentSize;
+		T_SENSOR* ms = Find(DeviceId);
+		if (ms)
+			return  ms->CurrentSize;
+		else
+			return  0;
+
 	}
 	int  getTableLinkValidSensorIdSize(unsigned int DeviceId)
 	{
@@ -115,7 +133,30 @@ public:
 		if (itt != m_sensors.end())
 				return &itt->second;
 		return 0;
-}
+	}
+	int  getEEP(unsigned int DeviceId)
+	{
+		T_SENSOR* ms = Find(DeviceId);
+		if (ms)
+			return  ms->Profile;
+		else
+			return  0;
+
+	}
+
+	int FindEmptyEntry(unsigned int  DeviceId)
+	{
+		T_SENSOR* sensor = Find(DeviceId);
+		if (sensor!=0)
+		for (int i = 0; i < SIZE_LINK_TABLE; i++)
+		{
+			if (sensor->LinkTable[i].Profile == EMPTY_PROFILE)
+				return i;
+		}
+		return -1;
+	}
+
+
 
 };
 

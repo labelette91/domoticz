@@ -413,6 +413,7 @@ CEnOceanESP3::CEnOceanESP3(const int ID, const std::string& devname, const int t
 	//m_bufferpos = 0;
 	//m_buffer[m_bufferpos++] = 0xA5;
 	//ParseData();
+	LoadSensorsNodesFromDb();
 }
 
 CEnOceanESP3::~CEnOceanESP3()
@@ -2421,6 +2422,43 @@ namespace http {
 					deviceId = getDeviceId(req, i);  if (deviceId.empty())	return;
 					pEnocean->action(DeviceIdCharToInt(deviceId));
 				}
+			}
+			else if (cmd == "Link") {
+				if (nbSelectedDevice != 2) {root["message"] = "Only 2 deviecs selected"; return;}
+				int deviceId1   = DeviceIdCharToInt( getDeviceId(req, 0) );
+				int deviceId2   = DeviceIdCharToInt( getDeviceId(req, 1) );
+				int LinkSize1   = pEnocean->Sensors.getTableLinkMaxSize(deviceId1);
+				int LinkSize2   = pEnocean->Sensors.getTableLinkMaxSize(deviceId2);
+				int deviceIdSender, deviceIdReceiver, receiverChannel, senderChannel;
+				if ((LinkSize1 == 0) && (LinkSize2 != 0))
+				{
+					deviceIdSender   = deviceId1;
+					deviceIdReceiver = deviceId2;
+					senderChannel    = std::stoi(getDeviceUnit(req, 0));
+					receiverChannel  = std::stoi(getDeviceUnit(req, 1));
+				}
+				else
+				if ((LinkSize1 != 0) && (LinkSize2 == 0))
+				{
+					deviceIdSender   = deviceId2;
+					deviceIdReceiver = deviceId1;
+					senderChannel   = std::stoi(getDeviceUnit(req, 1));
+					receiverChannel = std::stoi(getDeviceUnit(req, 0));
+				}
+				else
+				{
+					root["message"] = "Could not link devices"; return;
+				}
+				//get empty entry in receiver
+				int emptyEntry = pEnocean->Sensors.FindEmptyEntry(deviceIdReceiver);
+				if (emptyEntry<0)
+				{
+					root["message"] = "Link table full or device not found "; return;
+				}
+				int senderEEP = pEnocean->Sensors.getEEP(deviceIdSender);
+				pEnocean->setLinkEntryTable(deviceIdReceiver, emptyEntry, deviceIdSender, senderEEP , receiverChannel-1);
+				_log.Log(LOG_NORM, "EnOcean: Link receiver %08X channel %d to sender %08X(%06X) ", deviceIdReceiver, receiverChannel, deviceIdSender, senderEEP);
+
 			}
 
 			else

@@ -106,6 +106,8 @@ public:
 	T_COM_STATUS getCommStatus();
 
 	bool isCommStatusOk();
+
+	void LoadSensorsNodesFromDb();
 	
 };
 

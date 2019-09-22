@@ -713,6 +713,32 @@ bool  CEnOceanRMCC::isCommStatusOk()
 	return (m_com_status == COM_OK) ;
 }
 
+
+void CEnOceanRMCC::LoadSensorsNodesFromDb()
+{
+	Sensors.m_sensors.clear();
+	std::vector<std::vector<std::string> > result;
+	result = m_sql.safe_query("SELECT ID, DeviceID, Manufacturer, Rorg,Profile, [Type],Address FROM EnoceanSensors WHERE (HardwareID==%d)", m_HwdID);
+	if (!result.empty())
+	{
+		for (const auto & itt : result)
+		{
+			std::vector<std::string> sd = itt;
+			uint devideId = DeviceIdCharToInt(sd[1]);
+			Sensors.addSensorManuf(devideId, atoi(sd[2].c_str()) , 0 ) ;
+
+			int rorg = atoi(sd[3].c_str());
+			int func = atoi(sd[4].c_str());
+			int type = atoi(sd[5].c_str());
+			Sensors.addSensorProfile(devideId, RorgFuncTypeToProfile(rorg, func, type));
+
+			Sensors.setSensorAddress(devideId, atoi(sd[6].c_str())); 
+
+		}
+	}
+}
+
+
 typedef struct _STR_TABLE {
 	unsigned long    id;
 	const char   *str1;

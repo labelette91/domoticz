@@ -276,7 +276,7 @@ define(['app'], function (app) {
 		    $("#nodestable tbody").on('click', 'tr', function () {
 		        $('#updelclr #nodedelete').attr("class", "btnstyle3-dis");
 		        if ($(this).hasClass('row_selected')) {
-		            $(this).removeClass('row_selected');
+//		            $(this).removeClass('row_selected');
 
 		            /*		            $('#updelclr #nodeupdate').attr("class", "btnstyle3-dis");
                                         $("#hardwarecontent #configuration").html("");
