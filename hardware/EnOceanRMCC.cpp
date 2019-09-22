@@ -453,6 +453,20 @@ void CEnOceanRMCC::getallLinkTable(uint SensorId, int begin, int end)
 
 }
 
+void CEnOceanRMCC::getLinkTable( uint DeviceId)
+{
+	unlock(DeviceId, GetLockCode());
+	getLinkTableMedadata(DeviceId);
+	int TableSize = Sensors.getTableLinkCurrentSize(DeviceId);
+	int begin = 0;
+	if (TableSize)
+		while (TableSize != Sensors.getTableLinkValidSensorIdSize(DeviceId))
+		{
+			getallLinkTable(DeviceId, begin, begin + 2);
+			begin += 3;
+		}
+}
+
 void CEnOceanRMCC::setLinkEntryTable(uint SensorId, int begin , uint ID , int EEP , int channel )
 {
 	unsigned char buff[16];

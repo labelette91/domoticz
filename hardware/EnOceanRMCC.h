@@ -79,6 +79,8 @@ public:
 
 	void getallLinkTable(uint SensorId, int begin, int end);
 
+	void getLinkTable(uint DeviceId);
+
 	void setLinkEntryTable(uint SensorId, int begin, uint ID, int EEP, int channel);
 
 	void resetToDefaults(uint destID, int resetAction);
