@@ -22,7 +22,6 @@ define(['app'], function (app) {
 			$scope.ozw_node_id = "-";
 			$scope.ozw_node_desc = "-";
 
-//			EditOpenZWave($ctrl.hardware.idx, $ctrl.hardware.Name)
 			EditEnOcean($ctrl.hardware.idx, $ctrl.hardware.Name, 1, 2, 3, 4, 5, 6);
 		};
 
@@ -40,6 +39,10 @@ define(['app'], function (app) {
 		    var deviceIdSelected = {} ;
 		    
 		    var totalselected = $('#nodestable input:checkbox:checked').length;
+
+		    if (totalselected == 0) {
+		        var data = oTable.fnGetData(anSelected[0]);
+		    }
 		    if (totalselected < MinIdSelected)  {
 		        bootbox.alert($.t('No Devices selected !'));
 		        return;
@@ -50,11 +53,7 @@ define(['app'], function (app) {
 		    }
 
             //number entry selected
-		    totalLinkSelected = 0;
-		    $('#inboundlinktable input:checkbox:checked').each(function () {
-		        totalLinkSelected++;
-		    });
-
+		    totalLinkSelected = $('#inboundlinktable input:checkbox:checked').length;
 		    if (totalLinkSelected < MinEntrySelected) {
 		        bootbox.alert($.t('No Entry selected !'));
 		        return;
@@ -106,62 +105,6 @@ define(['app'], function (app) {
 		            }
 		        },
 		        error: function (response) {
-		        }
-		    });
-
-		}
-
-		EnOceanLink = function (cmd) {
-
-		    var oTable = $('#nodestable').dataTable();
-		    var anSelected = fnGetSelected(oTable);
-		    var payload = {};
-             
-
-		    var totalselected = $('#nodestable input:checkbox:checked').length;
-		    if (totalselected != 1) {
-		        bootbox.alert($.t('select only one  Devices !'));
-		        return;
-		    }
-
-//get device to link
-		    $('#nodestable input:checkbox:checked').each(function () {
-		        lineNo = $(this).val();
-		        var data = oTable.fnGetData(lineNo);
-                //DeviceId
-		        payload[0] = data[0];
-                //Channel
-		        payload[1] = data[1];
-		    });
-
-
-            oTable = $('#inboundlinktable').dataTable();
-            anSelected = fnGetSelected(oTable);
-
-            if (anSelected.length == 0) {
-                bootbox.alert($.t('No link entry selected !'));
-                return;
-            }
-		    //data device selectonne
-            var Entry = oTable.fnGetData(anSelected[0]);
-
-            //device Id
-            payload[2] = Entry["entry"];
-		    //link table entry
-            payload[3] = Entry[0];
-
-
-
-		    $.ajax({
-		        //		        type: 'POST',
-		        url: "json.htm?type=enocean&hwid=" + $.devIdx + "&cmd=" + cmd,
-		        data: payload,
-		        async: false,
-		        dataType: 'json',
-		        success: function (data) {
-		            if (typeof data.result != 'undefined') {
-
-		            }
 		        }
 		    });
 
