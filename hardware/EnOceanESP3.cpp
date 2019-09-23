@@ -2362,17 +2362,7 @@ namespace http {
 			}
 			else if (cmd == "GetLinkTable") {
 				deviceId = getDeviceId(req, 0);    if (deviceId.empty())	return;
-				int DeviceId = DeviceIdCharToInt(deviceId);
-				pEnocean->unlock(DeviceId, pEnocean->GetLockCode());
-				pEnocean->getLinkTableMedadata(DeviceId);
-				int TableSize = pEnocean->Sensors.getTableLinkCurrentSize(DeviceId);
-				int begin = 0;
-				if (TableSize)
-					while (TableSize != pEnocean->Sensors.getTableLinkValidSensorIdSize(DeviceId))
-					{
-						pEnocean->getallLinkTable(DeviceId, begin, begin + 2);
-						begin += 3;
-					}
+				pEnocean->getLinkTable(DeviceIdCharToInt(deviceId));
 			}
 			else if (cmd == "QueryStatus") {
 				for ( int i = 0; i < nbSelectedDevice; i++) {
@@ -2394,19 +2384,20 @@ namespace http {
 				}
 			}
 			else if (cmd == "DeleteEntrys") {
-				for (int i = 0; i < nbSelectedDevice; i++) {
-					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
-
-					int entryNb = 0;
+				{
+					deviceId = getLinkEntry(req, 0);    if (deviceId.empty())	return;
+					uint DeviceId = DeviceIdCharToInt(deviceId);
+					int entryNb = 1;
 					std::string entry;
 					entry = getLinkEntry(req, entryNb);
 					while (!entry.empty())
 					{
-						pEnocean->setLinkEntryTable(DeviceIdCharToInt(deviceId), std::stoi(entry,0,0),0,0,0 ) ;
+						pEnocean->setLinkEntryTable(DeviceId, std::stoi(entry,0,0),0,0,0 ) ;
 						entryNb++;
 						entry = getLinkEntry(req, entryNb);
 
 					}
+					pEnocean->getLinkTable(DeviceId);
 				}
 			}
 			else if (cmd == "Ping") {
@@ -2427,6 +2418,10 @@ namespace http {
 				if (nbSelectedDevice != 2) {root["message"] = "Only 2 deviecs selected"; return;}
 				int deviceId1   = DeviceIdCharToInt( getDeviceId(req, 0) );
 				int deviceId2   = DeviceIdCharToInt( getDeviceId(req, 1) );
+				if (pEnocean->Sensors.asLinkTable(deviceId1) )
+					pEnocean->getLinkTable(deviceId1);
+				if (pEnocean->Sensors.asLinkTable(deviceId2) )
+					pEnocean->getLinkTable(deviceId2);
 				int LinkSize1   = pEnocean->Sensors.getTableLinkMaxSize(deviceId1);
 				int LinkSize2   = pEnocean->Sensors.getTableLinkMaxSize(deviceId2);
 				int deviceIdSender, deviceIdReceiver, receiverChannel, senderChannel;

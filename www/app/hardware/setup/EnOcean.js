@@ -82,6 +82,8 @@ define(['app'], function (app) {
 		    $('#inboundlinktable input:checkbox:checked').each(function () {
 		        lineNo = $(this).val();
 		        var entry = oLinkTable.fnGetData(lineNo);
+		        if (selectedEntry == "")
+		            selectedEntry = entry["entry"] + ';';
 		        selectedEntry = selectedEntry + entry[0] + ';';
 		    });
 
@@ -97,7 +99,7 @@ define(['app'], function (app) {
 		            if (data.status == "ERR")
 		                bootbox.alert($.t('Error funcion '+cmd + ' : ' + data.message ));
 
-		            if (cmd == "GetLinkTable")
+		            if ((cmd == "GetLinkTable") || (cmd == "DeleteEntrys"))
 		                refreshLinkTable(deviceIdSelected[0]);
 		            if (typeof data.result != 'undefined') {
 

@@ -513,6 +513,9 @@ void CEnOceanRMCC::setLinkEntryTable(uint SensorId, int begin , uint ID , int EE
 	setDestination(opt, SensorId);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
+	//wait for all the table response
+	waitRemote_man_answer(RC_ACK, 5);
+
 	_log.Debug(DEBUG_NORM, "EnOcean: send setLinkTable %08X begin :%d ID:%08X EEP:%06X Channel : %d", SensorId, begin,ID, EEP, channel);
 
 }
@@ -640,7 +643,11 @@ addLinkTableEntry(0x1a65428, 0, 0xD0500, 0xABCDEF, 1);
 */
 	T_SENSOR* sensors = Sensors.Find(DeviceId);
 
-	if (sensors)
+	if (sensors) {
+		//read link table if not readed
+		if ((sensors->asLinkTable()) && (sensors->getTableLinkMaxSize() == 0))
+			getLinkTable(DeviceId);
+
 		for (int entry = 0; entry < sensors->MaxSize; entry++)
 		{
 			root["result"][entry]["Profile"]  = string_format("%06X", sensors->LinkTable[entry].Profile);
@@ -654,8 +661,8 @@ addLinkTableEntry(0x1a65428, 0, 0xD0500, 0xABCDEF, 1);
 				SenderId = GetSenderIdFromAddress(unitCode);
 			}
 			root["result"][entry]["Name"] = GetDeviceNameFromId(SenderId);
-
 		}
+	}
 }
 unsigned int CEnOceanRMCC::GetLockCode()
 {

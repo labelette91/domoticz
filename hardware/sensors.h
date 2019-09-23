@@ -49,6 +49,31 @@ typedef struct _T_SENSOR {
 		}
 	}
 
+	int  getSensorRorg()
+	{
+			return  getRorg(Profile);
+	}
+	int  getSensorFunc()
+	{
+		return  getFunc(Profile);
+	}
+	int  getSensorType()
+	{
+		return  getType(Profile);
+
+	}
+
+	bool asLinkTable()
+	{
+		return (getSensorRorg() == RORG_VLD);
+	}
+
+	int  getTableLinkMaxSize()
+	{
+		return  MaxSize;
+	}
+
+
 }T_SENSOR;
 
 typedef 	std::map<unsigned int, T_SENSOR > T_SENSOR_MAP;
@@ -108,7 +133,7 @@ public:
 	{
 		T_SENSOR* ms = Find(DeviceId);
 		if (ms)
-			return  ms->MaxSize;
+			return  ms->getTableLinkMaxSize();
 		else
 			return  0;
 	}
@@ -144,6 +169,34 @@ public:
 
 	}
 
+	int  getSensorRorg(unsigned int DeviceId)
+	{
+		T_SENSOR* ms = Find(DeviceId);
+		if (ms)
+			return   ms->getSensorRorg() ;
+		else
+			return  0;
+
+	}
+	int  getSensorFunc(unsigned int DeviceId)
+	{
+		T_SENSOR* ms = Find(DeviceId);
+		if (ms)
+			return  ms->getSensorFunc();
+		else
+			return  0;
+
+	}
+	int  getSensorType(unsigned int DeviceId)
+	{
+		T_SENSOR* ms = Find(DeviceId);
+		if (ms)
+			return  (ms->getSensorType());
+		else
+			return  0;
+
+	}
+
 	int FindEmptyEntry(unsigned int  DeviceId)
 	{
 		T_SENSOR* sensor = Find(DeviceId);
@@ -155,7 +208,16 @@ public:
 		}
 		return -1;
 	}
+	//return true if sensor as a link table 
+	bool asLinkTable(unsigned int  DeviceId)
+	{
+		T_SENSOR* ms = Find(DeviceId);
+		if (ms)
+			return ms->asLinkTable();
+		else
+			return  false;
 
+	}
 
 
 };
