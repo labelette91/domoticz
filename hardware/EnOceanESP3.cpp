@@ -1027,24 +1027,26 @@ bool CEnOceanESP3::ParseData()
 			_log.Log(LOG_ERROR,"EnOcean: Response Error (Code: %d, %s)",ResponseCode,szError.c_str());
 			return false;
 		}
-		if ((m_bBaseIDRequested)&&(m_bufferpos==6))
+		if ((m_bBaseIDRequested) && (m_bufferpos == 6))
 		{
-			m_bBaseIDRequested=false;
+			m_bBaseIDRequested = false;
 			m_id_base = (m_buffer[1] << 24) + (m_buffer[2] << 16) + (m_buffer[3] << 8) + m_buffer[4];
 			//unsigned char changes_left=m_buffer[5];
-			_log.Log(LOG_STATUS,"EnOcean: Transceiver ID_Base: 0x%08lx",m_id_base);
+			_log.Log(LOG_STATUS, "EnOcean: Transceiver ID_Base: 0x%08lx", m_id_base);
 		}
-		if (m_bufferpos==33)
+		else if (m_bufferpos == 33)
 		{
 			//Version Information
-			_log.Log(LOG_STATUS,"EnOcean: Version_Info, App: %02x.%02x.%02x.%02x, API: %02x.%02x.%02x.%02x, ChipID: %02x.%02x.%02x.%02x, ChipVersion: %02x.%02x.%02x.%02x, Description: %s",
-				m_buffer[1],m_buffer[2],m_buffer[3],m_buffer[4],
-				m_buffer[5],m_buffer[6],m_buffer[7],m_buffer[8],
-				m_buffer[9],m_buffer[10],m_buffer[11],m_buffer[12],
-				m_buffer[13],m_buffer[14],m_buffer[15],m_buffer[16],
-				(const char*)&m_buffer+17
-				);
+			_log.Log(LOG_STATUS, "EnOcean: Version_Info, App: %02x.%02x.%02x.%02x, API: %02x.%02x.%02x.%02x, ChipID: %02x.%02x.%02x.%02x, ChipVersion: %02x.%02x.%02x.%02x, Description: %s",
+				m_buffer[1], m_buffer[2], m_buffer[3], m_buffer[4],
+				m_buffer[5], m_buffer[6], m_buffer[7], m_buffer[8],
+				m_buffer[9], m_buffer[10], m_buffer[11], m_buffer[12],
+				m_buffer[13], m_buffer[14], m_buffer[15], m_buffer[16],
+				(const char*)&m_buffer + 17
+			);
 		}
+		else
+			setRemote_man_answer(PACKET_RESPONSE);
 		return true;
 	}
 	else if (m_ReceivedPacketType==PACKET_RADIO)

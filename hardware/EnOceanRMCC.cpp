@@ -7,6 +7,7 @@
 
 #include "EnOceanRMCC.h"
 
+#define ACK_TIMEOUT 5
 
 CEnOceanRMCC::CEnOceanRMCC() {
 	m_Seq = 0 ;
@@ -213,7 +214,7 @@ void CEnOceanRMCC::unlock(unsigned int destID, unsigned int code)
 
 	_log.Debug(DEBUG_NORM, "EnOcean: unlock send cmd to %08X code:%08X", destID,code);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
-	
+	waitRemote_man_answer(PACKET_RESPONSE, ACK_TIMEOUT);
 }
 void CEnOceanRMCC::lock(unsigned int destID, unsigned int code)
 {
@@ -369,7 +370,7 @@ void CEnOceanRMCC::getLinkTableMedadata(uint destID)
 	_log.Debug(DEBUG_NORM, "EnOcean: send getLinkTableMedadata %08X ", destID);
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
-	waitRemote_man_answer(RC_GET_METADATA_RESPONSE,5 );
+	waitRemote_man_answer(RC_GET_METADATA_RESPONSE, ACK_TIMEOUT);
 
 }
 
@@ -449,7 +450,7 @@ void CEnOceanRMCC::getallLinkTable(uint SensorId, int begin, int end)
 
 	//wait for all the table response
 	for (int i=0;i< NbAnswer;i++)
-		waitRemote_man_answer(RC_GET_TABLE_RESPONSE, 5);
+		waitRemote_man_answer(RC_GET_TABLE_RESPONSE, ACK_TIMEOUT);
 
 }
 
@@ -514,7 +515,7 @@ void CEnOceanRMCC::setLinkEntryTable(uint SensorId, int begin , uint ID , int EE
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
 	//wait for all the table response
-	waitRemote_man_answer(RC_ACK, 5);
+	waitRemote_man_answer(RC_ACK, ACK_TIMEOUT);
 
 	_log.Debug(DEBUG_NORM, "EnOcean: send setLinkTable %08X begin :%d ID:%08X EEP:%06X Channel : %d", SensorId, begin,ID, EEP, channel);
 
@@ -701,12 +702,12 @@ bool CEnOceanRMCC::waitRemote_man_answer(int premote_man_answer, int timeout)
 {
 	int remote_man_answer = getRemote_man_answer();
 	setCommStatus(COM_OK);
-
+	timeout *= 10;
 	while (( remote_man_answer != premote_man_answer) && (timeout > 0))
 	{
 		if (remote_man_answer == 0)
 		{
-			Sleep(1000);
+			Sleep(100);
 			timeout--;
 		}
 		remote_man_answer = getRemote_man_answer();
