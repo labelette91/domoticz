@@ -101,6 +101,8 @@ public:
 
 	int getRemote_man_answer();
 
+	void clearRemote_man_answer();
+
 	bool waitRemote_man_answer(int premote_man_answer, int timeout);
 
 	void setCommStatus(T_COM_STATUS status);

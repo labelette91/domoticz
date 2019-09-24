@@ -9,6 +9,27 @@
 
 #define ACK_TIMEOUT 5
 
+
+char * Query_Status_return_codes[] =
+{
+	"OK                            ",
+	"Wrong target ID               ",
+	"Wrong unlock code             ",
+	"Wrong EEP                     ",
+	"Wrong manufacturer ID         ",
+	"Wrong data size               ",
+	"No code set                   ",
+	"Not send                      ",
+	"RPC failed                    ",
+	"Message time out              ",
+	"Too Long Message              ",
+	"Message part already received ",
+	"Message part not received     ",
+	"Address out of range          ",
+	"Code data size exceeded       ",
+	"Wrong data                    "
+};
+
 CEnOceanRMCC::CEnOceanRMCC() {
 	m_Seq = 0 ;
 	m_com_status = COM_OK;
@@ -29,8 +50,6 @@ void CEnOceanRMCC::setRorg(unsigned char * buff, int idx )
 	buff[1] = (m_Seq << 6)  + idx ;       //SEQ 40/80/C0
 
 }
-
-
 void CEnOceanRMCC::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , int m_DataSize, int m_OptionalDataSize )
 {
 	//get function
@@ -162,7 +181,7 @@ void CEnOceanRMCC::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , i
 		int lastReturnCode= m_buffer[7] ;
 
 		unsigned int senderId = DeviceArrayToInt(&m_buffer[12]);
-		_log.Log(LOG_NORM, "EnOcean: QUERY STATUS ANSWER SenderId: %08X CodeIsSet:%d LastSeq:%d lastFunc:%04X lastReturnCode:%d ", senderId, CodeIsSet, LastSeq, lastFunc, lastReturnCode);
+		_log.Log(LOG_NORM, "EnOcean: QUERY STATUS ANSWER SenderId: %08X CodeIsSet:%d LastSeq:%d lastFunc:%04X lastReturnCode:%d :%s", senderId, CodeIsSet, LastSeq, lastFunc, lastReturnCode, Query_Status_return_codes[lastReturnCode&0xF]);
 	}
 
 	setRemote_man_answer(fct);
@@ -373,9 +392,6 @@ void CEnOceanRMCC::getLinkTableMedadata(uint destID)
 	waitRemote_man_answer(RC_GET_METADATA_RESPONSE, ACK_TIMEOUT);
 
 }
-
-
-
 void CEnOceanRMCC::queryFunction(uint destID)
 {
 	unsigned char buff[16];
@@ -453,7 +469,6 @@ void CEnOceanRMCC::getallLinkTable(uint SensorId, int begin, int end)
 		waitRemote_man_answer(RC_GET_TABLE_RESPONSE, ACK_TIMEOUT);
 
 }
-
 void CEnOceanRMCC::getLinkTable( uint DeviceId)
 {
 	unlock(DeviceId, GetLockCode());
@@ -467,7 +482,6 @@ void CEnOceanRMCC::getLinkTable( uint DeviceId)
 			begin += 3;
 		}
 }
-
 void CEnOceanRMCC::setLinkEntryTable(uint SensorId, int begin , uint ID , int EEP , int channel )
 {
 	unsigned char buff[16];
@@ -520,7 +534,6 @@ void CEnOceanRMCC::setLinkEntryTable(uint SensorId, int begin , uint ID , int EE
 	_log.Debug(DEBUG_NORM, "EnOcean: send setLinkTable %08X begin :%d ID:%08X EEP:%06X Channel : %d", SensorId, begin,ID, EEP, channel);
 
 }
-
 void CEnOceanRMCC::resetToDefaults(uint destID,int resetAction)
 {
 	unsigned char buff[16];
@@ -543,7 +556,6 @@ void CEnOceanRMCC::resetToDefaults(uint destID,int resetAction)
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
 }
-
 //teachin from ID database
 void CEnOceanRMCC::TeachIn(std::string& sidx, T_LEARN_MODE Device_LRN_Mode )
 {
@@ -697,9 +709,19 @@ int CEnOceanRMCC::getRemote_man_answer()
 
 	return remote_man_answer;
 };
+void CEnOceanRMCC::clearRemote_man_answer()
+{
+	//if a response as been received
+	if (m_RMCC_queue.size() > 0)
+	{
+		std::lock_guard<std::mutex> l(m_RMCC_Mutex);
+		m_RMCC_queue.clear();
+	}
+};
 //return true if time out
 bool CEnOceanRMCC::waitRemote_man_answer(int premote_man_answer, int timeout)
 {
+	clearRemote_man_answer();
 	int remote_man_answer = getRemote_man_answer();
 	setCommStatus(COM_OK);
 	timeout *= 10;
