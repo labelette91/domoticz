@@ -15,8 +15,10 @@
 #define S_RPS_RPC_SHIFT 0
 
 
-CEnOcean::CEnOcean() {
+CEnOcean::CEnOcean(int ID) {
 	m_id_base = 0;
+	m_HwdID = ID;
+
 };
 //return true if base adress reading
 bool CEnOcean::IsRunning()
@@ -29,7 +31,7 @@ unsigned int CEnOcean::GetAdress(int unitid) {
 	return(m_id_base + unitid);
 }
 unsigned int CEnOcean::GetOffsetAdress(int senderid) {
-	return (senderid - m_id_base) ;
+	return (senderid & (0x7F)) ;
 }
 uint64_t CEnOcean::CreateDevice(const int HardwareID, const char* ID, const int  unitCode, const unsigned char devType, const unsigned char subType, const unsigned char signallevel, const unsigned char batterylevel, const int nValue, const char* sValue, std::string &devname, int SwitchType , const std::string & deviceoptions)
 {
@@ -129,7 +131,7 @@ int CEnOcean::GetSenderIdFromAddress(int adsress) {
 
 //DeviceId : ID of device in EnoceanSensor
 //offsetID : offset of device from controler base adress 0..127
-void CEnOcean::UpdateBaseAddress(std::string DeviceId , int offsetID ) {
+void CEnOcean::UpdateSenorBaseAddress(std::string DeviceId , int offsetID ) {
 	m_sql.safe_query("UPDATE EnoceanSensors SET %s=%d   WHERE (DeviceID = '%s' )", "Address" , offsetID , DeviceId.c_str() );
 
 }
@@ -170,11 +172,11 @@ int CEnOcean::UpdateDeviceAddress(std::string DeviceId) {
 	//get all BaseId allready affected to switch device
 	for (unsigned int i = 0; i < result.size(); i++)
 	{
-		int unitId = atoi(result[i][0].c_str());
+		uint deviceId = DeviceIdCharToInt (result[i][0]);
 		//if it is a gateWay range adress
-		if (CheckIsGatewayAdress(unitId))
+		if (CheckIsGatewayAdress(deviceId))
 		{
-			unitId = GetOffsetAdress(unitId) % MAX_BASE_ADDRESS;//robustess
+			int unitId = GetOffsetAdress(deviceId) % MAX_BASE_ADDRESS;//robustess
 			//ID already used
 			UsedUnitId[unitId] = true;
 		}
@@ -184,7 +186,7 @@ int CEnOcean::UpdateDeviceAddress(std::string DeviceId) {
 	for (int i = 1; i < MAX_BASE_ADDRESS; i++)
 	{
 		if (UsedUnitId[i] == false) {
-			UpdateBaseAddress(DeviceId, i);
+			UpdateSenorBaseAddress(DeviceId, i);
 			return i ;
 		}
 	}
@@ -456,6 +458,27 @@ bool CEnOcean::CheckIsGatewayAdress(unsigned int deviceid)
 		return false;
 
 }
+
+//update sensor database with switch created manually 
+void  CEnOcean::UpdateSensorDbWithManualSwitch() {
+	std::vector<std::vector<std::string> > result;
+
+	//get list of device enocean created in DeviceStatus
+	result = m_sql.safe_query("SELECT DeviceId ,Unit FROM DeviceStatus  WHERE (HardwareId=%d)  ", m_HwdID);
+	//get all BaseId allready affected to switch device
+	for (unsigned int i = 0; i < result.size(); i++)
+	{
+		uint deviceId = DeviceIdCharToInt(result[i][0]);
+		uint unitId   = atoi(result[i][1].c_str());
+		//if it is a gateWay range adress
+		if (CheckIsGatewayAdress(deviceId))
+		{
+			AddSensors(deviceId, 0xF6, 0x7ff, 02, 01, unitId);
+		}
+	}
+	return ;
+}
+
 
 //static function librairy
 

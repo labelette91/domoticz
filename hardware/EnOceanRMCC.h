@@ -44,10 +44,11 @@ public:
 	//Remote Mannagement Control Command reception Queue
 	std::vector<int> m_RMCC_queue;
 
+	T_SENSORS Sensors;
 
 
 
-	CEnOceanRMCC();
+	CEnOceanRMCC(int ID);
 
 	void setRorg(unsigned char * buff);
 

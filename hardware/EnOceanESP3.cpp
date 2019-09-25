@@ -396,7 +396,7 @@ bool CEnOceanESP3::sendFrameQueue(unsigned char frametype, unsigned char *databu
 	return true;
 }
 
-CEnOceanESP3::CEnOceanESP3(const int ID, const std::string& devname, const int type)
+CEnOceanESP3::CEnOceanESP3(const int ID, const std::string& devname, const int type): CEnOceanRMCC::CEnOceanRMCC( ID)
 {
 	m_HwdID=ID;
 	m_szSerialPort=devname;
@@ -413,7 +413,6 @@ CEnOceanESP3::CEnOceanESP3(const int ID, const std::string& devname, const int t
 	//m_bufferpos = 0;
 	//m_buffer[m_bufferpos++] = 0xA5;
 	//ParseData();
-	LoadSensorsNodesFromDb();
 }
 
 CEnOceanESP3::~CEnOceanESP3()

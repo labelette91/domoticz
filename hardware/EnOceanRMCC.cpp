@@ -30,9 +30,10 @@ char * Query_Status_return_codes[] =
 	"Wrong data                    "
 };
 
-CEnOceanRMCC::CEnOceanRMCC() {
+CEnOceanRMCC::CEnOceanRMCC(int ID ):CEnOcean::CEnOcean(ID){
 	m_Seq = 0 ;
 	m_com_status = COM_OK;
+	LoadSensorsNodesFromDb();
 };
 void CEnOceanRMCC::setRorg(unsigned char * buff)
 {
@@ -123,7 +124,7 @@ void CEnOceanRMCC::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , i
 		//if no link content , delete internal base Adresse
 		if (currentSize == 0)
 			if (SensorExist(senderId))
-				UpdateBaseAddress(DeviceIDToString(senderId),0 );
+				UpdateSenorBaseAddress(DeviceIDToString(senderId),0 );
 	}
 	//get all link table
 	else if (fct == RC_GET_TABLE_RESPONSE)

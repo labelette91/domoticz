@@ -161,7 +161,7 @@ public:
     */
 //	CEnOcean(const int ID, const std::string& devname, const int type);
 
-	CEnOcean();
+	CEnOcean(int ID );
 
 	//return true if base adress reading
 	bool IsRunning();
@@ -180,7 +180,7 @@ public:
 
 	int UpdateDeviceAddress(unsigned int  DeviceId);
 
-	void UpdateBaseAddress(std::string idx, int offsetID);
+	void UpdateSenorBaseAddress(std::string idx, int offsetID);
 
 	static int getUnitFromDeviceId(unsigned int devIDx);
 
@@ -212,6 +212,8 @@ public:
 
 	bool CheckIsGatewayAdress(unsigned int id);
 
+	void UpdateSensorDbWithManualSwitch();
+
 private:
 	virtual bool ParseData() { return true; };
 
@@ -229,8 +231,6 @@ public:
 	void Send4BSTeachIn(unsigned int sID);
 
 public:	unsigned long m_id_base;
-
-	T_SENSORS Sensors;
 
 };
 
