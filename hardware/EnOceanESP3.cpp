@@ -735,7 +735,9 @@ bool CEnOceanESP3::WriteToHardware(const char *pdata, const unsigned char /*leng
 		}
 		//D2-01
 		else	if ((Rorg == 0xd2) && (Func == 0x01))
-			sendVld(unitBaseAddr, tsen->LIGHTING2.unitcode-1,  tsen->LIGHTING2.cmnd*64);
+			sendVld(unitBaseAddr, D20100_CMD1, 0, tsen->LIGHTING2.unitcode - 1, tsen->LIGHTING2.cmnd * 64 , END_ARG_DATA);
+
+//			sendVld(unitBaseAddr, tsen->LIGHTING2.unitcode-1,  tsen->LIGHTING2.cmnd*64);
 		return true ;
 
 	}

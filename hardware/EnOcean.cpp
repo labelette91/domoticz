@@ -402,7 +402,6 @@ void CEnOcean::sendVld(unsigned int sID, unsigned char *data , int DataLen )
 
 	sendFrameQueue(PACKET_RADIO, buffer, 6+DataLen, opt, 7);
 }
-extern uint32_t SetRawValues(uint8_t * data, T_DATAFIELD * OffsetDes, va_list value);
 //send a VLD datagramm of the command described by descriptor OffsetDes detailed in EEP profile.to device Id sID
 // the argument are variable length
 //it shall correspond to each offset Data detailed in EnOcean_Equipment_Profiles_EEP_v2.x.x_public.

@@ -3,6 +3,7 @@
 
 #include "ASyncSerial.h"
 #include "DomoticzHardware.h"
+#include "EnOceanRawValue.h"
 
 #define MAX_BASE_ADDRESS 128
 
@@ -125,22 +126,6 @@ void         setDestination(unsigned char * opt, unsigned int destID);
 
 
 #include "sensors.h"
-
-//Profile descriptor from eep.xml
-typedef struct {
-	int Offset;
-	int Size;
-	char * ShortCut;
-	double  RangeMin;
-	double  RangeMax;
-	double  ScaleMin;
-	double  ScaleMax;
-
-	char * description;
-}T_DATAFIELD;
-
-//value for the last argument of a telegram data payload
-#define END_ARG_DATA  (((unsigned int)1<<31)-1)
 
 class CEnOcean : public AsyncSerial, public CDomoticzHardwareBase
 {

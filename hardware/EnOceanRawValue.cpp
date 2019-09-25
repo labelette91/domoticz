@@ -1,21 +1,6 @@
-
-#if (_MSC_VER < 1300)
-   typedef signed char       int8_t;
-   typedef signed short      int16_t;
-   typedef signed int        int32_t;
-   typedef unsigned char     uint8_t;
-   typedef unsigned short    uint16_t;
-   typedef unsigned int      uint32_t;
-#else
-   typedef signed __int8     int8_t;
-   typedef signed __int16    int16_t;
-   typedef signed __int32    int32_t;
-   typedef unsigned __int8   uint8_t;
-   typedef unsigned __int16  uint16_t;
-   typedef unsigned __int32  uint32_t;
-#endif
-typedef signed __int64       int64_t;
-typedef unsigned __int64     uint64_t;
+#include "stdafx.h"
+#include "EnOceanRawValue.h"
+#include <string>
 
 
 const uint8_t maskArray[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0F, 0x07, 0x03, 0x01 };
@@ -89,7 +74,7 @@ bool SetRawValue(uint8_t * data , uint32_t value, uint16_t offset, uint8_t size)
 	if (size >= 32 )
 		return false;
 
-	if (((offset + size) / 8) > MAX_DATA_PAYLOAD)
+	if (((offset + size) / 8) > 16 )
 		return false;
 
 	uint8_t idx = (uint8_t)(offset / 8);
@@ -298,18 +283,13 @@ uint32_t SetRawValues(uint8_t * data, T_DATAFIELD * OffsetDes,  ...)
 
 
 //vld D2-03-0A : len=2 offset 0 battery level 1= action : //1 = simple press, 2=double press, 3=long press, 4=press release
-
 T_DATAFIELD D2030A[] = {
 {  0  , 8 , "BAT"  , 0,0,0,0,"battert level" },
 {  8  , 8 , "BUT"  , 0,0,0,0,"button       " }, //
 { 0  , 0  , 0      , 0,0,0,0,0              }  //
 };
 
-#define D2030A_BAT 0
-#define D2030A_BUT 1
-#define D2030A_NB_DATA    1
-#define D2030A_DATA_SIZE  2
-
+//TEACHIN_4BS vld
 T_DATAFIELD TEACHIN_4BS[] = {
 { 0  , 6 , "FUNC"  , 0,0,0,0,"function" },
 { 6  , 7 , "TYPE"  , 0,0,0,0,"type    " }, //
@@ -318,10 +298,5 @@ T_DATAFIELD TEACHIN_4BS[] = {
 { 28 , 1 , "LRNB"  , 0,0,0,0,"  learn bite " }, //  0 TeachIn telegram 1 DataLelegram
 { 0  , 0  , 0      , 0,0,0,0,0 }  //
 };
-
-#define WITHOUT_EEP 0
-#define WITH_EEP 1
-#define TEACHIN  0
-#define DATA_TELEG  1
 
 
