@@ -699,7 +699,8 @@ bool CEnOceanESP3::WriteToHardware(const char *pdata, const unsigned char /*leng
 
 	unsigned long sID=(tsen->LIGHTING2.id1<<24)|(tsen->LIGHTING2.id2<<16)|(tsen->LIGHTING2.id3<<8)|tsen->LIGHTING2.id4;
 
-	//to in range GateWay baseAdress..baseAdress+129
+	//to in range GateWay baseAdress..baseAdress+127 
+	//test if is not a swicyh manually created
 	if (!CheckIsGatewayAdress(sID) )
 	{
 		unsigned int unitBaseAddr = 0;
@@ -735,7 +736,7 @@ bool CEnOceanESP3::WriteToHardware(const char *pdata, const unsigned char /*leng
 		}
 		//D2-01
 		else	if ((Rorg == 0xd2) && (Func == 0x01))
-			sendVld(unitBaseAddr, D20100_CMD1, 0, tsen->LIGHTING2.unitcode - 1, tsen->LIGHTING2.cmnd * 64 , END_ARG_DATA);
+			sendVld(unitBaseAddr, D20100_CMD1, 1,0, tsen->LIGHTING2.unitcode - 1, tsen->LIGHTING2.cmnd * 64 , END_ARG_DATA);
 
 //			sendVld(unitBaseAddr, tsen->LIGHTING2.unitcode-1,  tsen->LIGHTING2.cmnd*64);
 		return true ;
@@ -1933,7 +1934,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 									{
 										_log.Debug(DEBUG_NORM, "EnOcean: TEACH Switch : 0xD2 Node 0x%08x UnitID: %02X cmd: %02X ", id, nbc + 1, light2_sOff);
 //										SendSwitch(id, nbc + 1, -1, light2_sOff, 0, DeviceIDToString(senderBaseAddr).c_str());
-										CreateDevice(m_HwdID, GetLighting2StringId(id).c_str(), nbc + 1, pTypeLighting2, sTypeAC, 0, -1, light2_sOff, "0", DeviceIDToString(id), STYPE_OnOff, "" );
+										CreateDevice(m_HwdID, GetLighting2StringId(id).c_str(), nbc + 1, pTypeLighting2, sTypeAC, 0, -1, light2_sOff, "0", DeviceIDToString(id), STYPE_OnOff, "" , 0 );
 									}
 									return;
 								}
@@ -1944,7 +1945,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 									{
 										_log.Debug(DEBUG_NORM, "EnOcean: TEACH Blinds Switch : 0xD2 Node 0x%08x UnitID: %02X cmd: %02X ", id, nbc + 1, light2_sOff);
 //										SendSwitch(id, nbc + 1, -1, light2_sOff, 0, DeviceIDToString(senderBaseAddr).c_str());
-										CreateDevice(m_HwdID, GetLighting2StringId(id).c_str(), nbc + 1, pTypeLighting2, sTypeAC, 0, -1, light2_sOff, "0", DeviceIDToString(id), STYPE_BlindsPercentage , "" );
+										CreateDevice(m_HwdID, GetLighting2StringId(id).c_str(), nbc + 1, pTypeLighting2, sTypeAC, 0, -1, light2_sOff, "0", DeviceIDToString(id), STYPE_BlindsPercentage , "" , 0 );
 									}
 									return;
 								}
@@ -2170,42 +2171,6 @@ void CEnOceanESP3::ParseRadioDatagram()
 			break;
 	}
 }
-
-
-
-
-void getDeviceIdUnit(std::string &cmd , std::string &deviceId , std::string &Unit)
-{
-	std::vector<std::string> splitresults;
-	StringSplit(cmd, ";", splitresults);
-	deviceId = "0";
-	Unit = "1";
-	if (splitresults.size()==2 )
-	{
-	deviceId = splitresults[0];
-	Unit = splitresults[1];
-	}
-	if (splitresults.size() == 1)
-	{
-		deviceId = splitresults[0];
-	}
-
-}
-
-void getDeviceIdUnit(std::string &cmd, unsigned &pdeviceId, unsigned &pUnit)
-{
-	std::string deviceId;
-	std::string Unit;
-	getDeviceIdUnit(cmd, deviceId, Unit);
-
-	pdeviceId = DeviceIdCharToInt(deviceId);
-	pUnit = DeviceIdCharToInt(Unit);
-
-}
-
-
-
-
 
 //Webserver helpers
 namespace http {

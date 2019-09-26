@@ -33,7 +33,7 @@ unsigned int CEnOcean::GetAdress(int unitid) {
 unsigned int CEnOcean::GetOffsetAdress(int senderid) {
 	return (senderid & (0x7F)) ;
 }
-uint64_t CEnOcean::CreateDevice(const int HardwareID, const char* ID, const int  unitCode, const unsigned char devType, const unsigned char subType, const unsigned char signallevel, const unsigned char batterylevel, const int nValue, const char* sValue, std::string &devname, int SwitchType , const std::string & deviceoptions)
+uint64_t CEnOcean::CreateDevice(const int HardwareID, const char* ID, const int  unitCode, const unsigned char devType, const unsigned char subType, const unsigned char signallevel, const unsigned char batterylevel, const int nValue, const char* sValue, std::string &devname, int SwitchType , const std::string & deviceoptions, int used )
 {
 	uint64_t ulID = 0;
 	std::vector<std::vector<std::string> > result;
@@ -52,11 +52,11 @@ uint64_t CEnOcean::CreateDevice(const int HardwareID, const char* ID, const int 
 			devname = "Unknown" + std::string(ID);
 		m_sql.safe_query(
 			"INSERT INTO DeviceStatus (HardwareID, DeviceID, Unit, Type, SubType, SignalLevel, BatteryLevel, nValue, sValue,Name,used,SwitchType) "
-			"VALUES ('%d','%q','%d','%d','%d','%d','%d','%d','%q','%q',1,'%d' )",
+			"VALUES ('%d','%q','%d','%d','%d','%d','%d','%d','%q','%q',%d,'%d' )",
 			HardwareID,
 			ID, unitCode, devType, subType,
 			signallevel, batterylevel,
-			nValue, sValue, devname.c_str(),
+			nValue, sValue, devname.c_str(),used,
 			SwitchType);
 
 		//Get new ID
@@ -432,6 +432,9 @@ uint32_t CEnOcean::sendVld(unsigned int unitBaseAddr, T_DATAFIELD * OffsetDes,  
 	uint32_t DataSize = SetRawValues(data, OffsetDes,  value);
 	if (DataSize)
 		sendVld(unitBaseAddr, data, DataSize);
+	else
+		_log.Log(LOG_ERROR, "EnOcean: Error argument number in sendVld : cmd :%s :%s ", OffsetDes->ShortCut, OffsetDes->description);
+
 
 	va_end(value);
 
