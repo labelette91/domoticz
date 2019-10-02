@@ -182,6 +182,8 @@ extern std::string szWebRoot;
 extern bool g_bUseUpdater;
 extern http::server::_eWebCompressionMode g_wwwCompressMode;
 extern http::server::CWebServerHelper m_webservers;
+extern bool g_bUseEventTrigger;
+
 
 
 CFibaroPush m_fibaropush;
@@ -792,7 +794,7 @@ bool MainWorker::AddHardwareFromParams(
 		break;
 	case HTYPE_MySensorsMQTT:
 		//LAN
-		pHardware = new MySensorsMQTT(ID, Name, Address, Port, Username, Password, Extra, Mode1);
+		pHardware = new MySensorsMQTT(ID, Name, Address, Port, Username, Password, Extra, Mode2, Mode1);
 		break;
 	case HTYPE_RFLINKTCP:
 		//LAN
@@ -804,7 +806,7 @@ bool MainWorker::AddHardwareFromParams(
 		break;
 	case HTYPE_MQTT:
 		//LAN
-		pHardware = new MQTT(ID, Address, Port, Username, Password, Extra, Mode1);
+		pHardware = new MQTT(ID, Address, Port, Username, Password, Extra, Mode2, Mode1);
 		break;
 	case HTYPE_eHouseTCP:
 		//eHouse LAN, WiFi,Pro and other via eHousePRO gateway
@@ -1104,7 +1106,7 @@ bool MainWorker::AddHardwareFromParams(
 		pHardware = new CTTNMQTT(ID, Address, Port, Username, Password, Extra);
 		break;
 	case HTYPE_BuienRadar:
-		pHardware = new CBuienRadar(ID);
+		pHardware = new CBuienRadar(ID, Mode1, Mode2);
 		break;
 	}
 
@@ -10067,6 +10069,7 @@ void MainWorker::decode_General(const int HwdID, const _eHardwareTypes HwdType, 
 		(subType == sTypeZWaveClock) ||
 		(subType == sTypeZWaveThermostatMode) ||
 		(subType == sTypeZWaveThermostatFanMode) ||
+		(subType == sTypeZWaveThermostatOperatingState) ||
 		(subType == sTypeFan) ||
 		(subType == sTypeTextStatus) ||
 		(subType == sTypeSoundLevel) ||
@@ -10192,7 +10195,7 @@ void MainWorker::decode_General(const int HwdID, const _eHardwareTypes HwdType, 
 		sprintf(szTmp, "%d;%d;%d", day, hour, minute);
 		DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, szTmp, procResult.DeviceName);
 	}
-	else if ((subType == sTypeZWaveThermostatMode) || (subType == sTypeZWaveThermostatFanMode))
+	else if ((subType == sTypeZWaveThermostatMode) || (subType == sTypeZWaveThermostatFanMode) || (subType == sTypeZWaveThermostatOperatingState))
 	{
 		cmnd = (uint8_t)pMeter->intval2;
 		DevRowIdx = m_sql.UpdateValue(HwdID, ID.c_str(), Unit, devType, subType, SignalLevel, BatteryLevel, cmnd, procResult.DeviceName);
@@ -10316,6 +10319,11 @@ void MainWorker::decode_General(const int HwdID, const _eHardwareTypes HwdType, 
 		case sTypeZWaveThermostatFanMode:
 			WriteMessage("subtype       = Thermostat Fan Mode");
 			sprintf(szTmp, "Mode = %d (%s)", pMeter->intval2, ZWave_Thermostat_Fan_Modes[pMeter->intval2]);
+			WriteMessage(szTmp);
+			break;
+		case sTypeZWaveThermostatOperatingState:
+			WriteMessage("subtype       = Thermostat Operating State");
+			sprintf(szTmp, "State = %d", pMeter->intval2);
 			WriteMessage(szTmp);
 			break;
 		case sTypePercentage:
@@ -13486,6 +13494,23 @@ void MainWorker::HeartbeatCheck()
 	}
 }
 
+bool MainWorker::UpdateDevice(const int DevIdx, int nValue, std::string& sValue, const int signallevel, const int batterylevel, const bool parseTrigger)
+{
+	// Get the raw device parameters
+	std::vector<std::vector<std::string> > result;
+	result = m_sql.safe_query("SELECT HardwareID, DeviceID, Unit, Type, SubType FROM DeviceStatus WHERE (ID==%d)", DevIdx);
+	if (result.empty())
+		return false;
+
+	int HardwareID = std::stoi(result[0][0]);
+	std::string DeviceID = result[0][1];
+	int unit = std::stoi(result[0][2]);
+	int devType = std::stoi(result[0][3]);
+	int subType = std::stoi(result[0][4]);
+
+	return UpdateDevice(HardwareID, DeviceID, unit, devType, subType, nValue, sValue, signallevel, batterylevel, parseTrigger);
+}
+
 bool MainWorker::UpdateDevice(const int HardwareID, const std::string &DeviceID, const int unit, const int devType, const int subType, int nValue, std::string &sValue, const int signallevel, const int batterylevel, const bool parseTrigger)
 {
 	CDomoticzHardwareBase *pHardware = GetHardware(HardwareID);
@@ -13493,6 +13518,8 @@ bool MainWorker::UpdateDevice(const int HardwareID, const std::string &DeviceID,
 	// Prevent hazardous modification of DB from JSON calls
 	if (!m_sql.DoesDeviceExist(HardwareID, DeviceID.c_str(), unit, devType, subType))
 		return false;
+
+	g_bUseEventTrigger = parseTrigger;
 
 	unsigned long ID = 0;
 	std::stringstream s_strid;
@@ -13530,6 +13557,7 @@ bool MainWorker::UpdateDevice(const int HardwareID, const std::string &DeviceID,
 			lcmd.LIGHTING2.filler = 0;
 			lcmd.LIGHTING2.rssi = signallevel;
 			DecodeRXMessage(pHardware, (const uint8_t *)&lcmd.LIGHTING2, NULL, batterylevel);
+			g_bUseEventTrigger = true;
 			return true;
 		}
 
@@ -13595,7 +13623,7 @@ bool MainWorker::UpdateDevice(const int HardwareID, const std::string &DeviceID,
 	}
 
 	std::string devname = "Unknown";
-	uint64_t devidx = m_sql.UpdateValue(
+	const uint64_t devidx = m_sql.UpdateValue(
 		HardwareID,
 		DeviceID.c_str(),
 		(const uint8_t)unit,
@@ -13609,7 +13637,10 @@ bool MainWorker::UpdateDevice(const int HardwareID, const std::string &DeviceID,
 		false
 	);
 	if (devidx == -1)
+	{
+		g_bUseEventTrigger = true;
 		return false;
+	}
 
 	if (pHardware)
 	{
@@ -13638,18 +13669,13 @@ bool MainWorker::UpdateDevice(const int HardwareID, const std::string &DeviceID,
 		m_trend_calculator[tID].AddValueAndReturnTendency(static_cast<double>(temp), _tTrendCalculator::TAVERAGE_TEMP);
 	}
 
-
-
 #ifdef ENABLE_PYTHON
 	// notify plugin
 	m_pluginsystem.DeviceModified(devidx);
 #endif
 
-	// signal connected devices (MQTT, fibaro, http push ... ) about the web update
-	if (parseTrigger)
-	{
-		sOnDeviceReceived(HardwareID, devidx, devname, NULL);
-	}
+	// signal connected devices (MQTT, fibaro, http push ... ) about the update
+	sOnDeviceReceived(HardwareID, devidx, devname, nullptr);
 
 	std::stringstream sidx;
 	sidx << devidx;
@@ -13676,5 +13702,8 @@ bool MainWorker::UpdateDevice(const int HardwareID, const std::string &DeviceID,
 		//Handle Notification
 		m_notifications.CheckAndHandleNotification(devidx, HardwareID, DeviceID, devname, unit, devType, subType, nValue, sValue);
 	}
+
+	g_bUseEventTrigger = true;
+
 	return true;
 }

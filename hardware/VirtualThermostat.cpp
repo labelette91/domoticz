@@ -12,6 +12,15 @@
 #include <map>
 
 
+std::string GetDeviceValue(const char * FieldName, const char *Idx)
+{
+	TSqlQueryResult result = m_sql.safe_query("SELECT %s from DeviceStatus WHERE (ID == %s )", FieldName, Idx);
+	if (!result.empty())
+		return  result[0][0];
+	else
+		return  "";
+}
+
 void CircularBuffer::Clear()
 {
 	for (int i = 0; i<Size; i++)Value[i] = 0;

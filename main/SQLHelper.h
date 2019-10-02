@@ -396,12 +396,13 @@ public:
 
 	uint64_t CreateDevice(const int HardwareID, const int SensorType, const int SensorSubType, std::string &devname, const unsigned long nid, const std::string &soptions);
 
-	void UpdateDeviceValue(const char * FieldName , std::string &Value , std::string &Idx );
-	void UpdateDeviceValue(const char * FieldName , int Value , std::string &Idx )   ;
-	void UpdateDeviceValue(const char * FieldName , float Value , std::string &Idx ) ;
+	void UpdateDeviceValue(const char * FieldName , const std::string &Value , const std::string &Idx );
+	void UpdateDeviceValue(const char * FieldName , const int Value , const std::string &Idx )   ;
+	void UpdateDeviceValue(const char * FieldName , const float Value , const std::string &Idx ) ;
+
 	double ConvertTemperature(double tempcelcius);
 	double ConvertTemperatureUnit(double tempcelcius);
-	std::string GetDeviceValue(const char * FieldName , const char *Idx );
+	std::string GetDeviceValue(const char * FieldName, const char *Idx);
 	float getTemperatureFromSValue(const char * sValue);
 
 	bool GetPreferencesVar(const std::string &Key, double &Value);

@@ -11,8 +11,7 @@
 #include "../main/mainworker.h"
 #include "../main/SQLHelper.h"
 #include <sstream>
-
-#define round(a) ( int ) ( a + .5 )
+#include <iomanip>
 
 #define BUIENRADAR_URL "https://data.buienradar.nl/2.0/feed/json"
 #define BUIENRADAR_ACTUAL_URL "https://observations.buienradar.nl/1.0/actual/weatherstation/" //station_id
@@ -20,13 +19,10 @@
 //#define BUIENRARA_GRAFIEK_HISTORY_URL "https://graphdata.buienradar.nl/1.0/actualarchive/weatherstation/6370?startDate=2019-09-15"
 
 #define BUIENRADAR_RAIN "https://gadgets.buienradar.nl/data/raintext/?lat=" // + m_szMyLatitude + "&lon=" + m_szMyLongitude;
-#define RAIN_ALARM_DURATION 15
-#define RAIN_SWITCH_THRESHOLD 70
-
 
 #ifdef _DEBUG
-// #define DEBUG_BUIENRADARR
-// #define DEBUG_BUIENRADARW
+ #define DEBUG_BUIENRADARR
+ #define DEBUG_BUIENRADARW
 #endif
 
 #ifdef DEBUG_BUIENRADARW
@@ -82,9 +78,11 @@ double distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d) {
 	return 2.0 * earthRadiusKm * asin(sqrt(u * u + cos(lat1r) * cos(lat2r) * v * v));
 }
 
-CBuienRadar::CBuienRadar(const int ID)
+CBuienRadar::CBuienRadar(const int ID, const int iForecast, const int iThreshold)
 {
 	m_HwdID = ID;
+	m_iForecast = (iForecast >= 5) ? iForecast : 15;
+	m_iThreshold = (iThreshold > 0) ? iThreshold : 25;
 	Init();
 }
 
@@ -94,6 +92,11 @@ CBuienRadar::~CBuienRadar(void)
 
 void CBuienRadar::Init()
 {
+	struct tm ltime;
+	time_t now = mytime(0);
+	localtime_r(&now, &ltime);
+	m_actDay = ltime.tm_mday;
+	m_lastRainCount = -1;
 }
 
 bool CBuienRadar::StartHardware()
@@ -136,8 +139,25 @@ void CBuienRadar::Do_Work()
 	{
 		sec_counter++;
 		if (sec_counter % 10 == 0) {
-			m_LastHeartbeat = mytime(NULL);
+			time_t now = mytime(0);
+
+			m_LastHeartbeat = now;
+
+			//Reset on time
+			now += m_sql.m_ShortLogInterval;
+			now += 10;
+
+			struct tm ltime;
+			localtime_r(&now, &ltime);
+			if (ltime.tm_mday != m_actDay)
+			{
+				//reset our rain counter
+				m_actDay = ltime.tm_mday;
+				m_lastRainCount = 0;
+				SendRainSensorWU(1, 255, 0, 0, "Rain");
+			}
 		}
+
 		if (sec_counter % 600 == 0)
 		{
 			//Every 10 minutes
@@ -301,7 +321,7 @@ void CBuienRadar::GetMeterDetails()
 		return;
 	}
 
-	if (root["stationid"].empty() == true)
+	if (root["timestamp"].empty() == true || root["stationid"].empty() == true)
 	{
 		_log.Log(LOG_ERROR, "BuienRadar: Invalid data received, or no data returned!");
 		return;
@@ -320,6 +340,11 @@ void CBuienRadar::GetMeterDetails()
 	}
 
 	//timestamp : "2019-08-22T08:30:00"
+	std::string szTimeStamp = root["timestamp"].asString();
+	int stampDay = std::stoi(szTimeStamp.substr(8, 2));
+	if (stampDay != m_actDay)
+		return;
+
 	//iconurl : "https://www.buienradar.nl/resources/images/icons/weather/30x30/a.png"
 	//graphUrl : "https://www.buienradar.nl/nederland/weerbericht/weergrafieken/a"
 
@@ -377,13 +402,13 @@ void CBuienRadar::GetMeterDetails()
 
 	if (!root["groundtemperature"].empty())
 	{
-		float temp = root["groundtemperature"].asFloat();
-		SendTempSensor(2, 255, temp, "Ground Temperature (10 cm)");
+		float tempGround = root["groundtemperature"].asFloat();
+		SendTempSensor(2, 255, tempGround, "Ground Temperature (10 cm)");
 	}
 	if (!root["feeltemperature"].empty())
 	{
-		float temp = root["feeltemperature"].asFloat();
-		SendTempSensor(3, 255, temp, "Feel Temperature");
+		float tempFeel = root["feeltemperature"].asFloat();
+		SendTempSensor(3, 255, tempFeel, "Feel Temperature");
 	}
 
 
@@ -422,13 +447,10 @@ void CBuienRadar::GetMeterDetails()
 
 	float total_rain_today = -1;
 	float total_rain_last_hour = 0;
-	if (!root["precipitation"].empty())
+
+	if (!root["rainFallLast24Hour"].empty())
 	{
-		total_rain_today = root["precipitation"].asFloat();
-	}
-	else if (!root["precipation"].empty())
-	{
-		total_rain_today = root["precipation"].asFloat();
+		total_rain_today = root["rainFallLast24Hour"].asFloat();
 	}
 	if (!root["rainFallLastHour"].empty())
 	{
@@ -436,7 +458,12 @@ void CBuienRadar::GetMeterDetails()
 	}
 	if (total_rain_today != -1)
 	{
-		SendRainSensorWU(1, 255, total_rain_today, total_rain_last_hour, "Rain");
+		//Make sure the 24 hour counter does not loop when our day is not finished yet (clocks could drift a few seconds/minutes)
+		if (total_rain_today >= m_lastRainCount)
+		{
+			m_lastRainCount = total_rain_today;
+			SendRainSensorWU(1, 255, total_rain_today, total_rain_last_hour, "Rain");
+		}
 	}
 }
 
@@ -468,7 +495,7 @@ void CBuienRadar::GetRainPrediction()
 #ifdef DEBUG_BUIENRADARR
 	startTime = (13 * 60) + 30;
 #endif
-	int endTime = startTime + RAIN_ALARM_DURATION;
+	int endTime = startTime + m_iForecast;
 	int endTimeHour = startTime + 60;
 
 	std::istringstream iStream(sResult);
@@ -522,12 +549,18 @@ void CBuienRadar::GetRainPrediction()
 		//double rain_mm_hour = pow(10, ((rain_avg - 109) / 32));
 		double rain_perc = (rain_avg == 0) ? 0 : (rain_avg * 0.392156862745098);
 		SendPercentageSensor(1, 1, 255, static_cast<float>(rain_perc), "Rain Intensity");
-		SendSwitch(1, 1, 255, (rain_avg >= RAIN_SWITCH_THRESHOLD), 255, "Is it Raining");
+		SendSwitch(1, 1, 255, (rain_perc >= m_iThreshold), 0, "Is it Raining");
 	}
 	if (total_rain_values_next_hour)
 	{
 		double rain_avg = total_rain_next_hour / total_rain_values_next_hour;
 		double rain_mm_hour = (rain_avg == 0) ? 0 : pow(10, ((rain_avg - 109) / 32));
+
+		//round it to 1 decimal
+		std::stringstream sstr;
+		sstr << std::setprecision(1) << std::fixed << rain_mm_hour;
+		rain_mm_hour = std::stod(sstr.str());
+
 		SendCustomSensor(1, 1, 255, static_cast<float>(rain_mm_hour), "Rainfall next Hour", "mm/h");
 	}
 

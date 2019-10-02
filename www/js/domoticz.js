@@ -1615,35 +1615,6 @@ function AddDataToTempChart(data, chart, isday, isthermostat) {
 			series.setData(datatableTrendline, false);
 		}
 	}
-	return;
-	if (datatabledp.length != 0) {
-		chart.addSeries({
-			id: 'dewpoint',
-			name: $.t('Dew Point'),
-			color: 'blue',
-			yAxis: 0,
-			tooltip: {
-				valueSuffix: ' \u00B0' + $.myglobals.tempsign,
-				valueDecimals: 1
-			}
-		}, false);
-		series = chart.get('dewpoint');
-		series.setData(datatabledp, false);
-	}
-	if (datatableba.length != 0) {
-		chart.addSeries({
-			id: 'baro',
-			name: $.t('Barometer'),
-			color: 'pink',
-			yAxis: 2,
-			tooltip: {
-				valueSuffix: ' hPa',
-				valueDecimals: 1
-			}
-		}, false);
-		series = chart.get('baro');
-		series.setData(datatableba, false);
-	}
 }
 
 function load_cam_video() {
@@ -1672,31 +1643,26 @@ function ShowCameraLiveStream(Name, camIdx) {
 	$('#dialog-camera-live #camfeed').attr("src", "images/camera_default.png");
 	//$('#dialog-camera-live #camfeed').attr("src", FeedURL);
 
-	var dwidth = $(window).width() / 2;
-	var dheight = $(window).height() / 2;
+	var windowWidth = $(window).width() - 20;
+	var windowHeight = $(window).height() - 150;
+	
+	var AspectSource = 4 / 3;
 
-	if (dwidth > 630) {
-		dwidth = 630;
-		dheight = parseInt((dwidth / 16) * 9);
+	var height = windowHeight;
+	var width = Math.round(height * AspectSource) & ~1;
+	if (width > windowWidth) {
+		width = windowWidth;
+		height = Math.round(width / AspectSource) & ~1;
 	}
-	if (dheight > 470) {
-		dheight = 470;
-		dwidth = parseInt((dheight / 9) * 16);
-	}
-	if (dwidth > dheight) {
-		dwidth = parseInt((dheight / 9) * 16);
-	}
-	else {
-		dheight = parseInt((dwidth / 16) * 9);
-	}
+	
 	//Set inner Camera feed width/height
-	$("#dialog-camera-live #camfeed").width(dwidth - 30);
-	$("#dialog-camera-live #camfeed").height(dheight - 16);
+	$("#dialog-camera-live #camfeed").width(width - 30);
+	$("#dialog-camera-live #camfeed").height(height - 16);
 
 	$("#dialog-camera-live").dialog({
 		resizable: false,
-		width: dwidth + 2,
-		height: dheight + 118,
+		width: width + 2,
+		height: height + 50,
 		position: {
 			my: "center",
 			at: "center",
@@ -1704,11 +1670,6 @@ function ShowCameraLiveStream(Name, camIdx) {
 		},
 		modal: true,
 		title: unescape(Name),
-		buttons: {
-			"OK": function () {
-				$(this).dialog("close");
-			}
-		},
 		open: function () {
 			load_cam_video();
 		},

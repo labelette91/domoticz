@@ -5,7 +5,7 @@
 class CBuienRadar : public CDomoticzHardwareBase
 {
 public:
-	CBuienRadar(const int ID);
+	CBuienRadar(const int ID, const int iForecast, const int iThreshold);
 	~CBuienRadar(void);
 	bool WriteToHardware(const char *pdata, const unsigned char length) override;
 	std::string GetForecastURL();
@@ -22,5 +22,9 @@ private:
 	std::string m_szMyLatitude;
 	std::string m_szMyLongitude;
 	std::shared_ptr<std::thread> m_thread;
+	int m_iForecast = 15;
+	int m_iThreshold = 25;
+	time_t m_actDay = 0;
+	float m_lastRainCount = 0;
 };
 

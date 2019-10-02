@@ -3550,7 +3550,7 @@ void CSQLHelper::Do_Work()
 			}
 			else if (itt->_ItemType == TITEM_UPDATEDEVICE)
 			{
-				m_mainworker.m_eventsystem.UpdateDevice(itt->_idx, itt->_nValue, itt->_sValue, itt->_HardwareID, (itt->_switchtype ? true : false));
+				m_mainworker.UpdateDevice(static_cast<int>(itt->_idx), itt->_nValue, itt->_sValue, 12, 255, (itt->_switchtype ? true : false));
 			}
 			else if (itt->_ItemType == TITEM_CUSTOM_COMMAND)
 			{
@@ -8326,17 +8326,17 @@ std::string CSQLHelper::GetDeviceValue(const char * FieldName, const char *Idx)
 		return  "";
 }
 
-void CSQLHelper::UpdateDeviceValue(const char * FieldName, std::string &Value, std::string &Idx)
+void CSQLHelper::UpdateDeviceValue(const char * FieldName, const std::string &Value, const std::string &Idx)
 {
-	safe_query("UPDATE DeviceStatus SET %s='%s' , LastUpdate='%s' WHERE (ID == %s )", FieldName, Value.c_str(), TimeToString(NULL, TF_DateTime).c_str(), Idx.c_str());
+	safe_query("UPDATE DeviceStatus SET %s='%s' , LastUpdate='%s' WHERE (ID == %s )", FieldName, Value.c_str(), TimeToString(nullptr, TF_DateTime).c_str(), Idx.c_str());
 }
-void CSQLHelper::UpdateDeviceValue(const char * FieldName, int Value, std::string &Idx)
+void CSQLHelper::UpdateDeviceValue(const char * FieldName, const int Value, const std::string &Idx)
 {
-	safe_query("UPDATE DeviceStatus SET %s=%d , LastUpdate='%s' WHERE (ID == %s )", FieldName, Value, TimeToString(NULL, TF_DateTime).c_str(), Idx.c_str());
+	safe_query("UPDATE DeviceStatus SET %s=%d , LastUpdate='%s' WHERE (ID == %s )", FieldName, Value, TimeToString(nullptr, TF_DateTime).c_str(), Idx.c_str());
 }
-void CSQLHelper::UpdateDeviceValue(const char * FieldName, float Value, std::string &Idx)
+void CSQLHelper::UpdateDeviceValue(const char * FieldName, const float Value, const std::string &Idx)
 {
-	safe_query("UPDATE DeviceStatus SET %s=%4.2f , LastUpdate='%s' WHERE (ID == %s )", FieldName, Value, TimeToString(NULL, TF_DateTime).c_str(), Idx.c_str());
+	safe_query("UPDATE DeviceStatus SET %s=%4.2f , LastUpdate='%s' WHERE (ID == %s )", FieldName, Value, TimeToString(nullptr, TF_DateTime).c_str(), Idx.c_str());
 }
 
 //return temperature value from Svalue : is code temperature;humidity;???
