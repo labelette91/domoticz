@@ -2198,6 +2198,9 @@
     <ClInclude Include="..\hardware\Meteorologisk.h">
       <Filter>Devices\Meteorologisk</Filter>
     </ClInclude>
+    <ClInclude Include="..\hardware\EnOceanRawValue.h">
+      <Filter>Devices\EnOcean</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\webserver\Base64.cpp">
@@ -2934,6 +2937,9 @@
     </ClCompile>
     <ClCompile Include="..\hardware\Meteorologisk.cpp">
       <Filter>Devices\Meteorologisk</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hardware\EnOceanRawValue.cpp">
+      <Filter>Devices\EnOcean</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
