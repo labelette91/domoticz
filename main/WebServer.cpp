@@ -10393,21 +10393,17 @@ namespace http {
 							if (_hardwareNames[hardwareID].HardwareTypeVal == HTYPE_VirtualThermostat)
 							{
 
-                TOptionMap optionsMap   = m_sql.BuildDeviceOptions( sOptions, false ) ;
+								TOptionMap optionsMap = m_sql.BuildDeviceOptions(sOptions, false);
 
-								root["result"][ii]["isVirtualThermostat"] = "yes";
-
-                //build option values
-		            for (const auto & itt : optionsMap)
-		            {
-			            std::string optionName  = itt.first.c_str();
-			            std::string optionValue = itt.second;  
-                  root["result"][ii][optionName.c_str()]  = optionValue.c_str() ;
-		            }
-
-
-								root["result"][ii]["nValue"]	  = nValue;
-              }
+								//build option values
+								for (const auto & itt : optionsMap)
+								{
+									std::string optionName = itt.first.c_str();
+									std::string optionValue = itt.second;
+									root["result"][ii][optionName.c_str()] = optionValue.c_str();
+								}
+								root["result"][ii]["nValue"] = nValue;
+							}
 						}
 					}
 					else if (dType == pTypeRadiator1)

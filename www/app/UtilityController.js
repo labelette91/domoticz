@@ -4,11 +4,11 @@ define(['app'], function (app) {
 		
 		$scope.HasInitializedEditCustomSensorDialog = false;
 
-		    function isVirtualThermostat(item) {
-		    return (item.isVirtualThermostat == 'yes');
+		function isVirtualThermostat(item) {
+		    return (item.HardwareType == 'Virtual Thermostat');
 		}
 
-		    function RefreshDeviceCombo(ComboName, filter, clear) {
+		function RefreshDeviceCombo(ComboName, filter, clear) {
 		    //get list
 
 		    $.List = [];
@@ -45,7 +45,7 @@ define(['app'], function (app) {
 
 		}
 
-		    GetThermostatBigTest = function (item) {
+		GetThermostatBigTest = function (item) {
 	            var bigtext;
 	            bigtext = item.Data + '\u00B0';
 	            if (typeof item.RoomTemp != 'undefined') {
@@ -54,7 +54,7 @@ define(['app'], function (app) {
 	            bigtext += $scope.config.TempSign;
 	            return bigtext;
 	        }
-	        GetThermostatStatus = function (item) {
+	    GetThermostatStatus = function (item) {
 	            var status;
 	            if (typeof item.Power != 'undefined') {
 	                status = "Power:"+item.Power + '%';
@@ -62,7 +62,7 @@ define(['app'], function (app) {
 	            return status;
 	        }
 
-	        getThermostatImage = function (item) {
+	    getThermostatImage = function (item) {
 	            var image = '"images/override.png"';
 	            if (isVirtualThermostat(item)) {
 	                if (item.nValue == 1)
@@ -74,6 +74,178 @@ define(['app'], function (app) {
 
 	            return xhtm;
 	        }
+
+	    Editvirtualthermostatdevice = function (idx, name, description, setpoint, isprotected,refresh) {
+			if (typeof $scope.mytimer != 'undefined') {
+				$interval.cancel($scope.mytimer);
+				$scope.mytimer = undefined;
+			}
+			HandleProtection(isprotected, function () {
+			    //creation boutton et dialog virtualthermostatdevice
+			    CreatevirtualthermostatDialog(0, idx, refresh);
+
+				$.devIdx = idx;
+				$("#dialog-virtualthermostatdevice #devicename").val(unescape(name));
+				$("#dialog-virtualthermostatdevice #devicedescription").val(unescape(description));
+				$('#dialog-virtualthermostatdevice #protected').prop('checked', (isprotected == true));
+				$("#dialog-virtualthermostatdevice #setpoint").val(setpoint);
+				$("#dialog-virtualthermostatdevice #tempunit").html($scope.config.TempSign);
+				var Item;
+				$.ajax({
+				    url: "json.htm?type=devices&filter=utility&used=true&rid=" + idx ,
+				    async: false,
+				    dataType: 'json',
+				    success: function (data) {
+				        if (typeof data.result != 'undefined') {
+				            if (data.result.length >= 1)
+				                Item = data.result[0];
+				        }
+				    }
+				});
+				$.Item = Item;
+		    RefreshDeviceCombo("#dialog-virtualthermostatdevice #comboTemperature", 'temp',true);
+				    
+				$("#dialog-virtualthermostatdevice  #comboTemperature").val(Item.TempIdx);
+				RefreshDeviceCombo("#dialog-virtualthermostatdevice #combosubdevice", 'light', true);
+				$("#dialog-virtualthermostatdevice  #combosubdevice").val(Item.SwitchIdx);
+				$("#dialog-virtualthermostatdevice  #CoefProp").val(Item.CoefProp);
+				$("#dialog-virtualthermostatdevice  #CoefInteg").val(Item.CoefInteg);
+				$("#dialog-virtualthermostatdevice  #Eco").val(Item.EcoTemp);
+				$("#dialog-virtualthermostatdevice  #Confor").val(Item.ConforTemp);
+				$("#dialog-virtualthermostatdevice  #OnCmd").val(Item.OnCmd);
+				$("#dialog-virtualthermostatdevice  #OffCmd").val(Item.OffCmd);
+				$("#dialog-virtualthermostatdevice  #virtualThermostat").show();
+
+				$("#dialog-virtualthermostatdevice").i18n();
+				$("#dialog-virtualthermostatdevice").dialog("open");
+			});
+        }
+
+	    CreatevirtualthermostatDialog = function (hwidx, devIdx, refresh) {
+            var dialog_editvirtualthermostatdevice_buttons = {};
+            if (hwidx == 0) {
+
+                dialog_editvirtualthermostatdevice_buttons[$.t("Update")] = function () {
+                    var bValid = true;
+                    bValid = bValid && checkLength($("#dialog-virtualthermostatdevice #devicename"), 2, 100);
+                    if (bValid) {
+                        $(this).dialog("close");
+
+                        if ($("#dialog-virtualthermostatdevice  #comboTemperature").val() == null) {
+                            ShowNotify($.t('Please select a temperature device!'), 2500, true);
+                            return;
+                        }
+
+                        if ($("#dialog-virtualthermostatdevice  #combosubdevice").val() == null) {
+                            ShowNotify($.t('Please select a switch device!'), 2500, true);
+                            return;
+                        }
+
+                        var option = [];
+                        {
+                            option.push("Power"     + ':' +  $.Item.Power                                              );
+                            option.push("RoomTemp"  + ':' +  $.Item.RoomTemp                                           );
+                            option.push("TempIdx" + ':' + $("#dialog-virtualthermostatdevice  #comboTemperature").val());
+                            option.push("SwitchIdx" + ':' + $("#dialog-virtualthermostatdevice  #combosubdevice").val());
+                            option.push("EcoTemp" + ':' + $("#dialog-virtualthermostatdevice  #Eco").val());
+                            option.push("CoefProp" + ':' + $("#dialog-virtualthermostatdevice  #CoefProp").val());
+                            option.push("ConforTemp" + ':' + $("#dialog-virtualthermostatdevice  #Confor").val());
+                            option.push("CoefInteg" + ':' + $("#dialog-virtualthermostatdevice  #CoefInteg").val());
+                            option.push("OnCmd" + ':' + $("#dialog-virtualthermostatdevice  #OnCmd").val());
+                            option.push("OffCmd" + ':' + $("#dialog-virtualthermostatdevice  #OffCmd").val());
+                        }
+                        $.ajax({
+                            url: "json.htm?type=setused&idx=" + devIdx +
+                                '&name=' + encodeURIComponent($("#dialog-virtualthermostatdevice #devicename").val()) +
+                                '&description=' + encodeURIComponent($("#dialog-virtualthermostatdevice #devicedescription").val()) +
+                                '&setpoint=' + $("#dialog-virtualthermostatdevice #setpoint").val() +
+                                '&protected=' + $('#dialog-virtualthermostatdevice #protected').is(":checked") +
+                                '&devoptions=' + (option.join(';')) +
+
+                                '&used=true',
+                            async: false,
+                            dataType: 'json',
+                            success: function (data) {
+                                //ShowUtilities();
+                            }
+                        });
+
+                    }
+                };
+                dialog_editvirtualthermostatdevice_buttons[$.t("Remove Device")] = function () {
+                    $(this).dialog("close");
+                    bootbox.confirm($.t("Are you sure to remove this Device?"), function (result) {
+                        if (result == true) {
+                            $.ajax({
+                                url: "json.htm?type=setused&idx=" + devIdx +
+                                    '&name=' + encodeURIComponent($("#dialog-editsetpointdevice #devicename").val()) +
+                                    '&description=' + encodeURIComponent($("#dialog-editsetpointdevice #devicedescription").val()) +
+                                    '&used=false',
+                                async: false,
+                                dataType: 'json',
+                                success: function (data) {
+                                    refresh();
+                                }
+                            });
+                        }
+                    });
+                };
+                dialog_editvirtualthermostatdevice_buttons[$.t("Cancel")] = function () {
+                    $(this).dialog("close");
+                };
+            }
+            else {
+                dialog_editvirtualthermostatdevice_buttons[$.t("Create")] = function () {
+                var bValid = true;
+                $(this).dialog("close");
+
+                var SensorName = $("#dialog-virtualthermostatdevice #devicename").val(unescape(name));
+
+                if (SensorName == "") {
+                    ShowNotify($.t('Please enter a Name!'), 2500, true);
+                    return;
+                }
+
+                $.ajax({
+                    url: "json.htm?type=createdevice&idx=" + hwidx +
+                        "&sensorname=" + encodeURIComponent(SensorName) +
+                        "&sensormappedtype=" + "0xF201",
+                    async: false,
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data.status == 'OK') {
+                            ShowNotify($.t('Virtua Thermostat Sensor Created, and can be found in the devices tab!'), 2500);
+                        }
+                        else {
+                            ShowNotify($.t('Problem creating Sensor!'), 2500, true);
+                        }
+                    },
+                    error: function () {
+                        HideNotify();
+                        ShowNotify($.t('Problem creating Sensor!'), 2500, true);
+                    }
+                });
+                
+            };
+            }
+
+
+            $("#dialog-virtualthermostatdevice").dialog({
+                autoOpen: false,
+                width: 'auto',
+                height: 'auto',
+                modal: true,
+                resizable: false,
+                title: $.t("Edit Device"),
+                buttons: dialog_editvirtualthermostatdevice_buttons,
+                close: function () {
+                    $(this).dialog("close");
+                }
+            });
+
+
+        }
+
 	        $.strPad = function (i, l, s) {
 			var o = i.toString();
 			if (!s) { s = '0'; }
@@ -262,40 +434,6 @@ define(['app'], function (app) {
 				$('#dialog-editsetpointdevice #protected').prop('checked', (isprotected == true));
 				$("#dialog-editsetpointdevice #setpoint").val(setpoint);
 				$("#dialog-editsetpointdevice #tempunit").html($scope.config.TempSign);
-				var Item;
-				$.ajax({
-				    url: "json.htm?type=devices&filter=utility&used=true&rid=" + idx ,
-				    async: false,
-				    dataType: 'json',
-				    success: function (data) {
-				        if (typeof data.result != 'undefined') {
-				            $.each(data.result, function (i, item) {
-				                Item = item;
-				                $.Item = item;
-				            });
-				        }
-				    }
-				});
-
-				if (isVirtualThermostat(Item))
-			{
-			    RefreshDeviceCombo("#dialog-editsetpointdevice #comboTemperature", 'temp',true);
-				    
-				$("#dialog-editsetpointdevice  #comboTemperature").val(Item.TempIdx);
-				RefreshDeviceCombo("#dialog-editsetpointdevice #combosubdevice", 'light', true);
-				$("#dialog-editsetpointdevice  #combosubdevice").val(Item.SwitchIdx);
-				$("#dialog-editsetpointdevice  #CoefProp").val(Item.CoefProp);
-				$("#dialog-editsetpointdevice  #CoefInteg").val(Item.CoefInteg);
-				$("#dialog-editsetpointdevice  #Eco").val(Item.EcoTemp);
-				$("#dialog-editsetpointdevice  #Confor").val(Item.ConforTemp);
-				$("#dialog-editsetpointdevice  #OnCmd").val(Item.OnCmd);
-				$("#dialog-editsetpointdevice  #OffCmd").val(Item.OffCmd);
-				$("#dialog-editsetpointdevice  #virtualThermostat").show();
-			}
-			else
-			{
-			    $("#dialog-editsetpointdevice  #virtualThermostat").hide();
-			}
 				$("#dialog-editsetpointdevice").i18n();
 				$("#dialog-editsetpointdevice").dialog("open");
 			});
@@ -947,7 +1085,10 @@ define(['app'], function (app) {
 									var logLink = '#/Devices/'+item.idx+'/Log';
 
 									xhtm += '<a class="btnsmall" href="' + logLink +'" data-i18n="Log">Log</a> ';
-									xhtm += '<a class="btnsmall" onclick="EditSetPoint(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', ' + item.SetPoint + ',' + item.Protected + ');" data-i18n="Edit">Edit</a> ';
+									if (isVirtualThermostat(item))
+									    xhtm += '<a class="btnsmall" onclick="Editvirtualthermostatdevice(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', ' + item.SetPoint + ',' + item.Protected + ',' + 'ShowUtilities' + ');" data-i18n="Edit">Edit</a> ';
+									else
+									  xhtm += '<a class="btnsmall" onclick="EditSetPoint(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', ' + item.SetPoint + ',' + item.Protected + ');" data-i18n="Edit">Edit</a> ';
 									if (item.Timers == "true") {
 										xhtm += '<a class="btnsmall-sel" href="' + timerLink + '" data-i18n="Timers">Timers</a> ';
 									}
@@ -1140,7 +1281,6 @@ define(['app'], function (app) {
 
 		function init() {
 			//global var
-		    $.Item   = [];
 			$.devIdx = 0;
 			$.LastUpdateTime = parseInt(0);
 
@@ -1496,32 +1636,12 @@ define(['app'], function (app) {
 				bValid = bValid && checkLength($("#dialog-editsetpointdevice #devicename"), 2, 100);
 				if (bValid) {
 					$(this).dialog("close");
-					
-		            var option = [];
-       				if (isVirtualThermostat($.Item))
-       				{
-       				    var OnCmd = $("#dialog-editsetpointdevice  #OnCmd").val();
-       				    var OffCmd = $("#dialog-editsetpointdevice  #OffCmd").val();
-
-                    option.push("Power"     + ':' +  $.Item.Power                                              );
-                    option.push("RoomTemp"  + ':' +  $.Item.RoomTemp                                           );
-                    option.push("TempIdx"   + ':' +  $("#dialog-editsetpointdevice #comboTemperature").val()   );
-                    option.push("SwitchIdx" + ':' +  $("#dialog-editsetpointdevice #combosubdevice").val()     );
-                    option.push("EcoTemp"   + ':' +  $("#dialog-editsetpointdevice  #Eco").val()               );
-                    option.push("CoefProp"  + ':' +  $("#dialog-editsetpointdevice  #CoefProp").val()          );
-                    option.push("ConforTemp"+ ':' +  $("#dialog-editsetpointdevice  #Confor").val()            );
-                    option.push("CoefInteg" + ':' +  $("#dialog-editsetpointdevice  #CoefInteg").val()         );
-                    option.push("OnCmd"     + ':' +  $("#dialog-editsetpointdevice  #OnCmd").val()             );
-                    option.push("OffCmd"    + ':' +  $("#dialog-editsetpointdevice  #OffCmd").val()            );
-					}
 					$.ajax({
 						url: "json.htm?type=setused&idx=" + $.devIdx +
 						'&name=' + encodeURIComponent($("#dialog-editsetpointdevice #devicename").val()) +
 						'&description=' + encodeURIComponent($("#dialog-editsetpointdevice #devicedescription").val()) +
 						'&setpoint=' + $("#dialog-editsetpointdevice #setpoint").val() +
 						'&protected=' + $('#dialog-editsetpointdevice #protected').is(":checked") +
-						'&devoptions='   + (option.join(';') ) +
-						 
 						'&used=true',
 						async: false,
 						dataType: 'json',
