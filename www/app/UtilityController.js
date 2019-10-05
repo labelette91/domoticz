@@ -888,7 +888,7 @@ define(['app', 'livesocket'], function (app) {
 
 									xhtm += '<a class="btnsmall" href="' + logLink +'" data-i18n="Log">Log</a> ';
 									if (isVirtualThermostat(item))
-									    xhtm += '<a class="btnsmall" onclick="Editvirtualthermostatdevice(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', ' + item.SetPoint + ',' + item.Protected + ',' + 'ShowUtilities,\'' + $scope.config.TempSign + '\',0);" data-i18n="Edit">Edit</a> ';
+									    xhtm += '<a class="btnsmall" onclick="Editvirtualthermostatdevice(' + item.idx + ','  + item.Protected + ',' + 'ShowUtilities,\'' + $scope.config.TempSign + '\',0);" data-i18n="Edit">Edit</a> ';
 									else
 									  xhtm += '<a class="btnsmall" onclick="EditSetPoint(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', ' + item.SetPoint + ',' + item.Protected + ');" data-i18n="Edit">Edit</a> ';
 									if (item.Timers == "true") {

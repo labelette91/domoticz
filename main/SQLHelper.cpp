@@ -3853,12 +3853,11 @@ uint64_t CSQLHelper::CreateDevice(const int HardwareID, const int SensorType, co
 
 		DeviceRowIdx = UpdateValue(HardwareID, ID, 1, SensorType, SensorSubType, 12, 255, 0, "20.5", devname);
 
-		if (Type == HTYPE_VirtualThermostat)
+		if (!soptions.empty() )
 		{
-			//set coefficient for PID for virtual Thermostat
 			std::string uidstr = boost::to_string(DeviceRowIdx);
 
-			UpdateVirtualThermostatOption(DeviceRowIdx, 0, 20, -1, -1, 16.0, 100, 20.0, 20.0, std::string("On"), std::string("Off"));
+			m_sql.safe_query("UPDATE DeviceStatus SET Options='%q' WHERE (ID==%" PRIu64 ")", soptions.c_str(), DeviceRowIdx);
 		}
 		break;
 	}

@@ -2847,69 +2847,6 @@ define(['app'], function (app) {
 			}
 		}
 
-		CreateVirtualThermostatSensors = function (idx, name) {
-
-
-		    $("#dialog-createsensor #vsensoraxis").hide();
-		    $("#dialog-createsensor #sensoraxis").val("");
-
-		    $("#dialog-createsensor #sensortype").hide();
-
-		    $("#dialog-createsensor").dialog({
-		        autoOpen: false,
-		        width: 420,
-		        height: 250,
-		        modal: true,
-		        resizable: false,
-		        buttons: {
-		            "OK": function () {
-		                var bValid = true;
-		                $(this).dialog("close");
-		                var SensorName = $("#dialog-createsensor #sensorname").val();
-		                if (SensorName == "") {
-		                    ShowNotify($.t('Please enter a Name!'), 2500, true);
-		                    return;
-		                }
-
-		                $.ajax({
-		                    url: "json.htm?type=createdevice&idx=" + idx +
-                            "&sensorname=" + encodeURIComponent(SensorName) +
-                            "&sensormappedtype=" + "0xF201",
-		                    async: false,
-		                    dataType: 'json',
-		                    success: function (data) {
-		                        if (data.status == 'OK') {
-		                            ShowNotify($.t('Virtua Thermostat Sensor Created, and can be found in the devices tab!'), 2500);
-		                        }
-		                        else {
-		                            ShowNotify($.t('Problem creating Sensor!'), 2500, true);
-		                        }
-		                    },
-		                    error: function () {
-		                        HideNotify();
-		                        ShowNotify($.t('Problem creating Sensor!'), 2500, true);
-		                    }
-		                });
-
-		            },
-		            Cancel: function () {
-		                $(this).dialog("close");
-		            }
-		        },
-		        close: function () {
-		            $(this).dialog("close");
-		        }
-		    });
-
-		    $("#dialog-createsensor").i18n();
-		    $("#dialog-createsensor").dialog("open");
-
-
-
-
-
-		}
-
 		CreateDummySensors = function (idx, name) {
 			$.devIdx = idx;
 
@@ -3286,7 +3223,7 @@ define(['app'], function (app) {
 								HwTypeStr += ' <span class="label label-info lcursor" onclick="CreateDummySensors(' + item.idx + ',\'' + item.Name + '\');">' + $.t("Create Virtual Sensors") + '</span>';
 							}
 							else if (HwTypeStr.indexOf("Virtual Thermostat") >= 0) {
-							    HwTypeStr += ' <span class="label label-info lcursor" onclick="CreateVirtualThermostatSensors(' + item.idx + ',\'' + item.Name + '\');">' + $.t("Create Virtual Thermostat Sensors") + '</span>';
+							    HwTypeStr += ' <span class="label label-info lcursor" onclick="Editvirtualthermostatdevice(0,false,0,\'' + $scope.config.TempSign + '\','+item.idx+');"' + '>' + $.t("Create Virtual Thermostat Sensors") + '</span>';
 							}
 							else if (HwTypeStr.indexOf("YeeLight") >= 0) {
 								HwTypeStr += ' <span class="label label-info lcursor" onclick="AddYeeLight(' + item.idx + ',\'' + item.Name + '\');">' + $.t("Add Light") + '</span>';

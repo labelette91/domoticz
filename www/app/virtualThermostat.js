@@ -39,14 +39,14 @@
 
 		}
 
-	    Editvirtualthermostatdevice = function (idx, name, description, setpoint, isprotected,refresh,TempSign,HwIdx) {
+		Editvirtualthermostatdevice = function (idx, isprotected,refresh, TempSign, HwIdx) {
 			HandleProtection(isprotected, function () {
 			    //creation boutton et dialog virtualthermostatdevice
 			    CreatevirtualthermostatXmlDialog();
 			    CreatevirtualthermostatDialog(HwIdx, idx, refresh);
 
 				$.devIdx = idx;
-				var Item;
+				var Item = {};
 				if (idx != 0) {
 
 				    $.ajax({
@@ -74,6 +74,9 @@
 				    Item.ConforTemp = 20.0;
 				    Item.OnCmd = "On";
 				    Item.OffCmd = "Off";
+				    Item.Power = 0;
+				    Item.RoomTemp = 20.0;
+
 				}
 				$.Item = Item;
 
@@ -101,61 +104,96 @@
 			});
         }
 
+
+	    ButtonActionvirtualthermostatDialog = function (hwidx, devIdx) {
+	        var bValid = true;
+	        bValid = bValid && checkLength($("#dialog-virtualthermostatdevice #devicename"), 2, 100);
+	        if (bValid) {
+
+	            if ($("#dialog-virtualthermostatdevice  #devicename").val() == null) {
+	                ShowNotify($.t('Please enter a Name!'), 2500, true);
+	                return;
+	            }
+
+	            if ($("#dialog-virtualthermostatdevice  #comboTemperature").val() == null) {
+	                ShowNotify($.t('Please select a temperature device!'), 2500, true);
+	                return;
+	            }
+
+	            if ($("#dialog-virtualthermostatdevice  #combosubdevice").val() == null) {
+	                ShowNotify($.t('Please select a switch device!'), 2500, true);
+	                return;
+	            }
+
+	            $("#dialog-virtualthermostatdevice").dialog("close");
+
+	            var option = [];
+	            {
+	                option.push("Power" + ':' + $.Item.Power);
+	                option.push("RoomTemp" + ':' + $.Item.RoomTemp);
+	                option.push("TempIdx" + ':' + $("#dialog-virtualthermostatdevice  #comboTemperature").val());
+	                option.push("SwitchIdx" + ':' + $("#dialog-virtualthermostatdevice  #combosubdevice").val());
+	                option.push("EcoTemp" + ':' + $("#dialog-virtualthermostatdevice  #Eco").val());
+	                option.push("CoefProp" + ':' + $("#dialog-virtualthermostatdevice  #CoefProp").val());
+	                option.push("ConforTemp" + ':' + $("#dialog-virtualthermostatdevice  #Confor").val());
+	                option.push("CoefInteg" + ':' + $("#dialog-virtualthermostatdevice  #CoefInteg").val());
+	                option.push("OnCmd" + ':' + $("#dialog-virtualthermostatdevice  #OnCmd").val());
+	                option.push("OffCmd" + ':' + $("#dialog-virtualthermostatdevice  #OffCmd").val());
+	            }
+                //if update
+	            if (devIdx)
+	            {
+	                $.ajax({
+	                    url: "json.htm?type=setused&idx=" + devIdx +
+                            '&name=' + encodeURIComponent($("#dialog-virtualthermostatdevice #devicename").val()) +
+                            '&description=' + encodeURIComponent($("#dialog-virtualthermostatdevice #devicedescription").val()) +
+                            '&setpoint=' + $("#dialog-virtualthermostatdevice #setpoint").val() +
+                            '&protected=' + $('#dialog-virtualthermostatdevice #protected').is(":checked") +
+                            '&devoptions=' + (option.join(';')) +
+
+                            '&used=true',
+	                    async: false,
+	                    dataType: 'json',
+	                    success: function (data) {
+	                        //ShowUtilities();
+	                    }
+	                });
+	            }
+	            else {
+	                $.ajax({
+	                    url: "json.htm?type=createdevice&idx=" + hwidx +
+                            "&sensorname=" + encodeURIComponent($("#dialog-virtualthermostatdevice #devicename").val()) +
+                            "&devicetype=" + "242"+
+	                        "&devicesubtype=" + "01"+
+	                        '&sensoroptions=' + (option.join(';')) ,
+                    
+	                    async: false,
+	                    dataType: 'json',
+	                    success: function (data) {
+	                        if (data.status == 'OK') {
+	                            ShowNotify($.t('Virtua Thermostat Sensor Created, and can be found in the devices tab!'), 2500);
+	                        }
+	                        else {
+	                            ShowNotify($.t('Problem creating Sensor!'), 2500, true);
+	                        }
+	                    },
+	                    error: function () {
+	                        HideNotify();
+	                        ShowNotify($.t('Problem creating Sensor!'), 2500, true);
+	                    }
+	                });
+
+	            }
+
+	        }
+
+	    }
 	    CreatevirtualthermostatDialog = function (hwidx, devIdx, refresh) {
             var dialog_editvirtualthermostatdevice_buttons = {};
             if (hwidx == 0) {
 
                 dialog_editvirtualthermostatdevice_buttons[$.t("Update")] = function () {
-                    var bValid = true;
-                    bValid = bValid && checkLength($("#dialog-virtualthermostatdevice #devicename"), 2, 100);
-                    if (bValid) {
-                        $(this).dialog("close");
-
-                        if ($("#dialog-virtualthermostatdevice  #devicename").val() == null) {
-                            ShowNotify($.t('Please enter a Name!'), 2500, true);
-                            return;
-                        }
-
-                        if ($("#dialog-virtualthermostatdevice  #comboTemperature").val() == null) {
-                            ShowNotify($.t('Please select a temperature device!'), 2500, true);
-                            return;
-                        }
-
-                        if ($("#dialog-virtualthermostatdevice  #combosubdevice").val() == null) {
-                            ShowNotify($.t('Please select a switch device!'), 2500, true);
-                            return;
-                        }
-
-                        var option = [];
-                        {
-                            option.push("Power"     + ':' +  $.Item.Power                                              );
-                            option.push("RoomTemp"  + ':' +  $.Item.RoomTemp                                           );
-                            option.push("TempIdx" + ':' + $("#dialog-virtualthermostatdevice  #comboTemperature").val());
-                            option.push("SwitchIdx" + ':' + $("#dialog-virtualthermostatdevice  #combosubdevice").val());
-                            option.push("EcoTemp" + ':' + $("#dialog-virtualthermostatdevice  #Eco").val());
-                            option.push("CoefProp" + ':' + $("#dialog-virtualthermostatdevice  #CoefProp").val());
-                            option.push("ConforTemp" + ':' + $("#dialog-virtualthermostatdevice  #Confor").val());
-                            option.push("CoefInteg" + ':' + $("#dialog-virtualthermostatdevice  #CoefInteg").val());
-                            option.push("OnCmd" + ':' + $("#dialog-virtualthermostatdevice  #OnCmd").val());
-                            option.push("OffCmd" + ':' + $("#dialog-virtualthermostatdevice  #OffCmd").val());
-                        }
-                        $.ajax({
-                            url: "json.htm?type=setused&idx=" + devIdx +
-                                '&name=' + encodeURIComponent($("#dialog-virtualthermostatdevice #devicename").val()) +
-                                '&description=' + encodeURIComponent($("#dialog-virtualthermostatdevice #devicedescription").val()) +
-                                '&setpoint=' + $("#dialog-virtualthermostatdevice #setpoint").val() +
-                                '&protected=' + $('#dialog-virtualthermostatdevice #protected').is(":checked") +
-                                '&devoptions=' + (option.join(';')) +
-
-                                '&used=true',
-                            async: false,
-                            dataType: 'json',
-                            success: function (data) {
-                                //ShowUtilities();
-                            }
-                        });
-
-                    }
+                    ButtonActionvirtualthermostatDialog(hwidx, devIdx);
                 };
                 dialog_editvirtualthermostatdevice_buttons[$.t("Remove Device")] = function () {
                     $(this).dialog("close");
@@ -181,36 +219,9 @@
             }
             else {
                 dialog_editvirtualthermostatdevice_buttons[$.t("Create")] = function () {
-                var bValid = true;
-                $(this).dialog("close");
 
-                var SensorName = $("#dialog-virtualthermostatdevice #devicename").val();
+                    ButtonActionvirtualthermostatDialog(hwidx, devIdx);
 
-                if (SensorName == "") {
-                    ShowNotify($.t('Please enter a Name!'), 2500, true);
-                    return;
-                }
-
-                $.ajax({
-                    url: "json.htm?type=createdevice&idx=" + hwidx +
-                        "&sensorname=" + encodeURIComponent(SensorName) +
-                        "&sensormappedtype=" + "0xF201",
-                    async: false,
-                    dataType: 'json',
-                    success: function (data) {
-                        if (data.status == 'OK') {
-                            ShowNotify($.t('Virtua Thermostat Sensor Created, and can be found in the devices tab!'), 2500);
-                        }
-                        else {
-                            ShowNotify($.t('Problem creating Sensor!'), 2500, true);
-                        }
-                    },
-                    error: function () {
-                        HideNotify();
-                        ShowNotify($.t('Problem creating Sensor!'), 2500, true);
-                    }
-                });
-                
             };
             }
 
