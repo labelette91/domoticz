@@ -66,8 +66,8 @@
 				    Item.Description = "";
 				    Item.Protected = false;
 				    Item.SetPoint = 20.0;
-				    Item.TempIdx = 0;
-				    Item.SwitchIdx = 0;
+				    Item.TempIdx = -1;
+				    Item.SwitchIdx = -1;
 				    Item.CoefProp = 100.0;
 				    Item.CoefInteg = 20.0;
 				    Item.EcoTemp = 16.0;

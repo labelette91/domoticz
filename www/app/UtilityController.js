@@ -24,7 +24,7 @@ define(['app', 'livesocket'], function (app) {
 	    getThermostatImage = function (item) {
 	            var image = '"images/override.png"';
 	            if (isVirtualThermostat(item)) {
-	                if (item.nValue == 1)
+	                if (item.Switch == 1)
 	                    image = '"images/override.png"';
 	                else
 	                    image = '"images/override_off.png"';
