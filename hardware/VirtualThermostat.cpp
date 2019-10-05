@@ -361,13 +361,13 @@ try
 
 					}
 					if (( lastPowerModulation != PowerModulation) || (lastTemp != RoomTemperature ) || (SwitchStateAsChanged) )
-          {
+					{
 
-            Option["Power"     ] = std::to_string(PowerModulation);
-            Option["RoomTemp"  ] = ToString(RoomTemperature,"%4.1f");
+						Option["Power"] = std::to_string(PowerModulation);
+						Option["RoomTemp"] = ToString(RoomTemperature, "%4.1f");
 						std::string options = m_sql.FormatDeviceOptions(Option, false);
-						m_sql.safe_query("UPDATE DeviceStatus SET nValue=%d,Options='%s',LastUpdate='%s' WHERE (ID = %s )", SwitchValue, options.c_str(),TimeToString(NULL, TF_DateTime).c_str(), idxThermostat.c_str());
-          }
+						m_sql.safe_query("UPDATE DeviceStatus SET nValue=%d,Options='%s',LastUpdate='%s' WHERE (ID = %s )", SwitchValue, options.c_str(), TimeToString(NULL, TF_DateTime).c_str(), idxThermostat.c_str());
+					}
 				if ((Minute % 10 )==0)
 				{
 					//compute delta room temperature
@@ -532,87 +532,6 @@ std::string VirtualThermostat::GetRoomTemperature(std::string &devIdx)
 
 } ;
 
-//convert thermostat option values to map option
-TOptionMap VirtualThermostatOptionToOptionMap(
-	float Power,
-	float RoomTemp,
-	float TempIdx,
-	float SwitchIdx,
-	float EcoTemp,
-	float CoefProp,
-	float ConforTemp,
-	float CoefInteg,
-	std::string &OnCmd,
-	std::string &OffCmd
-	)
-{
-	TOptionMap Option;
-
-	Option["Power"]      = ToString (Power       , "%4.1f" );
-	Option["RoomTemp"]   = ToString (RoomTemp    , "%4.1f" );
-	Option["TempIdx"]    = ToString (TempIdx     , "%4.1f" );
-	Option["SwitchIdx"]  = ToString (SwitchIdx   , "%4.1f" );
-	Option["EcoTemp"]    = ToString (EcoTemp     , "%4.1f" );
-	Option["CoefProp"]   = ToString (CoefProp    , "%4.1f" );
-	Option["ConforTemp"] = ToString (ConforTemp  , "%4.1f" );
-	Option["CoefInteg"]  = ToString (CoefInteg   , "%4.1f" );
-	Option["OnCmd"]      = OnCmd;
-	Option["OffCmd"]     = OffCmd;
-
-	return Option;
-}
-
-
-//get  thermostat option values from  db
-void VirtualThermostatOptionMaptoOptions(TOptionMap &Option,
-			float &Power,
-			float &RoomTemp,
-			float &TempIdx,
-			float &SwitchIdx,
-			float &EcoTemp,
-			float &CoefProp,
-			float &ConforTemp,
-			float &CoefInteg,
-			std::string &OnCmd,
-			std::string &OffCmd
-			)
-	{
-
-		Power = std::stof(Option["Power"]);
-		RoomTemp = std::stof(Option["RoomTemp"]);
-		TempIdx = std::stof(Option["TempIdx"]);
-		SwitchIdx = std::stof(Option["SwitchIdx"]);
-		EcoTemp = std::stof(Option["EcoTemp"]);
-		CoefProp = std::stof(Option["CoefProp"]);
-		ConforTemp = std::stof(Option["ConforTemp"]);
-		CoefInteg = std::stof(Option["CoefInteg"]);
-		OnCmd = Option["OnCmd"];
-		OffCmd = Option["OffCmd"];
-
-
-	}
-
-
-void UpdateVirtualThermostatOption(	const uint64_t uidstr,float Power,float RoomTemp,float TempIdx,float SwitchIdx,float EcoTemp,float CoefProp,float ConforTemp,float CoefInteg,std::string &OnCmd,	std::string &OffCmd	)
-{
-
-
-	TOptionMap Option = VirtualThermostatOptionToOptionMap(
-		Power,
-		RoomTemp,
-		TempIdx,
-		SwitchIdx,
-		EcoTemp,
-		CoefProp,
-		ConforTemp,
-		CoefInteg,
-		OnCmd,
-		OffCmd
-		);
-
-	std::string option = m_sql.FormatDeviceOptions(Option, false);
-	m_sql.UpdateDeviceValue("Options", option , std::to_string(uidstr) );
-}
 std::string VirtualThermostatGetOption (const std::string optionName , const std::string &options )
 {
   //if option present

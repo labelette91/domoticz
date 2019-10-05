@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html manifest="html5.appcache">
 <head>
 		<meta charset="utf-8">
@@ -543,7 +543,9 @@ $(document).ready(function() {
 					<a id="popup_temp_down"><img src="images/Down48.png" class="lcursor" height="48" width="48" onclick="SetpointDown()"></a>
 				</td>
 				<td align="center" style="vertical-align: center;">
-					<button data-i18n="Set" class="btn btn-info" onclick="SetSetpoint()">Set</button>
+					<button id="eco"    data-i18n="Eco " class="btn btn-info" onclick="SetEcoTemp()"  style="margin-top: 8px; margin-bottom: 8px; ">Eco</button><br>
+					<button data-i18n="Set " class="btn btn-info" onclick="SetSetpoint()"  style="margin-top: 8px; margin-bottom: 8px; ">Set</button><br>
+					<button id="confor" data-i18n="Conf" class="btn btn-info" onclick="SetConforTemp()" style="margin-top: 8px; margin-bottom: 8px; ">Conf</button>
 				</td>
 			</tr>
 		</table>

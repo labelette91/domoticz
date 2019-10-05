@@ -7651,6 +7651,18 @@ function SetpointDown() {
 	$('#setpoint_popup #popup_setpoint').val(curValueStr);
 }
 
+function SetEcoTemp() {
+    var curValueStr = $.eco.toFixed(1);
+    $('#setpoint_popup #popup_setpoint').val(curValueStr);
+    SetSetpoint();
+}
+
+function SetConforTemp() {
+    var curValueStr = $.confor.toFixed(1);
+    $('#setpoint_popup #popup_setpoint').val(curValueStr);
+    SetSetpoint();
+}
+
 function SetSetpoint() {
 	var curValue = parseFloat($('#setpoint_popup #popup_setpoint').val());
 	$.ajax({
@@ -7693,6 +7705,12 @@ function ShowSetpointPopupInt(mouseX, mouseY, idx, refreshfunction, currentvalue
 	$('#setpoint_popup #actual_value').html(curValue);
 	$('#setpoint_popup #popup_setpoint').val(curValue);
 
+	if (typeof $.confor == 'undefined') {
+	    $('#setpoint_popup #confor').hide();
+	    $('#setpoint_popup #eco').hide();
+	}
+
+
 	if (typeof ismobile == 'undefined') {
 		$("#setpoint_popup").css({
 			"top": mouseY,
@@ -7719,8 +7737,11 @@ function ShowSetpointPopupInt(mouseX, mouseY, idx, refreshfunction, currentvalue
 	$("#setpoint_popup").show();
 }
 
-function ShowSetpointPopup(event, idx, refreshfunction, Protected, currentvalue, ismobile) {
-	$.Protected = Protected;
+function ShowSetpointPopup(event, idx, refreshfunction, Protected, currentvalue, ismobile,confor,eco) {
+    $.Protected = Protected;
+    $.confor = confor;
+    $.eco = eco;
+
 	event = event || window.event;
 	// If pageX/Y aren't available and clientX/Y are,
 	// calculate pageX/Y - logic taken from jQuery.

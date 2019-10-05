@@ -29,7 +29,8 @@ define(['app', 'livesocket'], function (app) {
 	                else
 	                    image = '"images/override_off.png"';
 	            }
-	            var xhtm = '<img src='+ image+' class="lcursor" onclick="ShowSetpointPopup(event, ' + item.idx + ', RefreshUtilities, ' + item.Protected + ', ' + item.Data + ');" height="48" width="48" ></td>\n';
+	            var undef;
+	            var xhtm = '<img src=' + image + ' class="lcursor" onclick="ShowSetpointPopup(event, ' + item.idx + ', RefreshUtilities, ' + item.Protected + ', ' + item.Data + ','+undef+',' + item.ConforTemp + ',' + item.EcoTemp  + ');" height="48" width="48" ></td>\n';
 
 	            return xhtm;
 	        }
