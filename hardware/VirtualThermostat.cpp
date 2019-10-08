@@ -8,6 +8,7 @@
 
 #include "../main/localtime_r.h"
 #include "../main/mainworker.h"
+#include "../notifications/NotificationHelper.h"
 
 #include <map>
 
@@ -323,11 +324,14 @@ void VirtualThermostat::ScheduleThermostat(int Minute )
   std::string OnCmd ;
   std::string OffCmd;
   long DeviceID;
+  std::string sDeviceID;
+  std::string HwdID ;
+
 
 try
 {	
 //select all the Virtuan device
-  TSqlQueryResult result=m_sql.safe_query("SELECT A.Name,A.ID,A.Type,A.SubType,A.nValue,A.sValue, A.Options, B.Name , B.Type,A.DeviceID     FROM DeviceStatus as A LEFT OUTER JOIN Hardware as B ON (B.ID==A.HardwareID) where (B.type == %d )",HTYPE_VirtualThermostat );
+  TSqlQueryResult result=m_sql.safe_query("SELECT A.Name,A.ID,A.Type,A.SubType,A.nValue,A.sValue, A.Options, A.HardwareID , B.Type,A.DeviceID     FROM DeviceStatus as A LEFT OUTER JOIN Hardware as B ON (B.ID==A.HardwareID) where (B.type == %d )",HTYPE_VirtualThermostat );
 
 	//for all the thermostat switch
 	for (unsigned int i=0;i<result.size();i++)
@@ -340,7 +344,9 @@ try
 		lastSwitchValue				  =        atoi((*row)[4].c_str() );
 		SetPoint					      =            ((*row)[5].c_str() );
 		Options					        =            ((*row)[6].c_str() );
+		HwdID = (*row)[7] ;
 		DeviceID = std::stol((*row)[9], 0, 16);
+		sDeviceID = (*row)[9] ;
 		TOptionMap Option   = m_sql.BuildDeviceOptions(Options, false ) ;
 
 		getOption(Option,"Power"     , lastPowerModulation  );
@@ -405,7 +411,7 @@ try
 						_log.Debug(DEBUG_NORM,"VTHER: Mn:%02d  Therm:%-10s(%2s) Room:%4.1f SetPoint:%4.1f Power:%3d LightId(%2ld):%d Kp:%3.f Ki:%3.f Integr:%3.1f Cmd:%s",Minute,ThermostatSwitchName, idxThermostat.c_str() , RoomTemperature,ThermostatTemperatureSet,PowerModulation,SwitchIdx,SwitchValue,CoefProportional,CoefIntegral, DeltaTemps[ThermostatId]->GetSum() /INTEGRAL_DURATION, OutCmd.c_str());
 
 					}
-					if (( lastPowerModulation != PowerModulation) || (lastTemp != RoomTemperature ) || (SwitchStateAsChanged) )
+					if (  ( abs ( lastPowerModulation - PowerModulation) > 10 )  || ( abs(lastTemp - RoomTemperature ) > 0.2  ) || (SwitchStateAsChanged) )
 					{
 
 						setOption(Option, "Power"   , PowerModulation);
@@ -414,7 +420,9 @@ try
 
 
 						std::string options = m_sql.FormatDeviceOptions(Option, false);
-						m_sql.safe_query("UPDATE DeviceStatus SET Options='%s',LastUpdate='%s' WHERE (ID = %s )", options.c_str(), TimeToString(NULL, TF_DateTime).c_str(), idxThermostat.c_str());
+						m_sql.UpdateDeviceValue("Options", options , (idxThermostat)) ;
+
+					//		m_mainworker.m_eventsystem.ProcessDevice(atoi(HwdID.c_str()), ThermostatId, 1, pTypeThermostat, sTypeThermSetpoint, 0, 0, 0, SetPoint, ThermostatSwitchName);
 						SendSetPointSensor(DeviceID>>16 , (DeviceID>>8)&0xFF  , (DeviceID)&0xFF , ThermostatTemperatureSet, "");
 					}
 				if ((Minute % 10 )==0)
