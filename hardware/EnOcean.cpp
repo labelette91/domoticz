@@ -4,6 +4,7 @@
 #include "../main/Helper.h"
 #include "../main/RFXtrx.h"
 #include "../main/SQLHelper.h"
+#include "../json/json.h"
 
 #include <string>
 
@@ -479,6 +480,23 @@ void  CEnOcean::UpdateSensorDbWithManualSwitch() {
 		}
 	}
 	return ;
+}
+
+
+void CEnOcean::RegisterCmd(const char* idname, webserver_function ResponseFunction)
+{
+	//webEnoceanCmd.insert(std::pair<std::string, webserver_function >(std::string(idname), ResponseFunction));
+	m_webEnoceanCmd[idname] =  ResponseFunction ;
+
+}
+
+void CEnOcean::HandleCmd(const std::string &rtype,  const request& req, Json::Value &root)
+{
+	std::map < std::string, webserver_function >::iterator pf = m_webEnoceanCmd.find(rtype);
+	if (pf != m_webEnoceanCmd.end())
+	{
+		pf->second( req, root);
+	}
 }
 
 

@@ -282,6 +282,46 @@ uint32_t SetRawValues(uint8_t * data, T_DATAFIELD * OffsetDes,  ...)
 }
 
 
+
+
+
+uint32_t SetRawValues(uint8_t * data, _T_EEP_CASE * EEP_case ,  ...)
+{
+	va_list value;
+  uint32_t total_bits =0;
+
+  T_DATAFIELD * OffsetDes;
+
+  /* Initialize the va_list structure */
+	va_start(value, EEP_case);
+
+  for (int i=0;i<EEP_case->size();i++)
+	{
+    OffsetDes = & (EEP_case->at(i)) ;
+
+		int par = va_arg(value, int);       /*   va_arg() donne le paramètre courant    */
+		//not enough argument
+		if (par == END_ARG_DATA)
+			return 0;
+		SetRawValue(data, par, OffsetDes);
+	  total_bits = OffsetDes->Offset + OffsetDes->Size;
+	}
+
+	int par = va_arg(value, int);       
+	if (par != END_ARG_DATA)
+		return 0;
+
+  //last bit offset
+	int total_bytes = (total_bits + 7) / 8;
+
+	va_end(value);
+
+	return total_bytes;
+}
+
+
+
+
 //vld D2-03-0A : len=2 offset 0 battery level 1= action : //1 = simple press, 2=double press, 3=long press, 4=press release
 T_DATAFIELD D2030A[] = {
 {  0  , 8 , "BAT"  , 0,0,0,0,"battert level" },

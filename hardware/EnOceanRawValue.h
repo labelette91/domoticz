@@ -2,6 +2,7 @@
 #define _SetGetRawValue
 
 #include <stdint.h>
+#include <vector>
 
 //Profile descriptor from eep.xml
 typedef struct {
@@ -15,6 +16,11 @@ typedef struct {
 
 	char * description;
 }T_DATAFIELD;
+
+//descriptor for a eep case
+//a profil a as several case 
+// a case as several datafield
+typedef std::vector<T_DATAFIELD> _T_EEP_CASE;
 
 //value for the last argument of a telegram data payload
 #define END_ARG_DATA  (((unsigned int)1<<31)-1)

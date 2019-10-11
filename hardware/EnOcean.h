@@ -127,6 +127,12 @@ void         setDestination(unsigned char * opt, unsigned int destID);
 
 #include "sensors.h"
 
+class request;
+namespace Json {
+	class Value;
+};
+typedef boost::function< void( const request& req, Json::Value &root) > webserver_function;
+
 class CEnOcean : public AsyncSerial, public CDomoticzHardwareBase
 {
 	friend class CEnOceanESP3;
@@ -199,7 +205,13 @@ public:
 
 	void UpdateSensorDbWithManualSwitch();
 
+	void RegisterCmd(const char * idname, webserver_function ResponseFunction);
+
+	void HandleCmd(const std::string & rtype, const request & req, Json::Value & root);
+
 private:
+	std::map < std::string, webserver_function > m_webEnoceanCmd;
+
 	virtual bool ParseData() { return true; };
 
 	virtual bool sendFrame(unsigned char frametype, unsigned char *databuf, unsigned short datalen, unsigned char *optdata, unsigned char optdatalen) { return true; };
