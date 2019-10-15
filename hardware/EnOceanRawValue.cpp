@@ -158,7 +158,7 @@ T_DATAFIELD* GetOffsetFromName( char * OffsetName , T_DATAFIELD * OffsetDes )
   uint32_t offsetInd = 0 ;
   while (OffsetDes[offsetInd].Size != 0 )
   {
-    if (strstr(OffsetDes[offsetInd].ShortCut,OffsetName ) != 0 )
+    if (strstr(OffsetDes[offsetInd].ShortCut.c_str(),OffsetName ) != 0 )
       return &OffsetDes[offsetInd] ;
     offsetInd++;
   }
@@ -333,7 +333,7 @@ uint32_t SetRawValues(uint8_t * data, _T_EEP_CASE * EEP_case ,  ...)
 T_DATAFIELD D2030A[] = {
 {  0  , 8 , 0,0,0,0, "BAT", "battert level" },
 {  8  , 8 , 0,0,0,0, "BUT", "button       " }, //
-{ 0  , 0  , 0      , 0,0,0,0,0              }  //
+{ 0  , 0  , 0      , 0,0,0,"",""              }  //
 };
 
 //TEACHIN_4BS vld
@@ -343,7 +343,7 @@ T_DATAFIELD TEACHIN_4BS[] = {
 { 13 , 11  , 0,0,0,0, "MANU","manufacturer   " }, //
 { 24 , 1   , 0,0,0,0, "LRNT","  learn type " }, //  0:WithOut EEP 1: with EEP
 { 28 , 1   , 0,0,0,0, "LRNB","  learn bite " }, //  0 TeachIn telegram 1 DataLelegram
-{ 0  , 0  , 0      , 0,0,0,0,0 }  //
+{ 0  , 0  , 0      , 0,0,0,"",""}  //
 };
 
 

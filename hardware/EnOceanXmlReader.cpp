@@ -7,8 +7,12 @@
 #include <stdarg.h>  
 #include <tinyxml.h>
 #include "xpath_static.h"
+#include "../main/Logger.h"
 
-std::string string_format(const char * fmt, ...) {
+std::string string_format(const char* fmt, ...);
+/*
+
+{
 	va_list ap;
 	char buf[1024];
 	va_start(ap, fmt);
@@ -16,7 +20,7 @@ std::string string_format(const char * fmt, ...) {
 
 	return buf;
 }
-
+*/
 
 T_PROFIL_MAP Profils;
 
@@ -235,7 +239,8 @@ if( NULL != l_pRootElement )
 
                  Profils.AddProfil(Profil,functtl,typettl);
 
-
+				 _log.Log(LOG_ERROR, "// function type :%s : %s \n", typeNumber.c_str(), typettl.c_str());
+				 
                 fprintf (out,"// function type :%s : %s \n",typeNumber.c_str(),typettl.c_str());
 
 //	{ 0xA5, 0x02, 0x01, "Temperature Sensor Range -40C to 0C",																	"Temperature.01" },
@@ -281,14 +286,11 @@ if( NULL != l_pRootElement )
                   fprintf (out,  "// DESC :%s\n",DescriptionCase.c_str() );
                   fprintf (out,"T_DATAFIELD %s [] = {\n",DataFieldName.c_str() );
 
-				  Profils.AddCaseTitle (Profil, caseNb-1,TitleCase, DescriptionCase);
-
                   int bitoffs=0;
                   int bitsize=0;
                   while( l_pdatafield )
                   {
                     T_DATAFIELD dataf ;
-                    memset(&dataf,0,sizeof(T_DATAFIELD) );
 
                     std::string  datas = getText(l_pdatafield,"data","");
                     if (!datas.empty()  )
@@ -336,7 +338,7 @@ if( NULL != l_pRootElement )
                       dataf.RangeMax = atoi(RangeMax.c_str() );
                       dataf.ScaleMin = atoi(ScaleMin.c_str() );
                       dataf.ScaleMax = atoi(ScaleMax.c_str() );
-                      dataf.description = (char*)datas.c_str() ;
+                      dataf.description = datas   ;
 
                       //recherche si existe
                       T_DATAFIELD * df =  Profils.getCase (Profil, caseNb-1)->FindShortCut( shortcut.c_str() );
@@ -351,7 +353,7 @@ if( NULL != l_pRootElement )
                         while ( df != 0 );
                         shortcut = sname;
                       }
-                      dataf.ShortCut = (char*)shortcut.c_str()  ;
+                      dataf.ShortCut = shortcut ;
 
 
                       Profils.AddDataField (Profil, caseNb-1 ,  dataf );
@@ -379,6 +381,10 @@ if( NULL != l_pRootElement )
                   bitoffs = (bitoffs+7)/8 ;
                   fprintf(out,"#define %s_%-10s %d\n",DataFieldName.c_str(),"DATA_SIZE",bitoffs );
 
+				  //end case
+				  Profils.AddCaseTitle(Profil, caseNb - 1, TitleCase, DescriptionCase);
+
+
                   l_pcase = l_pcase->NextSiblingElement( "case" );
                 }
 
@@ -395,6 +401,9 @@ if( NULL != l_pRootElement )
                   T_PROFIL_EEP * profil = Profils.getProfil (RefProfil);
                   for (unsigned int i=0;i<profil->cases.size() ;i++)
                      fprintf(out,"%s ,\n",getDataFieldName(RefProfil,i+1).c_str() );
+
+				  //copy case
+				  Profils.getProfil(Profil)->cases = Profils.getProfil(RefProfil)->cases;
                 }
                 
                 fprintf (out,"{0 }\n" );

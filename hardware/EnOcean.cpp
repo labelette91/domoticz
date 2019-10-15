@@ -443,11 +443,11 @@ uint32_t CEnOcean::sendVld(unsigned int unitBaseAddr, T_DATAFIELD * OffsetDes,  
 
 }
 T_DATAFIELD remote_sysex[] = {
-{  0 , 2 , "SEQ"       ,   0 ,   0 ,   0 ,   0 , "SEQ"},
-{  2 , 6 , "IDX"       ,   0 ,   0 ,   0 ,   0 , "IDX"},
-{  8 , 9 , "LEN"       ,   0 ,   0 ,   0 ,   0 , ""},
-{  17, 11, "MAN"       ,   0 ,   0 ,   0 ,   0 , ""},
-{  28, 12, "FN"        ,   0 ,   0 ,   0 ,   0 , ""},
+{  0 , 2 ,   0 ,   0 ,   0 ,   0 ,"SEQ"       ,  "SEQ"},
+{  2 , 6 ,   0 ,   0 ,   0 ,   0 ,"IDX"       , "IDX"},
+{  8 , 9 ,   0 ,   0 ,   0 ,   0 , "LEN"       , ""},
+{  17, 11,   0 ,   0 ,   0 ,   0 ,"MAN"       , ""},
+{  28, 12,   0 ,   0 ,   0 ,   0 ,"FN"        , ""},
 
 															   //Value: 0x01 = Configuration data valid 
 {  0 , 0 , 0          , 0           }

@@ -13,8 +13,9 @@ typedef struct {
 	double  ScaleMin;
 	double  ScaleMax;
 
-	char * ShortCut;
-	char * description;
+	std::string ShortCut;
+	std::string description;
+
 
 	std::string toString()
 	{
@@ -26,10 +27,10 @@ typedef struct {
 			RangeMax,
 			ScaleMin,
 			ScaleMax,
-			ShortCut ,
-			description );
-//			ShortCut.c_str(),
-			//description.c_str());
+//			ShortCut ,
+//			description );
+			ShortCut.c_str(),
+			description.c_str());
 			return buf;
 
 	}

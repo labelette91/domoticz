@@ -2435,9 +2435,9 @@ namespace http {
 				T_PROFIL_EEP* prof = Profils.getProfil(DeviceIdCharToInt(sprofil));
 				for (uint caseNb = 0; caseNb < prof->cases.size(); caseNb++)
 				{
-					root["Num"]         = caseNb +1;
-					root["Title"]       = prof->cases[caseNb].Title;
-					root["Description"] = prof->cases[caseNb].Desc;
+					root["result"][caseNb]["Num"]         = caseNb +1;
+					root["result"][caseNb]["Title"]       = prof->cases[caseNb].Title;
+					root["result"][caseNb]["Description"] = prof->cases[caseNb].Desc;
 				}
 			}
 			else if (cmd == "getCaseShortCut") {
@@ -2454,9 +2454,9 @@ namespace http {
 			T_EEP_CASE* Case = Profils.getCase(DeviceIdCharToInt(sprofil),  std::stoi(scaseNb, nullptr, 0)   );
 				for (uint i = 0; i < Case->size(); i++)
 				{
-					root["Short"] = Case->at(i).ShortCut ;
-					root["Desc"]  = Case->at(i).description;
-					root["Enum"] = "";//Case->at(i).Enum ;
+					root["result"][i]["Short"] = Case->at(i).ShortCut ;
+					root["result"][i]["Desc"]  = Case->at(i).description;
+					root["result"][i]["Enum"] = "";//Case->at(i).Enum ;
 				}
 			}
 
