@@ -2459,6 +2459,29 @@ namespace http {
 					root["result"][i]["Enum"] = "";//Case->at(i).Enum ;
 				}
 			}
+			else if (cmd == "sendvld") {
+			//return the list of shorcuts for the  case for the profil 
+			std::string sprofil = request::findValue(&req, "profil");
+			if (sprofil.empty())
+				return;
+
+			std::string scaseNb = request::findValue(&req, "casenb");
+			if (scaseNb.empty())
+				return;
+
+			std::string sdevidx = request::findValue(&req, "devidx");
+			if (sdevidx.empty())
+				return;
+
+			int nbSelectedDevice = req.parameters.size() - 6 ;
+			int * values  = new int[nbSelectedDevice];
+			for (int i = 0; i < nbSelectedDevice; i++) {
+				std::string value  = getDeviceId(req, i).c_str();  
+				int val = atoi(getDeviceId(req, i).c_str() );
+				values[i] = val;
+			}
+			delete[] values;
+			}
 
 			else
 				return;
