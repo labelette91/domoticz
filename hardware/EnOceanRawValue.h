@@ -8,13 +8,32 @@
 typedef struct {
 	int Offset;
 	int Size;
-	char * ShortCut;
 	double  RangeMin;
 	double  RangeMax;
 	double  ScaleMin;
 	double  ScaleMax;
 
+	char * ShortCut;
 	char * description;
+
+	std::string toString()
+	{
+		char buf[1024];
+		_snprintf(buf, sizeof(buf), "%2d;%2d;%5.2f;%5.2f;%5.2f;%5.2f;%-10s;%s",
+			Offset,
+			Size,
+			RangeMin,
+			RangeMax,
+			ScaleMin,
+			ScaleMax,
+			ShortCut ,
+			description );
+//			ShortCut.c_str(),
+			//description.c_str());
+			return buf;
+
+	}
+
 }T_DATAFIELD;
 
 //descriptor for a eep case
@@ -53,6 +72,11 @@ uint32_t SetRawValuesNb(uint8_t * data, T_DATAFIELD * OffsetDes, int NbParameter
 uint32_t SetRawValues(uint8_t * data, T_DATAFIELD * OffsetDes, va_list value);
 
 uint32_t SetRawValues(uint8_t * data, T_DATAFIELD * OffsetDes, ...);
+
+uint32_t GetRawValue(uint8_t * data, _T_EEP_CASE* offset, uint32_t offsetIndex);
+
+uint32_t SetRawValues(uint8_t * data, _T_EEP_CASE * EEP_case, ...);
+
 
 //vld D2-03-0A : len=2 offset 0 battery level 1= action : //1 = simple press, 2=double press, 3=long press, 4=press release
 

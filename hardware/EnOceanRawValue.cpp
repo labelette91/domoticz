@@ -283,6 +283,13 @@ uint32_t SetRawValues(uint8_t * data, T_DATAFIELD * OffsetDes,  ...)
 
 
 
+uint32_t GetRawValue(uint8_t * data, _T_EEP_CASE* offset, uint32_t offsetIndex)
+{
+	if (offsetIndex < offset->size())
+		return GetRawValue(data, offset->at(offsetIndex).Offset, offset->at(offsetIndex).Size);
+	else
+		return 0;
+}
 
 
 uint32_t SetRawValues(uint8_t * data, _T_EEP_CASE * EEP_case ,  ...)
@@ -324,18 +331,18 @@ uint32_t SetRawValues(uint8_t * data, _T_EEP_CASE * EEP_case ,  ...)
 
 //vld D2-03-0A : len=2 offset 0 battery level 1= action : //1 = simple press, 2=double press, 3=long press, 4=press release
 T_DATAFIELD D2030A[] = {
-{  0  , 8 , "BAT"  , 0,0,0,0,"battert level" },
-{  8  , 8 , "BUT"  , 0,0,0,0,"button       " }, //
+{  0  , 8 , 0,0,0,0, "BAT", "battert level" },
+{  8  , 8 , 0,0,0,0, "BUT", "button       " }, //
 { 0  , 0  , 0      , 0,0,0,0,0              }  //
 };
 
 //TEACHIN_4BS vld
 T_DATAFIELD TEACHIN_4BS[] = {
-{ 0  , 6 , "FUNC"  , 0,0,0,0,"function" },
-{ 6  , 7 , "TYPE"  , 0,0,0,0,"type    " }, //
-{ 13 , 11, "MANU"  , 0,0,0,0,"manufacturer   " }, //
-{ 24 , 1 , "LRNT"  , 0,0,0,0,"  learn type " }, //  0:WithOut EEP 1: with EEP
-{ 28 , 1 , "LRNB"  , 0,0,0,0,"  learn bite " }, //  0 TeachIn telegram 1 DataLelegram
+{ 0  , 6   , 0,0,0,0, "FUNC","function" },
+{ 6  , 7   , 0,0,0,0, "TYPE","type    " }, //
+{ 13 , 11  , 0,0,0,0, "MANU","manufacturer   " }, //
+{ 24 , 1   , 0,0,0,0, "LRNT","  learn type " }, //  0:WithOut EEP 1: with EEP
+{ 28 , 1   , 0,0,0,0, "LRNB","  learn bite " }, //  0 TeachIn telegram 1 DataLelegram
 { 0  , 0  , 0      , 0,0,0,0,0 }  //
 };
 
