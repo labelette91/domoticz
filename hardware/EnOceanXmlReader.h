@@ -23,6 +23,7 @@ typedef struct {
   int Func;
   int type;
   T_EEP_CASE_* *cases  ;
+  int nbCases;
   std::string FuncTitle ;
   std::string TypeTitle ;
 

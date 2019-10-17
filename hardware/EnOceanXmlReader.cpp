@@ -406,7 +406,7 @@ if( NULL != l_pRootElement )
                   T_PROFIL_EEP * profil = Profils.getProfil (RefProfil);
                   for (unsigned int i=0;i<profil->cases.size() ;i++)
                       fprintf(out,"&%06X_CASE%d ,\n",RefProfil,i+1 );
-
+                  caseNb = profil->cases.size() ;
 				          //copy case
 				          Profils.getProfil(Profil)->cases = Profils.getProfil(RefProfil)->cases;
                 }
@@ -415,7 +415,7 @@ if( NULL != l_pRootElement )
 
                 fprintf(out,"};\n\n");
                 
-                ProfilList.push_back(  string_format ( "{ 0x%06X, %s , %s, %s, %06X_CASES , \"%-80s\" , \"%-80s\" },\n",Profil, rorg.c_str(),funcNumber.c_str(),typeNumber.c_str(), Profil,   functtl.c_str(),typettl.c_str() )   );
+                ProfilList.push_back(  string_format ( "{ 0x%06X, %s , %s, %s, %06X_CASES , %2d ,\"%-80s\" , \"%-80s\" },\n",Profil, rorg.c_str(),funcNumber.c_str(),typeNumber.c_str(), Profil, caseNb,   functtl.c_str(),typettl.c_str() )   );
                 
                 l_ptype = l_ptype->NextSiblingElement( "type" );
               }
@@ -435,7 +435,8 @@ if( NULL != l_pRootElement )
         for (unsigned int i=0;i<ProfilList.size();i++)
           fprintf(out, ProfilList[i].c_str() );
 
-        fprintf (out,"{0,0,0,0,0,\"\",\"\" }\n" );
+//        fprintf (out,"{0,0,0,0,0,\"\",\"\" }\n" );
+        fprintf (out,"{0 }\n" );
 
         fprintf (out,"};\n\n" );
 
@@ -466,4 +467,30 @@ void testProfils()
   Profils.print();
   T_EEP_CASE * Case = Profils.getCase(0xd20101,0) ;
   Case->print();
+}
+
+
+
+T_PROFIL_LIST * getProfil (int profil )
+{
+  int i=0;
+  while( Profillist[i].Profil != 0)
+  {
+    if (Profillist[i].Profil == profil)
+        return &Profillist[i] ;
+    i++;
+  }
+  return 0;
+}
+
+T_EEP_CASE_ * getProfilCase (int profil , int caseNb)
+{
+  T_PROFIL_LIST * prof = getProfil ( profil ) ;
+  
+  if (prof)
+  {
+      if(caseNb<prof->nbCases)
+        return prof->cases[caseNb];
+  }
+  return 0;
 }
