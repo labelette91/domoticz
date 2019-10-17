@@ -7,7 +7,6 @@
 #include <stdarg.h>  
 #include <tinyxml.h>
 #include "xpath_static.h"
-#include "../main/Logger.h"
 
 std::string string_format(const char* fmt, ...);
 /*
@@ -25,7 +24,7 @@ std::string string_format(const char* fmt, ...);
 T_PROFIL_MAP Profils;
 
 
-//#include "eep.h"
+#include "eep-.h"
 
 
 std::string  getEnum(TiXmlElement *l_p , int nbc)
@@ -103,27 +102,21 @@ std::string getTab(unsigned  int tabLen ,  std::string & word)
 
 }
 
-
-
-
-#define First FirstChildElement
-#define Next  FirstChildElement
-
-
-class Element  
+int getChildNumber(TiXmlElement *l_proot , const char * childName )
 {
-  std::string field ;
-  TiXmlElement* lpElement ;
-  Element(const char * pfield)
-  {
-    field = pfield;
-  }
-  void First()
-  {
-    
-  }
 
-};
+  int nbChild = 0 ;
+   TiXmlElement *l_p  = l_proot->FirstChildElement( childName ); 
+   while( l_p )
+   {
+      nbChild++;
+      l_p = l_p->NextSiblingElement( childName );
+   }
+   printf ("nb chield %s : %d \n", childName, nbChild );
+
+   return nbChild ;
+}
+
 /*
               <datafield>
                 <data>Supply voltage</data>
@@ -161,11 +154,7 @@ int axtoi( std::string  & svalue  )
 
 std::string getDataFieldName (int Profil, int caseNb  )
 {
-//                    if ( ( Profil>>16 )!= 0xA5 )
                     return string_format("%06X_CMD%d",Profil,caseNb );
-//                  else
-//                    return string_format("%06X",Profil,caseNb );
-
 }
 void parseEEP_xml(const char * prorg,const char * pfctnum , FILE * out )
 {
@@ -239,8 +228,6 @@ if( NULL != l_pRootElement )
 
                  Profils.AddProfil(Profil,functtl,typettl);
 
-				 _log.Log(LOG_ERROR, "// function type :%s : %s \n", typeNumber.c_str(), typettl.c_str());
-				 
                 fprintf (out,"// function type :%s : %s \n",typeNumber.c_str(),typettl.c_str());
 
 //	{ 0xA5, 0x02, 0x01, "Temperature Sensor Range -40C to 0C",																	"Temperature.01" },
@@ -276,7 +263,10 @@ if( NULL != l_pRootElement )
                   TiXmlElement *l_pdatafield = l_pcase->FirstChildElement( "datafield" );
 
                   std::string TitleCase       = getText( l_pcase, "title" ) ;
+                  replaceBlanc(TitleCase,'"',' ');
+
                   std::string DescriptionCase = getText( l_pcase, "description" ) ;
+                  replaceBlanc(DescriptionCase,'"',' ');
 
                   std::string DataFieldName  = getDataFieldName ( Profil,  caseNb  ) ;
 
@@ -288,9 +278,15 @@ if( NULL != l_pRootElement )
 
                   int bitoffs=0;
                   int bitsize=0;
+
+                  int NbDataF = getChildNumber(l_pcase,"datafield" );
+
+//                  T_DATAFIELD * CaseDataf = new T_DATAFIELD[ NbDataF+1 ] ; 
+                  int Nbdataf = 0 ;
+
+                  T_DATAFIELD dataf ;
                   while( l_pdatafield )
                   {
-                    T_DATAFIELD dataf ;
 
                     std::string  datas = getText(l_pdatafield,"data","");
                     if (!datas.empty()  )
@@ -334,10 +330,10 @@ if( NULL != l_pRootElement )
 
                       dataf.Offset = bitoffs ;
                       dataf.Size   = bitsize ;
-                      dataf.RangeMin = atoi(RangeMin.c_str() );
-                      dataf.RangeMax = atoi(RangeMax.c_str() );
-                      dataf.ScaleMin = atoi(ScaleMin.c_str() );
-                      dataf.ScaleMax = atoi(ScaleMax.c_str() );
+                      dataf.RangeMin = atof(RangeMin.c_str() );
+                      dataf.RangeMax = atof(RangeMax.c_str() );
+                      dataf.ScaleMin = atof(ScaleMin.c_str() );
+                      dataf.ScaleMax = atof(ScaleMax.c_str() );
                       dataf.description = datas   ;
 
                       //recherche si existe
@@ -356,6 +352,8 @@ if( NULL != l_pRootElement )
                       dataf.ShortCut = shortcut ;
 
 
+//                      CaseDataf[Nbdataf]  = dataf ;
+                      Nbdataf++;
                       Profils.AddDataField (Profil, caseNb-1 ,  dataf );
                       char*nptr;
 //                      int tabn = fprintf(out, "{ %2s ,%2s , \"%s\"%s , %3s , %3s , %3s , %3s , \"%s\"}," ,Bitoffs.c_str() , Bitsize.c_str(),shortcut.c_str(),getTab(8,shortcut).c_str(), RangeMin.c_str() ,RangeMax.c_str(),ScaleMin.c_str(),ScaleMax.c_str() , datas.c_str() );
@@ -372,6 +370,13 @@ if( NULL != l_pRootElement )
 
                   fprintf(out,"};\n\n");
 
+                  dataf.Offset=dataf.Size= dataf.RangeMin=dataf.RangeMax=dataf.ScaleMin=dataf.ScaleMax=0 ;dataf.description=dataf.ShortCut = "" ;
+//                  CaseDataf[Nbdataf++]  = dataf ;
+
+                  //print case definiton
+                  fprintf (out,"T_EEP_CASE_ %06X_CASE%d = { %s,\"%s\",\"%s\" } ;" ,Profil,caseNb , DataFieldName.c_str() , TitleCase.c_str(), DescriptionCase.c_str()  );
+
+
                   fprintf(out,"// Index of field\n");
                   for (unsigned int i=0;i<OffsetId.size();i++)
                     fprintf(out,"#define %s_%-10s %d\n",DataFieldName.c_str(),OffsetId[i].c_str(),i );
@@ -381,8 +386,8 @@ if( NULL != l_pRootElement )
                   bitoffs = (bitoffs+7)/8 ;
                   fprintf(out,"#define %s_%-10s %d\n",DataFieldName.c_str(),"DATA_SIZE",bitoffs );
 
-				  //end case
-				  Profils.AddCaseTitle(Profil, caseNb - 1, TitleCase, DescriptionCase);
+				          //end case : add case title / description
+				          Profils.AddCaseTitle(Profil, caseNb - 1, TitleCase, DescriptionCase);
 
 
                   l_pcase = l_pcase->NextSiblingElement( "case" );
@@ -391,19 +396,19 @@ if( NULL != l_pRootElement )
 
 
                 //fin du profile : list des case du profil courant
-                fprintf (out,"\nT_DATAFIELD* %06X_CASES [] = {\n",Profil );
+                fprintf (out,"\nT_EEP_CASE_* %06X_CASES [] = {\n",Profil );
                 for (int i=0;i<caseNb;i++)
-                   fprintf(out,"%s ,\n",getDataFieldName(Profil,i+1).c_str() );
+                   fprintf(out,"&%06X_CASE%d ,\n",Profil,i+1 );
 
                 if ( (caseNb==0) && (RefProfil!=0))
                 {
 
                   T_PROFIL_EEP * profil = Profils.getProfil (RefProfil);
                   for (unsigned int i=0;i<profil->cases.size() ;i++)
-                     fprintf(out,"%s ,\n",getDataFieldName(RefProfil,i+1).c_str() );
+                      fprintf(out,"&%06X_CASE%d ,\n",RefProfil,i+1 );
 
-				  //copy case
-				  Profils.getProfil(Profil)->cases = Profils.getProfil(RefProfil)->cases;
+				          //copy case
+				          Profils.getProfil(Profil)->cases = Profils.getProfil(RefProfil)->cases;
                 }
                 
                 fprintf (out,"{0 }\n" );

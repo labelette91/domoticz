@@ -10,12 +10,19 @@
 
 //Profile descriptor from eep.xml
 
+
+typedef struct {
+  T_DATAFIELD* Dataf  ;
+	std::string Title;
+	std::string Desc ;
+}T_EEP_CASE_ ; 
+
 typedef struct {
   int Profil ; 
   int Rorg;
   int Func;
   int type;
-  T_DATAFIELD* *cases  ;
+  T_EEP_CASE_* *cases  ;
   std::string FuncTitle ;
   std::string TypeTitle ;
 
@@ -157,6 +164,10 @@ public:
    void AddDataField ( int pProfil , int CaseNb  , T_DATAFIELD & dataf  )
    {
       lProfils[pProfil].AddDataField ( CaseNb ,  dataf  ) ;
+   }
+   void AddCase ( int pProfil ,  T_EEP_CASE &newCase   )
+   {
+      lProfils[pProfil].cases.push_back(newCase);
    }
    void print()
    {
