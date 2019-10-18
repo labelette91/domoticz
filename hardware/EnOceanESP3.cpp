@@ -2427,9 +2427,7 @@ namespace http {
 
 			else if (cmd == "getCases") {
 				//return the list of eep cases for the profil 
-				std::string sprofil = request::findValue(&req, "profil");
-				if (sprofil.empty())
-					return;
+				std::string sprofil = request::findValue(&req, "profil");if (sprofil.empty())return;
 
 				Profils.LoadXml();
 				T_PROFIL_EEP* prof = Profils.getProfil(DeviceIdCharToInt(sprofil));
@@ -2440,15 +2438,25 @@ namespace http {
 					root["result"][caseNb]["Description"] = prof->cases[caseNb].Desc;
 				}
 			}
+			else if (cmd == "getCases2") {
+				//return the list of eep cases for the profil 
+				std::string sprofil = request::findValue(&req, "profil");if (sprofil.empty())return;
+
+				T_PROFIL_LIST * prof = getProfil (DeviceIdCharToInt(sprofil));
+
+				if(prof)
+				for (uint caseNb = 0; caseNb < prof->nbCases; caseNb++)
+				{
+					root["result"][caseNb]["Num"]         = caseNb +1;
+					root["result"][caseNb]["Title"]       = prof->cases[caseNb]->Title;
+					root["result"][caseNb]["Description"] = prof->cases[caseNb]->Desc;
+				}
+			}
 			else if (cmd == "getCaseShortCut") {
 			//return the list of shorcuts for the  case for the profil 
-			std::string sprofil = request::findValue(&req, "profil");
-			if (sprofil.empty())
-				return;
+			std::string sprofil = request::findValue(&req, "profil");if (sprofil.empty())	return;
 
-			std::string scaseNb = request::findValue(&req, "casenb");
-			if (scaseNb.empty())
-				return;
+			std::string scaseNb = request::findValue(&req, "casenb");if (scaseNb.empty())	return;
 
 			Profils.LoadXml();
 			T_EEP_CASE* Case = Profils.getCase(DeviceIdCharToInt(sprofil),  std::stoi(scaseNb, nullptr, 0)   );
@@ -2459,19 +2467,29 @@ namespace http {
 					root["result"][i]["Enum"] = "";//Case->at(i).Enum ;
 				}
 			}
+			else if (cmd == "getCaseShortCut2") {
+			//return the list of shorcuts for the  case for the profil 
+			std::string sprofil = request::findValue(&req, "profil");if (sprofil.empty())	return;
+			std::string scaseNb = request::findValue(&req, "casenb");if (scaseNb.empty())	return;
+
+			T_EEP_CASE_ * Case = getProfilCase (DeviceIdCharToInt(sprofil),  std::stoi(scaseNb, nullptr, 0)   );
+			if(Case)
+				for (uint i = 0; i < 50 ; i++)
+				{
+					if (Case->Dataf[i].Size ==0)
+						break;
+					root["result"][i]["Short"] = Case->Dataf[i].ShortCut ;
+					root["result"][i]["Desc"]  = Case->Dataf[i].description;
+					root["result"][i]["Enum"] = "";//Case->at(i).Enum ;
+				}
+			}
 			else if (cmd == "sendvld") {
 			//return the list of shorcuts for the  case for the profil 
-			std::string sprofil = request::findValue(&req, "profil");
-			if (sprofil.empty())
-				return;
+			std::string sprofil = request::findValue(&req, "profil");if (sprofil.empty())	return;
 
-			std::string scaseNb = request::findValue(&req, "casenb");
-			if (scaseNb.empty())
-				return;
+			std::string scaseNb = request::findValue(&req, "casenb");if (scaseNb.empty())	return;
 
-			std::string sdevidx = request::findValue(&req, "devidx");
-			if (sdevidx.empty())
-				return;
+			std::string sdevidx = request::findValue(&req, "devidx");if (sdevidx.empty())	return;
 
 			int nbSelectedDevice = req.parameters.size() - 6 ;
 			int * values  = new int[nbSelectedDevice];

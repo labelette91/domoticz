@@ -24,9 +24,6 @@ std::string string_format(const char* fmt, ...);
 T_PROFIL_MAP Profils;
 
 
-#include "eep-.h"
-
-
 std::string  getEnum(TiXmlElement *l_p , int nbc)
 {
 
@@ -156,7 +153,7 @@ std::string getDataFieldName (int Profil, int caseNb  )
 {
                     return string_format("%06X_CMD%d",Profil,caseNb );
 }
-void parseEEP_xml(const char * prorg,const char * pfctnum , FILE * out )
+void parseEEP_xml(const char * prorg,const char * pfctnum , FILE * out , FILE * outH )
 {
 
 int Rorg ;
@@ -233,6 +230,8 @@ if( NULL != l_pRootElement )
 //	{ 0xA5, 0x02, 0x01, "Temperature Sensor Range -40C to 0C",																	"Temperature.01" },
 
                 fprintf(out, "//{ %s, %s, %s, \"%-80s\" , \"%-80s\" },\n",rorg.c_str(),funcNumber.c_str(),typeNumber.c_str(),functtl.c_str(),typettl.c_str() );
+                if (out != outH)
+                fprintf(outH, "//{ %s, %s, %s, \"%-80s\" , \"%-80s\" },\n",rorg.c_str(),funcNumber.c_str(),typeNumber.c_str(),functtl.c_str(),typettl.c_str() );
 
 
                 //get ref :
@@ -273,8 +272,17 @@ if( NULL != l_pRootElement )
                   std::vector<std::string> OffsetId ;
 
                   fprintf (out,"\n// TITLE:%s\n",TitleCase.c_str() );
+                  if (out != outH)
+                  fprintf (outH,"\n// TITLE:%s\n",TitleCase.c_str() );
+
                   fprintf (out,  "// DESC :%s\n",DescriptionCase.c_str() );
+                  if (out != outH)
+                  fprintf (outH,  "// DESC :%s\n",DescriptionCase.c_str() );
+
+                  fprintf (outH,"extern T_DATAFIELD %s [] ; \n",DataFieldName.c_str() );
                   fprintf (out,"T_DATAFIELD %s [] = {\n",DataFieldName.c_str() );
+
+
 
                   int bitoffs=0;
                   int bitsize=0;
@@ -374,17 +382,19 @@ if( NULL != l_pRootElement )
 //                  CaseDataf[Nbdataf++]  = dataf ;
 
                   //print case definiton
-                  fprintf (out,"T_EEP_CASE_ %06X_CASE%d = { %s,\"%s\",\"%s\" } ;" ,Profil,caseNb , DataFieldName.c_str() , TitleCase.c_str(), DescriptionCase.c_str()  );
+                  fprintf (outH,"extern T_EEP_CASE_ %06X_CASE%d ;\n" ,Profil,caseNb , DataFieldName.c_str() , TitleCase.c_str(), DescriptionCase.c_str()  );
+                  fprintf (out ,"T_EEP_CASE_ %06X_CASE%d = { %s,\"%s\",\"%s\" } ;\n" ,Profil,caseNb , DataFieldName.c_str() , TitleCase.c_str(), DescriptionCase.c_str()  );
 
 
-                  fprintf(out,"// Index of field\n");
+
+                  fprintf(outH,"// Index of field\n");
                   for (unsigned int i=0;i<OffsetId.size();i++)
-                    fprintf(out,"#define %s_%-10s %d\n",DataFieldName.c_str(),OffsetId[i].c_str(),i );
-                  fprintf  (out,"#define %s_%-10s %d\n",DataFieldName.c_str(),"NB_DATA",OffsetId.size() );
+                    fprintf(outH,"#define %s_%-10s %d\n",DataFieldName.c_str(),OffsetId[i].c_str(),i );
+                  fprintf  (outH,"#define %s_%-10s %d\n",DataFieldName.c_str(),"NB_DATA",OffsetId.size() );
 
                   bitoffs += bitsize;
                   bitoffs = (bitoffs+7)/8 ;
-                  fprintf(out,"#define %s_%-10s %d\n",DataFieldName.c_str(),"DATA_SIZE",bitoffs );
+                  fprintf(outH,"#define %s_%-10s %d\n",DataFieldName.c_str(),"DATA_SIZE",bitoffs );
 
 				          //end case : add case title / description
 				          Profils.AddCaseTitle(Profil, caseNb - 1, TitleCase, DescriptionCase);
@@ -396,6 +406,7 @@ if( NULL != l_pRootElement )
 
 
                 //fin du profile : list des case du profil courant
+                fprintf (out,"\nextern T_EEP_CASE_* %06X_CASES [] ;\n",Profil );
                 fprintf (out,"\nT_EEP_CASE_* %06X_CASES [] = {\n",Profil );
                 for (int i=0;i<caseNb;i++)
                    fprintf(out,"&%06X_CASE%d ,\n",Profil,i+1 );

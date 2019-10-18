@@ -44,6 +44,7 @@ typedef struct {
   }
 }T_PROFIL_LIST  ;
 
+extern T_PROFIL_LIST Profillist [] ;
 
 //descriptor for a eep case
 //a profil a as several case 
@@ -51,7 +52,7 @@ typedef struct {
 typedef std::vector<T_DATAFIELD> _T_EEP_CASE;
 
 
-void parseEEP_xml(const char * prorg, const char * pfctnum, FILE * out);
+void parseEEP_xml(const char * prorg, const char * pfctnum, FILE * out , FILE * outH);
 
 class T_EEP_CASE : public _T_EEP_CASE
 {
@@ -147,7 +148,7 @@ public:
 	{
 		if (IsNotLoaded())
 		{
-			parseEEP_xml("0x", "0x", stdout );
+			parseEEP_xml("0x", "0x", stdout , stdout );
 
 		}
 	}
@@ -199,5 +200,9 @@ public:
 };
 
 extern T_PROFIL_MAP Profils;
+
+T_PROFIL_LIST * getProfil (int profil );
+T_EEP_CASE_ * getProfilCase (int profil , int caseNb);
+
 
 //#endif
