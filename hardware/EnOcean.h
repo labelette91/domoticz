@@ -221,6 +221,7 @@ public:
 	void sendVld(unsigned int sID, int channel, int value);
 	void sendVld(unsigned int sID, unsigned char *data, int DataLen);
 	uint32_t sendVld(unsigned int unitBaseAddr, T_DATAFIELD * OffsetDes,  ...);
+	uint32_t senDatadVld(unsigned int unitBaseAddr, T_DATAFIELD* OffsetDes, int* values, int NbValues);
 
 
 	void SendRpsTeachIn(unsigned int sID);

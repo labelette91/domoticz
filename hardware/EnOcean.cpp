@@ -434,7 +434,7 @@ uint32_t CEnOcean::sendVld(unsigned int unitBaseAddr, T_DATAFIELD * OffsetDes,  
 	if (DataSize)
 		sendVld(unitBaseAddr, data, DataSize);
 	else
-		_log.Log(LOG_ERROR, "EnOcean: Error argument number in sendVld : cmd :%s :%s ", OffsetDes->ShortCut, OffsetDes->description);
+		_log.Log(LOG_ERROR, "EnOcean: Error argument number in sendVld : cmd :%s :%s ", OffsetDes->ShortCut.c_str(), OffsetDes->description.c_str());
 
 
 	va_end(value);
@@ -442,6 +442,26 @@ uint32_t CEnOcean::sendVld(unsigned int unitBaseAddr, T_DATAFIELD * OffsetDes,  
 	return  DataSize;
 
 }
+uint32_t CEnOcean::senDatadVld(unsigned int unitBaseAddr, T_DATAFIELD* OffsetDes, int* values , int NbValues )
+{
+	uint8_t  data[MAX_DATA_PAYLOAD + 2];
+
+	memset(data, 0, sizeof(data));
+
+	uint32_t DataSize = setRawDataValues(data, OffsetDes, values,NbValues );
+	if (DataSize)
+		sendVld(unitBaseAddr, data, DataSize);
+	else
+		_log.Log(LOG_ERROR, "EnOcean: Error argument number in sendVld : cmd :%s :%s ", OffsetDes->ShortCut.c_str(), OffsetDes->description.c_str());
+
+
+	return  DataSize;
+
+}
+
+
+
+
 T_DATAFIELD remote_sysex[] = {
 {  0 , 2 ,   0 ,   0 ,   0 ,   0 ,"SEQ"       ,  "SEQ"},
 {  2 , 6 ,   0 ,   0 ,   0 ,   0 ,"IDX"       , "IDX"},

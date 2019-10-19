@@ -2491,13 +2491,19 @@ namespace http {
 
 			std::string sdevidx = request::findValue(&req, "devidx");if (sdevidx.empty())	return;
 
-			int nbSelectedDevice = req.parameters.size() - 6 ;
-			int * values  = new int[nbSelectedDevice];
-			for (int i = 0; i < nbSelectedDevice; i++) {
+			int NbValues = req.parameters.size() - 6 ;
+			int * values  = new int[NbValues];
+			for (int i = 0; i < NbValues; i++) {
 				std::string value  = getDeviceId(req, i).c_str();  
 				int val = atoi(getDeviceId(req, i).c_str() );
 				values[i] = val;
 			}
+			T_EEP_CASE_* Case = getProfilCase(DeviceIdCharToInt(sprofil), std::stoi(scaseNb, nullptr, 0));
+			uint DeviceId = DeviceIdCharToInt(sdevidx);
+
+			pEnocean->senDatadVld(DeviceId , Case->Dataf, values,  NbValues);
+
+
 			delete[] values;
 			}
 
@@ -2601,6 +2607,15 @@ void CEnOceanESP3::testParsingData(int sec_counter)
 //												         | manufactuer ID nodon = 46
 //														        | eep
 
+	if (sec_counter == 1) {
+
+		//send command stop si rappuie
+		sendVld(0x1234, D20500_CMD2, 1, 2, END_ARG_DATA);
+		sendVld(0x5678, D20500_CMD1, 100, 127, 0, 0, 1, 1, END_ARG_DATA);
+		///erreur arg trop
+		sendVld(0x1234, D20500_CMD2, 1, 2,  3 , END_ARG_DATA);
+		sendVld(0x1234, D20500_CMD2, 1,  END_ARG_DATA);
+	}
 
 //ESP3_RORG rorg, unsigned sID,  unsigned char status , T_DATAFIELD * OffsetDes, ...
 	if (sec_counter == 2) {

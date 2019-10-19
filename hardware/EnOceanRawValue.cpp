@@ -238,34 +238,70 @@ uint32_t SetRawValuesNb(uint8_t * data, T_DATAFIELD * OffsetDes, int NbParameter
 }
 
 
+uint32_t GetNbDataFields(T_DATAFIELD* OffsetDes)
+{
+
+	int i = 0;
+	while (OffsetDes++->Size != 0)
+		i++;
+
+	return i;
+}
+
+uint32_t CopyValues(int * data, int SizeData, va_list value)
+{
+	int i = 0;
+	int par = va_arg(value, int);       /*   va_arg() donne le paramètre courant    */
+	while ( (par != END_ARG_DATA) && (i<SizeData))
+	{
+		data[i] = par;
+		par = va_arg(value, int);       /*   va_arg() donne le paramètre courant    */
+		i++;
+	}
+
+	if (par != END_ARG_DATA)
+		return 0;
+
+
+	return i ;
+}
 
 //return the number of byte of data payload
 //0 if error
 
-uint32_t SetRawValues(uint8_t * data, T_DATAFIELD * OffsetDes,  va_list value)
+uint32_t setRawDataValues(uint8_t* data, T_DATAFIELD* OffsetDes, int value[], int NbData)
 {
 
+	int i = 0;
 	while (OffsetDes->Size != 0)
 	{
 
-		int par = va_arg(value, int);       /*   va_arg() donne le paramètre courant    */
-		//not enough argument
-		if (par == END_ARG_DATA)
+		if (i >= NbData)
 			return 0;
+		int par = value[i++];
+		//not enough argument
 		SetRawValue(data, par, OffsetDes);
 		OffsetDes++;
 	}
-
-	int par = va_arg(value, int);       
-	if (par != END_ARG_DATA)
+	if (i != NbData)
 		return 0;
 
-    //last bit offset
+	//last bit offset
 	OffsetDes--;
 	uint32_t total_bits = OffsetDes->Offset + OffsetDes->Size;
 	uint32_t total_bytes = (total_bits + 7) / 8;
 
 	return total_bytes;
+}
+
+uint32_t SetRawValues(uint8_t * data, T_DATAFIELD * OffsetDes,  va_list value)
+{
+
+	int Value[256];
+	//get value in arg line ...
+	int nbValue = CopyValues(Value, sizeof(Value), value);
+
+	return setRawDataValues( data,  OffsetDes, Value , nbValue ) ;
 }
 
 
@@ -275,14 +311,11 @@ uint32_t SetRawValues(uint8_t * data, T_DATAFIELD * OffsetDes,  ...)
 
 	/* Initialize the va_list structure */
 	va_start(value, OffsetDes);
-	uint32_t total_bytes = SetRawValues(data, OffsetDes, value);
-	va_end(value);
-
-	return total_bytes;
+	return   SetRawValues(data, OffsetDes, value);
 }
 
 
-
+//map
 uint32_t GetRawValue(uint8_t * data, _T_EEP_CASE* offset, uint32_t offsetIndex)
 {
 	if (offsetIndex < offset->size())

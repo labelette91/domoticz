@@ -78,6 +78,7 @@ uint32_t GetRawValue(uint8_t * data, _T_EEP_CASE* offset, uint32_t offsetIndex);
 
 uint32_t SetRawValues(uint8_t * data, _T_EEP_CASE * EEP_case, ...);
 
+uint32_t setRawDataValues(uint8_t* data, T_DATAFIELD* OffsetDes, int value[], int NbData);
 
 //vld D2-03-0A : len=2 offset 0 battery level 1= action : //1 = simple press, 2=double press, 3=long press, 4=press release
 
