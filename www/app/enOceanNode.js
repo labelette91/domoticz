@@ -58,7 +58,7 @@ function EnOceanGetProfileCases(profil)
 	var payload = {};
 	payload["profil"] = profil ;
 
-    result = SendCmd($.devIdx, "getCases", payload);
+    result = SendCmd($.devIdx, "getCases2", payload);
 
     return result;
 
@@ -115,17 +115,17 @@ function EnOceanGetProfileCase(profil,caseNb) {
     var payload = {};
 	payload["profil"] = profil ;
     payload["casenb"] = caseNb;
-    result = SendCmd($.devIdx, "getCaseShortCut", payload);
+    result = SendCmd($.devIdx, "getCaseShortCut2", payload);
     
     return result;
 
 
 }
-EnoceanDeviceSendDialogOpen = function (profil, deviceId ) {
+EnoceanDeviceSendDialogOpen = function (hwid, profil, deviceId ) {
 		        $.t = tt;
 		        $.Profil = profil;
 		        $.devIdx = deviceId;
-				$.hwid  = 2;
+				$.hwid  = hwid;
 		    //creation boutton et dialog enoceansend
 			    EnoceanDeviceSendAddXmlDialog();
 			    EnoceanDeviceSendCreateDialog(profil, deviceId);

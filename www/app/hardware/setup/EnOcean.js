@@ -174,7 +174,7 @@ define(['app'], function (app) {
 		                $.each(data.result, function (i, item) {
 		                    var status = "ok";
 		                    var statusImg = '<img src="images/' + status + '.png" />';
-		                    var healButton = '<img src="images/heal.png" onclick="ZWaveHealNode(' + item.ID + ')" class="lcursor" title="' + $.t("Heal node") + '" />';
+		                    var healButton = '<img src="images/heal.png" onclick="EnoceanDeviceSendDialogOpen(' +  $.devIdx + ',\''+ item.Profile + '\',\'' +  item.DeviceID +  '\')" class="lcursor" title="' + $.t("Heal node") + '" />';
 //		                    var itemChecker = '<input type="checkbox" class="noscheck" name="Check-' + item.DeviceID + ' id="Check-' + item.DeviceID + '" value="' + item.DeviceID + '" />';
 		                    var itemChecker = '<input type="checkbox" class="noscheck" name="Check-' + item.DeviceID + ' id="Check-' + item.DeviceID + '" value="' + i + '" />';
 
@@ -195,7 +195,7 @@ define(['app'], function (app) {
 		                        "7": item.BaseAddress,
 		                        "8": item.EnoTypeName,
 		                        //		                        "8": statusImg + '&nbsp;&nbsp;' + healButton,
-		                        "9": statusImg + '&nbsp;&nbsp;' + itemChecker,
+		                        "9": healButton + '&nbsp;&nbsp;' + itemChecker,
 		                    });
 		                });
 		            }
@@ -248,13 +248,6 @@ define(['app'], function (app) {
 		                //		                var data = oTable.fnGetData(anSelected[0]);
 		                var data = oTable.fnGetData($(this));
 		                var DeviceID = data["DeviceID"];
-		                $("#updelclr #nodeupdate").attr("href", "javascript:UpdateNode(" + DeviceID + ")");
-		                $("#hardwarecontent #zwavecodemanagement").attr("href", "javascript:ZWaveUserCodeManagement(" + DeviceID + ")");
-		                {
-		                    $('#updelclr #nodedelete').attr("class", "btnstyle3");
-		                    $("#updelclr #nodedelete").attr("href", "javascript:DeleteNode(" + DeviceID + ")");
-		                }
-		                $("#hardwarecontent #nodeparamstable #nodename").val(DeviceID);
 
 		                //		                var szConfig = "";
 		                //		                $("#hardwarecontent #configuration").html(szConfig);

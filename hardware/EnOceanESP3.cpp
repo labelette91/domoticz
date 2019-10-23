@@ -2213,6 +2213,19 @@ namespace http {
 				return "";
 		}
 
+		void checkComStatus(CEnOceanESP3* pEnocean, Json::Value& root)
+		{
+
+		if (pEnocean->isCommStatusOk())
+			root["status"] = "OK";
+		else {
+			root["message"] = "Communication Timeout";
+//			_log.Log(LOG_ERROR, "EnOcean: Server Error: %s  cmd:%s Hwid:%s arg:%s  Entry=%s", root["message"].asString().c_str(), cmd.c_str(), hwid.c_str(), arg.c_str(), request::findValue(&req, "entry").c_str());
+			_log.Log(LOG_ERROR, "EnOcean: Server Error: %s  cmd:%s ", root["message"].asString().c_str(), root["cmd"].asString().c_str());
+			pEnocean->setCommStatus(COM_OK);
+		}
+		}
+
 		void CWebServer::RType_OpenEnOcean(WebEmSession & session, const request& req, Json::Value &root)
 		{
 			std::string deviceId;
@@ -2230,6 +2243,7 @@ namespace http {
 			std::string cmd = request::findValue(&req, "cmd");
 			if (cmd.empty())
 				return;
+			root["cmd"] = cmd ;
 			int iHardwareID = atoi(hwid.c_str());
 			CEnOceanESP3 *pEnocean = reinterpret_cast<CEnOceanESP3*>(m_mainworker.GetHardware(iHardwareID));
 
@@ -2246,9 +2260,9 @@ namespace http {
 			_log.Debug(DEBUG_NORM, "EnOcean: Server received cmd:%s Hwid:%s arg:%s Entry=%s ", cmd.c_str(),hwid.c_str(),arg.c_str(), request::findValue(&req, "entry").c_str() );
 
 			//retrieve the list od Device Id
-			if (cmd == "GetNodeList")
+			if (cmd == "GetNodeList") {
 				pEnocean->GetNodeList(root);
-
+			}
 			else if (cmd == "SendCode") {
 
 				unsigned int code = pEnocean->GetLockCode();
@@ -2259,6 +2273,7 @@ namespace http {
 					deviceId = getDeviceId(req, i) ;  if (deviceId.empty())	return;
 					pEnocean->setcode(DeviceIdCharToInt(deviceId), code);
 				}
+				checkComStatus(pEnocean, root);
 
 			}
 			else if (cmd == "Lock") {
@@ -2271,6 +2286,7 @@ namespace http {
 					deviceId = getDeviceId(req, i);  if (deviceId.empty())	return;
 					pEnocean->lock(DeviceIdCharToInt(deviceId), code);
 				}
+				checkComStatus(pEnocean, root);
 
 			}
 			else if (cmd == "UnLock") {
@@ -2283,6 +2299,7 @@ namespace http {
 					deviceId = getDeviceId(req, i);  if (deviceId.empty())	return;
 					pEnocean->unlock(DeviceIdCharToInt(deviceId), code);
 				}
+				checkComStatus(pEnocean, root);
 
 			}
 			else if (cmd == "SetCode") {
@@ -2291,11 +2308,13 @@ namespace http {
 				if (code.empty())
 					return;
 				pEnocean->SetLockCode(code);
-
+				root["status"] = "OK";
 			}
 			else if (cmd == "GetLinkTableList") {
 				deviceId = getDeviceId(req, 0);  if (deviceId.empty())	return;
 				pEnocean->GetLinkTableList(root, deviceId);
+				checkComStatus(pEnocean, root);
+
 			}
 
 			else if (cmd == "LearnIn") {
@@ -2304,6 +2323,7 @@ namespace http {
 					unit     = getDeviceUnit(req, i);  
 					pEnocean->TeachIn(deviceId, unit, LEARN_IN );
 				}
+				checkComStatus(pEnocean, root);
 
 			}
 			else if (cmd == "LearnOut") {
@@ -2312,6 +2332,7 @@ namespace http {
 					unit = getDeviceUnit(req, i);
 					pEnocean->TeachIn(deviceId, unit, LEARN_OUT);
 				}
+				checkComStatus(pEnocean, root);
 			}
 			else if (cmd == "GetProductId") {
 				pEnocean->unlock(BROADCAST_ID, pEnocean->GetLockCode());
@@ -2323,34 +2344,39 @@ namespace http {
 					deviceId = getDeviceId(req, i);  if (deviceId.empty())	return;
 					pEnocean->getProductId(DeviceIdCharToInt(deviceId));
 				}
-
+				checkComStatus(pEnocean, root);
 			}
 			else if (cmd == "QueryId") {
 				pEnocean->unlock(0xFFFFFFFF, pEnocean->GetLockCode());
 				pEnocean->queryid(0,0);
+				checkComStatus(pEnocean, root);
 			}
 			else if (cmd == "GetLinkTable") {
 				deviceId = getDeviceId(req, 0);    if (deviceId.empty())	return;
 				pEnocean->getLinkTable(DeviceIdCharToInt(deviceId));
+				checkComStatus(pEnocean, root);
 			}
 			else if (cmd == "QueryStatus") {
 				for ( int i = 0; i < nbSelectedDevice; i++) {
 					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
 					pEnocean->queryStatus(DeviceIdCharToInt(deviceId));
 				}
-
+				checkComStatus(pEnocean, root);
 			}
 			else if (cmd == "ResetToDefaults") {
 				for (int i = 0; i < nbSelectedDevice; i++) {
 					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
 					pEnocean->resetToDefaults(DeviceIdCharToInt(deviceId), ResetToDefaults );
 				}
+				checkComStatus(pEnocean, root);
+
 			}
 			else if (cmd == "QueryFunction") {
 				for (int i = 0; i < nbSelectedDevice; i++) {
 					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
 					pEnocean->queryFunction(DeviceIdCharToInt(deviceId) );
 				}
+				checkComStatus(pEnocean, root);
 			}
 			else if (cmd == "DeleteEntrys") {
 				{
@@ -2367,6 +2393,7 @@ namespace http {
 
 					}
 					pEnocean->getLinkTable(DeviceId);
+					checkComStatus(pEnocean, root);
 				}
 			}
 			else if (cmd == "Ping") {
@@ -2376,12 +2403,14 @@ namespace http {
 					deviceId = getDeviceId(req, i);  if (deviceId.empty())	return;
 					pEnocean->ping(DeviceIdCharToInt(deviceId));
 				}
+				checkComStatus(pEnocean, root);
 			}
 			else if (cmd == "Action") {
 				for (int i = 0; i < nbSelectedDevice; i++) {
 					deviceId = getDeviceId(req, i);  if (deviceId.empty())	return;
 					pEnocean->action(DeviceIdCharToInt(deviceId));
 				}
+				checkComStatus(pEnocean, root);
 			}
 			else if (cmd == "Link") {
 				if (nbSelectedDevice != 2) {root["message"] = "Only 2 deviecs selected"; return;}
@@ -2422,6 +2451,7 @@ namespace http {
 				int senderEEP = pEnocean->Sensors.getEEP(deviceIdSender);
 				pEnocean->setLinkEntryTable(deviceIdReceiver, emptyEntry, deviceIdSender, senderEEP , receiverChannel-1);
 				_log.Log(LOG_NORM, "EnOcean: Link receiver %08X channel %d to sender %08X(%06X) ", deviceIdReceiver, receiverChannel, deviceIdSender, senderEEP);
+				checkComStatus(pEnocean, root);
 
 			}
 
@@ -2437,6 +2467,7 @@ namespace http {
 					root["result"][caseNb]["Title"]       = prof->cases[caseNb].Title;
 					root["result"][caseNb]["Description"] = prof->cases[caseNb].Desc;
 				}
+				root["status"] = "OK";
 			}
 			else if (cmd == "getCases2") {
 				//return the list of eep cases for the profil 
@@ -2451,6 +2482,7 @@ namespace http {
 					root["result"][caseNb]["Title"]       = prof->cases[caseNb]->Title;
 					root["result"][caseNb]["Description"] = prof->cases[caseNb]->Desc;
 				}
+				root["status"] = "OK";
 			}
 			else if (cmd == "getCaseShortCut") {
 			//return the list of shorcuts for the  case for the profil 
@@ -2466,6 +2498,7 @@ namespace http {
 					root["result"][i]["Desc"]  = Case->at(i).description;
 					root["result"][i]["Enum"] = "";//Case->at(i).Enum ;
 				}
+				root["status"] = "OK";
 			}
 			else if (cmd == "getCaseShortCut2") {
 			//return the list of shorcuts for the  case for the profil 
@@ -2482,6 +2515,7 @@ namespace http {
 					root["result"][i]["Desc"]  = Case->Dataf[i].description;
 					root["result"][i]["Enum"] = "";//Case->at(i).Enum ;
 				}
+				root["status"] = "OK";
 			}
 			else if (cmd == "sendvld") {
 			//return the list of shorcuts for the  case for the profil 
@@ -2502,6 +2536,7 @@ namespace http {
 			uint DeviceId = DeviceIdCharToInt(sdevidx);
 
 			pEnocean->senDatadVld(DeviceId , Case->Dataf, values,  NbValues);
+			root["status"] = "OK";
 
 
 			delete[] values;
@@ -2510,13 +2545,7 @@ namespace http {
 			else
 				return;
 
-			if (pEnocean->isCommStatusOk())
-				root["status"] = "OK";
-			else {
-				root["message"] = "Communication Timeout";
-				_log.Log(LOG_ERROR, "EnOcean: Server Error: %s  cmd:%s Hwid:%s arg:%s  Entry=%s", root["message"].asString().c_str(), cmd.c_str(), hwid.c_str(), arg.c_str() , request::findValue(&req, "entry").c_str() );
-				pEnocean->setCommStatus(COM_OK);
-			}
+			pEnocean->setCommStatus(COM_OK);
 
 
 		}

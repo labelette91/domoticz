@@ -608,7 +608,7 @@ void CEnOceanRMCC::GetNodeList(Json::Value &root)
 				int func = atoi(sd[2].c_str());
 				int type = atoi(sd[3].c_str());
 
-				root["result"][ii]["Profile"] = IntToString(rorg, 2) + "-" + IntToString(func, 2) + "-" + IntToString(type, 2);
+				root["result"][ii]["Profile"] = IntToString(rorg, 2) +  IntToString(func, 2) +  IntToString(type, 2);
 				root["result"][ii]["Manufacturer"] = sd[4];
 				std::string man = Get_EnoceanManufacturer(atoi(sd[4].c_str()));
 				if (man[0] == '>') man = "Unkown";
