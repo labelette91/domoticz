@@ -37,6 +37,43 @@ typedef struct {
 
 }T_DATAFIELD;
 
+//Profile descriptor from eep.xml
+
+
+typedef struct {
+  T_DATAFIELD* Dataf  ;
+	std::string Title;
+	std::string Desc ;
+}T_EEP_CASE_ ; 
+
+typedef struct {
+  int Profil ; 
+  int Rorg;
+  int Func;
+  int type;
+  T_EEP_CASE_* *cases  ;
+  int nbCases;
+  std::string FuncTitle ;
+  std::string TypeTitle ;
+
+
+
+  std::string toString() 
+  {
+    char buf[1024] ;
+    _snprintf ( buf,sizeof(buf),"%06x;%2x;%2x;%2x;%-10s;%s", 
+   Profil , 
+   Rorg,
+   Func,
+   type,
+	 FuncTitle.c_str(),
+	 TypeTitle.c_str() );
+   return buf;
+
+  }
+}T_PROFIL_LIST  ;
+
+
 //descriptor for a eep case
 //a profil a as several case 
 // a case as several datafield
@@ -81,6 +118,9 @@ uint32_t SetRawValues(uint8_t * data, _T_EEP_CASE * EEP_case, ...);
 uint32_t setRawDataValues(uint8_t* data, T_DATAFIELD* OffsetDes, int value[], int NbData);
 
 //vld D2-03-0A : len=2 offset 0 battery level 1= action : //1 = simple press, 2=double press, 3=long press, 4=press release
+
+T_PROFIL_LIST * getProfil (int profil );
+T_EEP_CASE_ * getProfilCase (int profil , int caseNb);
 
 extern T_DATAFIELD D2030A[];
 

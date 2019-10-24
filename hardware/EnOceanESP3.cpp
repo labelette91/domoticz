@@ -24,8 +24,8 @@
 using namespace boost::placeholders;
 
 //#include "eep-d2.h"
-#include "EnOceanXmlReader.h"
-#include "eep.h"
+// #include "EnOceanXmlReader.h"
+#include "EnOceanEep.h"
 
 #if _DEBUG
 	#define ENOCEAN_BUTTON_DEBUG
@@ -2459,6 +2459,7 @@ namespace http {
 				//return the list of eep cases for the profil 
 				std::string sprofil = request::findValue(&req, "profil");if (sprofil.empty())return;
 
+				/*
 				Profils.LoadXml();
 				T_PROFIL_EEP* prof = Profils.getProfil(DeviceIdCharToInt(sprofil));
 				for (uint caseNb = 0; caseNb < prof->cases.size(); caseNb++)
@@ -2467,6 +2468,7 @@ namespace http {
 					root["result"][caseNb]["Title"]       = prof->cases[caseNb].Title;
 					root["result"][caseNb]["Description"] = prof->cases[caseNb].Desc;
 				}
+				*/
 				root["status"] = "OK";
 			}
 			else if (cmd == "getCases2") {
@@ -2489,7 +2491,7 @@ namespace http {
 			std::string sprofil = request::findValue(&req, "profil");if (sprofil.empty())	return;
 
 			std::string scaseNb = request::findValue(&req, "casenb");if (scaseNb.empty())	return;
-
+			/*
 			Profils.LoadXml();
 			T_EEP_CASE* Case = Profils.getCase(DeviceIdCharToInt(sprofil),  std::stoi(scaseNb, nullptr, 0)   );
 				for (uint i = 0; i < Case->size(); i++)
@@ -2498,6 +2500,7 @@ namespace http {
 					root["result"][i]["Desc"]  = Case->at(i).description;
 					root["result"][i]["Enum"] = "";//Case->at(i).Enum ;
 				}
+				*/
 				root["status"] = "OK";
 			}
 			else if (cmd == "getCaseShortCut2") {
@@ -2526,20 +2529,21 @@ namespace http {
 			std::string sdevidx = request::findValue(&req, "devidx");if (sdevidx.empty())	return;
 
 			int NbValues = req.parameters.size() - 6 ;
-			int * values  = new int[NbValues];
+			int values[256] ;
 			for (int i = 0; i < NbValues; i++) {
 				std::string value  = getDeviceId(req, i).c_str();  
 				int val = atoi(getDeviceId(req, i).c_str() );
 				values[i] = val;
 			}
 			T_EEP_CASE_* Case = getProfilCase(DeviceIdCharToInt(sprofil), std::stoi(scaseNb, nullptr, 0));
+			if (Case)
+			{
 			uint DeviceId = DeviceIdCharToInt(sdevidx);
 
 			pEnocean->senDatadVld(DeviceId , Case->Dataf, values,  NbValues);
 			root["status"] = "OK";
 
-
-			delete[] values;
+			}
 			}
 
 			else

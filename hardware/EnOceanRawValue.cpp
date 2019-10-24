@@ -379,4 +379,28 @@ T_DATAFIELD TEACHIN_4BS[] = {
 { 0  , 0  , 0      , 0,0,0,"",""}  //
 };
 
+extern T_PROFIL_LIST Profillist [];
 
+T_PROFIL_LIST * getProfil (int profil )
+{
+  int i=0;
+  while( Profillist[i].Profil != 0)
+  {
+    if (Profillist[i].Profil == profil)
+        return &Profillist[i] ;
+    i++;
+  }
+  return 0;
+}
+
+T_EEP_CASE_ * getProfilCase (int profil , int caseNb)
+{
+  T_PROFIL_LIST * prof = getProfil ( profil ) ;
+  
+  if (prof)
+  {
+      if(caseNb<prof->nbCases)
+        return prof->cases[caseNb];
+  }
+  return 0;
+}
