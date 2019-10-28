@@ -2521,29 +2521,56 @@ namespace http {
 				root["status"] = "OK";
 			}
 			else if (cmd == "sendvld") {
-			//return the list of shorcuts for the  case for the profil 
-			std::string sprofil = request::findValue(&req, "profil");if (sprofil.empty())	return;
+				//return the list of shorcuts for the  case for the profil 
+				std::string sprofil = request::findValue(&req, "profil");if (sprofil.empty())	return;
 
-			std::string scaseNb = request::findValue(&req, "casenb");if (scaseNb.empty())	return;
+				std::string scaseNb = request::findValue(&req, "casenb");if (scaseNb.empty())	return;
 
-			std::string sdevidx = request::findValue(&req, "devidx");if (sdevidx.empty())	return;
+				std::string sdevidx = request::findValue(&req, "devidx");if (sdevidx.empty())	return;
 
-			int NbValues = req.parameters.size() - 6 ;
-			int values[256] ;
-			for (int i = 0; i < NbValues; i++) {
-				std::string value  = getDeviceId(req, i).c_str();  
-				int val = atoi(getDeviceId(req, i).c_str() );
-				values[i] = val;
+				int NbValues = req.parameters.size() - 6 ;
+				int values[256] ;
+				for (int i = 0; i < NbValues; i++) {
+					std::string value  = getDeviceId(req, i).c_str();  
+					int val = atoi(getDeviceId(req, i).c_str() );
+					values[i] = val;
+				}
+				T_EEP_CASE_* Case = getProfilCase(DeviceIdCharToInt(sprofil), std::stoi(scaseNb, nullptr, 0));
+				if (Case)
+				{
+					uint DeviceId = DeviceIdCharToInt(sdevidx);
+
+					pEnocean->senDatadVld(DeviceId , Case->Dataf, values,  NbValues);
+					root["status"] = "OK";
+				}
 			}
-			T_EEP_CASE_* Case = getProfilCase(DeviceIdCharToInt(sprofil), std::stoi(scaseNb, nullptr, 0));
-			if (Case)
-			{
-			uint DeviceId = DeviceIdCharToInt(sdevidx);
-
-			pEnocean->senDatadVld(DeviceId , Case->Dataf, values,  NbValues);
-			root["status"] = "OK";
-
+			else if (cmd == "GetRepeaterQuery") {
+				for (int i = 0; i < nbSelectedDevice; i++) {
+					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
+					pEnocean->GetRepeaterQuery(DeviceIdCharToInt(deviceId) );
+				}
+				checkComStatus(pEnocean, root);
 			}
+			else if (cmd == "SetRepeaterQueryLevelOff") {
+				for (int i = 0; i < nbSelectedDevice; i++) {
+					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
+					pEnocean->SetRepeaterQuery(DeviceIdCharToInt(deviceId) , 0 , 1 , 0 );
+				}
+				checkComStatus(pEnocean, root);
+			}
+			else if (cmd == "SetRepeaterQueryLevel1") {
+				for (int i = 0; i < nbSelectedDevice; i++) {
+					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
+					pEnocean->SetRepeaterQuery(DeviceIdCharToInt(deviceId) , 1 , 1 , 0 );
+				}
+				checkComStatus(pEnocean, root);
+			}
+			else if (cmd == "SetRepeaterQueryLevel2") {
+				for (int i = 0; i < nbSelectedDevice; i++) {
+					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
+					pEnocean->SetRepeaterQuery(DeviceIdCharToInt(deviceId) , 1 , 2 , 0 );
+				}
+				checkComStatus(pEnocean, root);
 			}
 
 			else

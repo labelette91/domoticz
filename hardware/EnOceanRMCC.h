@@ -86,6 +86,10 @@ public:
 
 	void resetToDefaults(uint destID, int resetAction);
 
+	void GetRepeaterQuery(unsigned int destination);
+
+	void SetRepeaterQuery(unsigned int destination, int Repeaterfunction, int Repeaterlevel, int RepeaterFilter);
+
 	void TeachIn(std::string & sidx ,  T_LEARN_MODE Device_LRN_Mode);
 
 	void TeachIn(std::string & deviceId, std::string & unit, T_LEARN_MODE Device_LRN_Mode);

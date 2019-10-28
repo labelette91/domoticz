@@ -185,6 +185,27 @@ void CEnOceanRMCC::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , i
 		_log.Log(LOG_NORM, "EnOcean: QUERY STATUS ANSWER SenderId: %08X CodeIsSet:%d LastSeq:%d lastFunc:%04X lastReturnCode:%d :%s", senderId, CodeIsSet, LastSeq, lastFunc, lastReturnCode, Query_Status_return_codes[lastReturnCode&0xF]);
 	}
 
+	else if (fct == RC_GET_REPEATER_FUNCTIONS_RESPONSE)
+	{	
+		/*
+		Repeater function (2 bit): 		 0b00 - Repeater Off 		 0b01 - Repeater On 		 0b10 - Filtered Repeating On
+		Repeater level    (2 bit):		 0b01 - Repeater Level 1     0b10 - Repeater Level 2
+		Repeater Filter Structure (1 bit): 		 0b0 - AND for Repeating		 0b1 - OR for Repeating
+ 		 Data structure:
+		7  6    5  4   3  
+		RepFunc RepLev RepStruct
+		*/
+
+		bool  RepFunc   =   m_buffer[4] >> 6 ;
+		int   RepLev    = ( m_buffer[4] >> 4 ) & 0x3 ;
+		int   RepStruct = ( m_buffer[4] >> 3 ) & 0x1 ;
+		unsigned int senderId = DeviceArrayToInt(&m_buffer[12]);
+
+		_log.Log(LOG_NORM, "EnOcean: GET_REPEATER_FUNCTIONS_RESPONSE SenderId: %08X Repeater function:%d  Repeater level: %d Repeater Filter Structure  : %d", senderId, RepFunc, RepLev , RepStruct );
+	}
+
+	
+
 	setRemote_man_answer(fct);
 
 }
@@ -557,6 +578,67 @@ void CEnOceanRMCC::resetToDefaults(uint destID,int resetAction)
 	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
 
 }
+
+void CEnOceanRMCC::GetRepeaterQuery (unsigned int destination )
+{
+	unsigned char buff[16];
+	unsigned char opt[16];
+
+	memset(buff, 0, sizeof(buff));
+	setRorg(buff);
+
+	buff[2] = 0x00;			//data len = 0
+	buff[3] = 0x7F;			//mamanufacturer 7FF
+	buff[4] = 0xF2;
+	buff[5] = 0x50;			//function x250 RC_GET_REPEATER_FUNCTIONS
+	buff[14] = 0x8F;		//status
+
+							//optionnal data
+	setDestination(opt, destination);
+
+	_log.Debug(DEBUG_NORM, "EnOcean: geRepeaterFunctionsQuery cmd send to %08X", destination );
+	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
+
+}
+
+
+
+
+void CEnOceanRMCC::SetRepeaterQuery (unsigned int destination , int Repeaterfunction , int Repeaterlevel ,  int RepeaterFilter )
+{
+	unsigned char buff[16];
+	unsigned char opt[16];
+
+	memset(buff, 0, sizeof(buff));
+	setRorg(buff);
+
+	buff[2] = 0x00;			//data len = 1
+	buff[3] = 0xFF;			//mamanufacturer 7FF
+	buff[4] = 0xF2;
+	buff[5] = 0x51;			//function x251 RC_SET_REPEATER_FUNCTIONS
+	buff[14] = 0x8F;		//status
+
+		/*
+		Repeater function (2 bit): 		 0b00 - Repeater Off 		 0b01 - Repeater On 		 0b10 - Filtered Repeating On
+		Repeater level    (2 bit):		 0b01 - Repeater Level 1     0b10 - Repeater Level 2
+		Repeater Filter Structure (1 bit): 		 0b0 - AND for Repeating		 0b1 - OR for Repeating
+ 		 Data structure:
+		7  6    5  4   3  
+		RepFunc RepLev RepStruct
+		*/
+
+	buff[6] =  (Repeaterfunction << 6 ) & (Repeaterlevel << 4 ) & (RepeaterFilter << 3 );
+
+							//optionnal data
+	setDestination(opt, destination);
+
+	_log.Debug(DEBUG_NORM, "EnOcean: seRepeaterFunctionsQuery cmd send to %08X  Repeaterfunction:%d  Repeaterlevel:%d  RepeaterFilter:%d ", destination,Repeaterfunction ,  Repeaterlevel ,   RepeaterFilter  );
+	sendFrameQueue(PACKET_RADIO, buff, 15, opt, 7);
+
+}
+
+
+
 //teachin from ID database
 void CEnOceanRMCC::TeachIn(std::string& sidx, T_LEARN_MODE Device_LRN_Mode )
 {
