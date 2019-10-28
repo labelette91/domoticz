@@ -25,6 +25,12 @@ define(['app'], function (app) {
 			EditEnOcean($ctrl.hardware.idx, $ctrl.hardware.Name, 1, 2, 3, 4, 5, 6);
 		};
 
+		EnOceanVldSend = function () {
+		    var oTable = $('#nodestable').dataTable();
+		    var anSelected = fnGetSelected(oTable);
+		    var data = oTable.fnGetData(anSelected[0]);
+		    EnoceanDeviceSendDialogOpen($.hwid, data[5], data[0]);
+		}
 		EnOceanCmd = function (cmd, MinIdSelected, MaxIdSelected , MinEntrySelected,MaxEntrySelected) {
 
 		    //		    $.ajax({ type: 'POST', url: url + "api/" + topic, data: payload, async: true });
@@ -90,7 +96,7 @@ define(['app'], function (app) {
 
 		    $.ajax({
 		        //		        type: 'POST',
-		        url: "json.htm?type=enocean&hwid=" + $.devIdx + "&cmd=" + cmd,
+		        url: "json.htm?type=enocean&hwid=" + $.hwid + "&cmd=" + cmd,
 		        data: payload,
 		        async: false,
 		        dataType: 'json',
@@ -120,7 +126,7 @@ define(['app'], function (app) {
             payload[0] = DeviceID + ";1" ;
 
 		    $.ajax({
-		        url: "json.htm?type=enocean&hwid=" + $.devIdx + "&cmd=GetLinkTableList" ,
+		        url: "json.htm?type=enocean&hwid=" + $.hwid + "&cmd=GetLinkTableList" ,
                 data: payload,
                 async: false,
 		        dataType: 'json',
@@ -163,7 +169,7 @@ define(['app'], function (app) {
 		    oTable.fnClearTable();
 
 		    $.ajax({
-		        url: "json.htm?type=enocean&hwid=" + $.devIdx + "&cmd=GetNodeList",
+		        url: "json.htm?type=enocean&hwid=" + $.hwid + "&cmd=GetNodeList",
 		        async: false,
 		        dataType: 'json',
 		        success: function (data) {
@@ -174,7 +180,7 @@ define(['app'], function (app) {
 		                $.each(data.result, function (i, item) {
 		                    var status = "ok";
 		                    var statusImg = '<img src="images/' + status + '.png" />';
-		                    var healButton = '<img src="images/heal.png" onclick="EnoceanDeviceSendDialogOpen(' +  $.devIdx + ',\''+ item.Profile + '\',\'' +  item.DeviceID +  '\')" class="lcursor" title="' + $.t("Heal node") + '" />';
+		                    var healButton = '<img src="images/heal.png" onclick="EnoceanDeviceSendDialogOpen(' +  $.hwid + ',\''+ item.Profile + '\',\'' +  item.DeviceID +  '\')" class="lcursor" title="' + $.t("Heal node") + '" />';
 //		                    var itemChecker = '<input type="checkbox" class="noscheck" name="Check-' + item.DeviceID + ' id="Check-' + item.DeviceID + '" value="' + item.DeviceID + '" />';
 		                    var itemChecker = '<input type="checkbox" class="noscheck" name="Check-' + item.DeviceID + ' id="Check-' + item.DeviceID + '" value="' + i + '" />';
 
@@ -252,7 +258,7 @@ define(['app'], function (app) {
 		                //		                var szConfig = "";
 		                //		                $("#hardwarecontent #configuration").html(szConfig);
 		                //$("#hardwarecontent #configuration").i18n();
-		                refreshLinkTable(DeviceID);
+		                //refreshLinkTable(DeviceID);
 
 		            }
 		        }
@@ -262,7 +268,7 @@ define(['app'], function (app) {
 		}
 
 		EditEnOcean = function (idx, name, Mode1, Mode2, Mode3, Mode4, Mode5, Mode6) {
-		    $.devIdx = idx;
+		    $.hwid = idx;
 		    $.devName = name;
 		    cursordefault();
 		    var htmlcontent = '';
@@ -304,7 +310,7 @@ define(['app'], function (app) {
 		                callback: function () {
 		                    var addnode = $("#add_node").val();
 		                    $http({
-		                        url: "json.htm?type=enocean&hwid=" + $.devIdx + "&cmd=SetCode" + "&code=" + addnode ,
+		                        url: "json.htm?type=enocean&hwid=" + $.hwid + "&cmd=SetCode" + "&code=" + addnode ,
 		                        async: true,
 		                        dataType: 'json'
 		                    }).then(function successCallback(response) {

@@ -85,6 +85,26 @@ function RefreshDeviceCombo(ComboName, List, clear) {
 		}
 
 
+function ComboChange() {
+    $.caseNb = $("#dialog-enoceansend  #CaseCombo").val();
+    $("#dialog-enoceansend #description").val($.Cases[$.caseNb].Description);
+
+    $.shortCuts = EnOceanGetProfileCase($.profil, $.caseNb);
+    var i;
+    for (i = 0; i < $.shortCuts.length ; i++) {
+        $("#dialog-enoceansend  #Short" + i + " #LblParam" ).html($.shortCuts[i].Short);
+        $("#dialog-enoceansend  #Short" + i + " #ValParam").val("0");
+        $("#dialog-enoceansend  #Short" + i + " #DesParam").html($.shortCuts[i].Desc);
+        $("#dialog-enoceansend  #Short" + i).show();
+
+    }
+    for (i = $.shortCuts.length; i < 26; i++) {
+        name = "#dialog-enoceansend  #Short" + i;
+        $(name).hide();
+
+    }
+
+}
 
 function EnOceanGetProfileCase(profil,caseNb) {
     var result = [];
@@ -123,7 +143,7 @@ function EnOceanGetProfileCase(profil,caseNb) {
 }
 EnoceanDeviceSendDialogOpen = function (hwid, profil, deviceId ) {
 		        $.t = tt;
-		        $.Profil = profil;
+		        $.profil = profil;
 		        $.devIdx = deviceId;
 				$.hwid  = hwid;
 		    //creation boutton et dialog enoceansend
@@ -141,28 +161,10 @@ EnoceanDeviceSendDialogOpen = function (hwid, profil, deviceId ) {
 
 				RefreshDeviceCombo("#dialog-enoceansend #CaseCombo", Cases, true);
 
-					$("#dialog-enoceansend #CaseCombo").change(function () {
-					    $.caseNb = $("#dialog-enoceansend  #CaseCombo").val();
-					    $("#dialog-enoceansend #description").val(Cases[$.caseNb].Description);
+				$("#dialog-enoceansend #CaseCombo").change( ComboChange ) ;
 
-					    $.shortCuts = EnOceanGetProfileCase(profil, $.caseNb);
-					    var i;
-					    for (i = 0; i < $.shortCuts.length ; i++) {
-					        $("#dialog-enoceansend  #Short" + i + " #LblParam" ).html($.shortCuts[i].Short);
-					        $("#dialog-enoceansend  #Short" + i + " #ValParam").val("0");
-					        $("#dialog-enoceansend  #Short" + i + " #DesParam").html($.shortCuts[i].Desc);
-					        $("#dialog-enoceansend  #Short" + i).show();
-
-					    }
-					    for (i = $.shortCuts.length; i < 26; i++) {
-					        name = "#dialog-enoceansend  #Short" + i;
-					        $(name).hide();
-
-					    }
-
-					});
-
-					$("#dialog-enoceansend #CaseCombo").change();
+    //					$("#dialog-enoceansend #CaseCombo").change();
+				ComboChange();
 				    
 //				$("#dialog-enoceansend").i18n();
 				$("#dialog-enoceansend").dialog("open");
@@ -229,7 +231,9 @@ EnoceanDeviceSendDialogOpen = function (hwid, profil, deviceId ) {
 
         }
 
-	    EnoceanDeviceSendAddXmlDialog = function () {
+		EnoceanDeviceSendAddXmlDialog = function () {
+		    var obj = $("#dialog-enoceansend");
+            if (obj.length == 0 )
 	        $(document.body).append(`
 <div id="dialog-enoceansend" title="Edit Device" style="display:none;">
     <form>

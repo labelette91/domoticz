@@ -2245,12 +2245,15 @@ namespace http {
 				return;
 			root["cmd"] = cmd ;
 			int iHardwareID = atoi(hwid.c_str());
-			CEnOceanESP3 *pEnocean = reinterpret_cast<CEnOceanESP3*>(m_mainworker.GetHardware(iHardwareID));
+
+			CEnOceanESP3 *pEnocean = dynamic_cast <CEnOceanESP3*>(m_mainworker.GetHardware(iHardwareID));
 
 			if (pEnocean == NULL)
 				return;
-			int nbSelectedDevice = req.parameters.size() - 4;
+			if(pEnocean->HwdType != HTYPE_EnOceanESP3)
+				return;
 
+			int nbSelectedDevice = req.parameters.size() - 4;
 
 			std::string arg;
 			for ( int i = 0; i < nbSelectedDevice; i++) {
