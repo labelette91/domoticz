@@ -603,6 +603,19 @@ bool CEnOceanESP3::OpenSerialDevice()
 	buf[0] = CO_RD_VERSION;
 	sendFrameQueue(PACKET_COMMON_COMMAND,buf,1,NULL,0);
 
+	//Request CO_RD_REPEATER
+	buf[0] = CO_RD_REPEATER;
+	sendFrameQueue(PACKET_COMMON_COMMAND,buf,1,NULL,0);
+
+	//Request CO_WR_REPEATER : set repeater ON level 1
+	buf[0] = CO_WR_REPEATER; buf[1] = ON; buf[2] = LEVEL1;
+	sendFrameQueue(PACKET_COMMON_COMMAND,buf,3,NULL,0);
+
+	//Request CO_RD_REPEATER
+	buf[0] = CO_RD_REPEATER;
+	sendFrameQueue(PACKET_COMMON_COMMAND,buf,1,NULL,0);
+
+
 	return true;
 }
 
@@ -1047,6 +1060,15 @@ bool CEnOceanESP3::ParseData()
 				m_buffer[13], m_buffer[14], m_buffer[15], m_buffer[16],
 				(const char*)&m_buffer + 17
 			);
+		}
+		//CO_RD_REPEATER response
+		else if (m_DataSize == 3)
+		{
+			const char* Repeater_status[] = { "OFF","ON", "FILTER" };
+			int REP_ENABLE =  m_buffer[1]%3;
+			int REP_LEVEL  =  m_buffer[2];
+			_log.Log(LOG_STATUS, "EnOcean: REPEATER function Enable=%d:%s Level=%d", REP_ENABLE, Repeater_status[REP_ENABLE], REP_LEVEL);
+
 		}
 		else
 			setRemote_man_answer(PACKET_RESPONSE);

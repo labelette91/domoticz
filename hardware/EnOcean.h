@@ -102,6 +102,18 @@ typedef enum
 }FCT_CODE;
 
 
+typedef enum  {
+	OFF,
+	ON,
+	FILTERED
+}T_REP_ENABLE;
+
+typedef enum  {
+	LEVEL1=1,
+	LEVEL2
+}T_REP_LEVEL;
+
+
 //static functions ************************************************************************
 
 //convert id from  buffer[] to unsigned int
