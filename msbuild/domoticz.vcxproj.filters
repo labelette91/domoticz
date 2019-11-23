@@ -2941,6 +2941,9 @@
     <ClCompile Include="..\hardware\EnOceanRawValue.cpp">
       <Filter>Devices\EnOcean</Filter>
     </ClCompile>
+    <ClCompile Include="..\hardware\EnOceanEep.cpp">
+      <Filter>Devices\EnOcean</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="domoticz.rc">
