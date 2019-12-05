@@ -3,6 +3,7 @@ define(['app', 'livesocket'], function (app) {
 		var $element = $('#main-view #utilitycontent').last();
 		
 		$scope.HasInitializedEditCustomSensorDialog = false;
+		$scope.broadcast_unsubscribe = undefined;
 
 		GetThermostatBigTest = function (item) {
 	            var bigtext;
@@ -30,7 +31,7 @@ define(['app', 'livesocket'], function (app) {
 	                    image = '"images/override_off.png"';
 	            }
 	            var undef;
-	            var xhtm = '<img src=' + image + ' class="lcursor" onclick="ShowSetpointPopup(event, ' + item.idx + ', RefreshUtilities, ' + item.Protected + ', ' + item.Data + ','+undef+',' + item.ConforTemp + ',' + item.EcoTemp  + ');" height="48" width="48" ></td>\n';
+	            var xhtm = '<img src=' + image + ' class="lcursor" onclick="ShowSetpointPopup(event, ' + item.idx + ',' + item.Protected + ', ' + item.Data + ','+undef+',' + item.ConforTemp + ',' + item.EcoTemp  + ');" height="48" width="48" ></td>\n';
 
 	            return xhtm;
 	        }
@@ -51,10 +52,6 @@ define(['app', 'livesocket'], function (app) {
 				return;
 			}
 
-			if (typeof $scope.mytimer != 'undefined') {
-				$interval.cancel($scope.mytimer);
-				$scope.mytimer = undefined;
-			}
 			$.ajax({
 				url: "json.htm?type=command&param=makefavorite&idx=" + id + "&isfavorite=" + isfavorite,
 				async: false,
@@ -105,11 +102,8 @@ define(['app', 'livesocket'], function (app) {
 		}
 
 		EditUtilityDevice = function (idx, name, description) {
-			if (typeof $scope.mytimer != 'undefined') {
-				$interval.cancel($scope.mytimer);
-				$scope.mytimer = undefined;
-			}
 			$.devIdx = idx;
+			$("#dialog-editutilitydevice #deviceidx").text(idx);
 			$("#dialog-editutilitydevice #devicename").val(unescape(name));
 			$("#dialog-editutilitydevice #devicedescription").val(unescape(description));
 			$("#dialog-editutilitydevice").i18n();
@@ -117,13 +111,10 @@ define(['app', 'livesocket'], function (app) {
 		}
 
 		EditCustomSensorDevice = function (idx, name, description, customimage, sensortype, axislabel) {
-			if (typeof $scope.mytimer != 'undefined') {
-				$interval.cancel($scope.mytimer);
-				$scope.mytimer = undefined;
-			}
 			ConfigureEditCustomSensorDialog();
 			$.devIdx = idx;
 			$.sensorType = sensortype;
+			$("#dialog-editcustomsensordevice #deviceidx").text(idx);
 			$("#dialog-editcustomsensordevice #devicename").val(unescape(name));
 			$("#dialog-editcustomsensordevice #sensoraxis").val(unescape(axislabel));
 
@@ -148,11 +139,8 @@ define(['app', 'livesocket'], function (app) {
 		}
 
 		EditDistanceDevice = function (idx, name, description, switchtype) {
-			if (typeof $scope.mytimer != 'undefined') {
-				$interval.cancel($scope.mytimer);
-				$scope.mytimer = undefined;
-			}
 			$.devIdx = idx;
+			$("#dialog-editdistancedevice #deviceidx").text(idx);
 			$("#dialog-editdistancedevice #devicename").val(unescape(name));
 			$("#dialog-editdistancedevice #devicedescription").val(unescape(description));
 			$("#dialog-editdistancedevice #combometertype").val(switchtype);
@@ -161,11 +149,8 @@ define(['app', 'livesocket'], function (app) {
 		}
 
 		EditMeterDevice = function (idx, name, description, switchtype, meteroffset, meterdivider, valuequantity, valueunits) {
-			if (typeof $scope.mytimer != 'undefined') {
-				$interval.cancel($scope.mytimer);
-				$scope.mytimer = undefined;
-			}
 			$.devIdx = idx;
+			$("#dialog-editmeterdevice #deviceidx").text(idx);
 			$("#dialog-editmeterdevice #devicename").val(unescape(name));
 			$("#dialog-editmeterdevice #devicedescription").val(unescape(description));
 			$("#dialog-editmeterdevice #combometertype").val(switchtype);
@@ -195,11 +180,8 @@ define(['app', 'livesocket'], function (app) {
 		}
 
 		EditEnergyDevice = function (idx, name, description, switchtype, EnergyMeterMode) {
-			if (typeof $scope.mytimer != 'undefined') {
-				$interval.cancel($scope.mytimer);
-				$scope.mytimer = undefined;
-			}
 			$.devIdx = idx;
+			$("#dialog-editenergydevice #deviceidx").text(idx);
 			$("#dialog-editenergydevice #devicename").val(unescape(name));
 			$("#dialog-editenergydevice #devicedescription").val(unescape(description));
 			$("#dialog-editenergydevice #combometertype").val(switchtype);
@@ -212,12 +194,9 @@ define(['app', 'livesocket'], function (app) {
 		}
 
 		EditSetPoint = function (idx, name, description, setpoint, isprotected) {
-			if (typeof $scope.mytimer != 'undefined') {
-				$interval.cancel($scope.mytimer);
-				$scope.mytimer = undefined;
-			}
 			HandleProtection(isprotected, function () {
 				$.devIdx = idx;
+				$("#dialog-editsetpointdevice #deviceidx").text(idx);
 				$("#dialog-editsetpointdevice #devicename").val(unescape(name));
 				$("#dialog-editsetpointdevice #devicedescription").val(unescape(description));
 				$('#dialog-editsetpointdevice #protected').prop('checked', (isprotected == true));
@@ -229,13 +208,10 @@ define(['app', 'livesocket'], function (app) {
 		}
 
 		EditThermostatClock = function (idx, name, description, daytime, isprotected) {
-			if (typeof $scope.mytimer != 'undefined') {
-				$interval.cancel($scope.mytimer);
-				$scope.mytimer = undefined;
-			}
 			HandleProtection(isprotected, function () {
 				var sarray = daytime.split(";");
 				$.devIdx = idx;
+				$("#dialog-editthermostatclockdevice #deviceidx").text(idx);
 				$("#dialog-editthermostatclockdevice #devicename").val(unescape(name));
 				$("#dialog-editthermostatclockdevice #devicedescription").val(unescape(description));
 				$('#dialog-editthermostatclockdevice #protected').prop('checked', (isprotected == true));
@@ -252,6 +228,7 @@ define(['app', 'livesocket'], function (app) {
 				var sarray = modes.split(";");
 				$.devIdx = idx;
 				$.isFan = false;
+				$("#dialog-editthermostatmode #deviceidx").text(idx);
 				$("#dialog-editthermostatmode #devicename").val(unescape(name));
 				$("#dialog-editthermostatmode #devicedescription").val(unescape(description));
 				$('#dialog-editthermostatmode #protected').prop('checked', (isprotected == true));
@@ -275,6 +252,7 @@ define(['app', 'livesocket'], function (app) {
 				var sarray = modes.split(";");
 				$.devIdx = idx;
 				$.isFan = true;
+				$("#dialog-editthermostatmode #deviceidx").text(idx);
 				$("#dialog-editthermostatmode #devicename").val(unescape(name));
 				$("#dialog-editthermostatmode #devicedescription").val(unescape(description));
 				$('#dialog-editthermostatmode #protected').prop('checked', (isprotected == true));
@@ -459,10 +437,6 @@ define(['app', 'livesocket'], function (app) {
 
 		//We only call this once. After this the widgets are being updated automatically by used of the 'jsonupdate' broadcast event.
 		RefreshUtilities = function () {
-			if (typeof $scope.mytimer != 'undefined') {
-				$interval.cancel($scope.mytimer);
-				$scope.mytimer = undefined;
-			}
 			var id = "";
 
 			livesocket.getJson("json.htm?type=devices&filter=utility&used=true&order=[Order]&lastupdate=" + $.LastUpdateTime + "&plan=" + window.myglobals.LastPlanSelected, function (data) {
@@ -484,7 +458,7 @@ define(['app', 'livesocket'], function (app) {
 				}
 			});
 
-			$scope.$on('jsonupdate', function (event, data) {
+			$scope.broadcast_unsubscribe = $scope.$on('jsonupdate', function (event, data) {
 				/*
 					When this event is caught, a widget status update is received.
 					We call RefreshItem to update the widget.
@@ -500,11 +474,12 @@ define(['app', 'livesocket'], function (app) {
 		};
 
 		ShowUtilities = function () {
-			if (typeof $scope.mytimer != 'undefined') {
-				$interval.cancel($scope.mytimer);
-				$scope.mytimer = undefined;
-			}
 			$('#modal').show();
+
+			if (typeof $scope.broadcast_unsubscribe != 'undefined') {
+				$scope.broadcast_unsubscribe();
+				$scope.broadcast_unsubscribe = undefined;
+			}
 
 			var htmlcontent = '';
 			var bShowRoomplan = false;
@@ -761,8 +736,9 @@ define(['app', 'livesocket'], function (app) {
 								status = "";
 							}
 							else if (((item.Type == "Thermostat") && (item.SubType == "SetPoint")) || (item.Type == "Radiator 1")) {
-							    //								xhtm += '<img src="images/override.png" class="lcursor" onclick="ShowSetpointPopup(event, ' + item.idx + ', RefreshUtilities, ' + item.Protected + ', ' + item.Data + ');" height="48" width="48" ></td>\n';
 							    xhtm+=getThermostatImage(item);
+								//xhtm += '<img src="images/override.png" class="lcursor" onclick="ShowSetpointPopup(event, ' + item.idx + ', ' + item.Protected + ', ' + item.Data + ');" height="48" width="48" ></td>\n';
+								status = "";
 							}
 							else if (item.SubType == "Thermostat Clock") {
 								xhtm += '<img src="images/clock48.png" height="48" width="48"></td>\n';
@@ -1044,10 +1020,6 @@ define(['app', 'livesocket'], function (app) {
 					if (window.myglobals.ismobileint == false) {
 						$element.find(".span4").draggable({
 							drag: function () {
-								if (typeof $scope.mytimer != 'undefined') {
-									$interval.cancel($scope.mytimer);
-									$scope.mytimer = undefined;
-								}
 								$.devIdx = $(this).attr("id");
 								$(this).css("z-index", 2);
 							},
@@ -1627,9 +1599,9 @@ define(['app', 'livesocket'], function (app) {
 			});
 		};
 		$scope.$on('$destroy', function () {
-			if (typeof $scope.mytimer != 'undefined') {
-				$interval.cancel($scope.mytimer);
-				$scope.mytimer = undefined;
+			if (typeof $scope.broadcast_unsubscribe != 'undefined') {
+				$scope.broadcast_unsubscribe();
+				$scope.broadcast_unsubscribe = undefined;
 			}
 			var popup = $("#setpoint_popup");
 			if (typeof popup != 'undefined') {

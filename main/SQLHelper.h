@@ -398,7 +398,8 @@ public:
 
 	void UpdateDeviceValue(const char * FieldName , const std::string &Value , const std::string &Idx );
 	void UpdateDeviceValue(const char * FieldName , const int Value , const std::string &Idx )   ;
-	void UpdateDeviceValue(const char * FieldName , const float Value , const std::string &Idx ) ;
+	void UpdateDeviceValue(const char* FieldName, const float Value, const std::string& Idx);
+	void UpdateDeviceName(const std::string& Idx, const std::string &Name);
 
 	double ConvertTemperature(double tempcelcius);
 	double ConvertTemperatureUnit(double tempcelcius);

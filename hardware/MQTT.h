@@ -1,20 +1,12 @@
 #pragma once
 
 #include "MySensorsBase.h"
-#ifdef BUILTIN_MQTT
-#include "../MQTT/mosquittopp.h"
-#else
-#ifdef WIN32
-#include "../MQTT/mosquittopp.h"
-#else
-#include <mosquittopp.h>
-#endif
-#endif
+#include "../main/mosquitto_helper.h"
 
-class MQTT : public MySensorsBase, mosqpp::mosquittopp
+class MQTT : public MySensorsBase, mosqdz::mosquittodz
 {
 public:
-	MQTT(const int ID, const std::string &IPAddress, const unsigned short usIPPort, const std::string &Username, const std::string &Password, const std::string &CAFile, const int TLS_Version, const int Topics);
+	MQTT(const int ID, const std::string &IPAddress, const unsigned short usIPPort, const std::string &Username, const std::string &Password, const std::string &CAFile, const int TLS_Version, const int Topics, const std::string &MQTTClientID);
 	~MQTT(void);
 	bool isConnected(){ return m_IsConnected; };
 
@@ -36,7 +28,7 @@ public:
 private:
 	bool ConnectInt();
 	bool ConnectIntEx();
-	void SendDeviceInfo(const int m_HwdID, const uint64_t DeviceRowIdx, const std::string &DeviceName, const unsigned char *pRXCommand);
+	void SendDeviceInfo(const int HwdID, const uint64_t DeviceRowIdx, const std::string &DeviceName, const unsigned char *pRXCommand);
 	void SendSceneInfo(const uint64_t SceneIdx, const std::string &SceneName);
 protected:
 	std::string m_szIPAddress;
