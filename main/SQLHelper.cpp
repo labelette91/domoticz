@@ -8416,9 +8416,10 @@ double  CSQLHelper::ConvertTemperatureUnit(double tempcelcius)
 	if (m_tempunit == TEMPUNIT_F)
 	{
 		//Convert back to celcius
-		tempcelcius = ConvertToFahrenheit( tempcelcius);
+		tempcelcius = ConvertToFahrenheit(tempcelcius);
 	}
 	return tempcelcius;
+}
 void CSQLHelper::UpdateDeviceName(const std::string& Idx, const std::string& Name)
 {
 	safe_query("UPDATE DeviceStatus SET Name='%q', LastUpdate='%s' WHERE (ID == %s )", Name.c_str(), TimeToString(nullptr, TF_DateTime).c_str(), Idx.c_str());

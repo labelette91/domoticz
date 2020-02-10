@@ -2163,7 +2163,7 @@ void MainWorker::Do_Work_On_Rx_Messages()
 void MainWorker::ProcessRXMessage(const CDomoticzHardwareBase *pHardware, const uint8_t *pRXCommand, const char *defaultName, const int BatteryLevel)
 {
 	// current date/time based on current system
-	//size_t Len = pRXCommand[0] + 1;
+	size_t Len = pRXCommand[0] + 1;
 
 	int HwdID = pHardware->m_HwdID;
 	_eHardwareTypes HwdType = pHardware->HwdType;
