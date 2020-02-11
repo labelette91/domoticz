@@ -160,7 +160,7 @@ void CNetatmo::Do_Work()
 				}
 				if (m_bPollThermostat)
 				{
-					//Thermostat data is updated every hour
+					//Thermostat data is updated every 10 minutes
 					if ((sec_counter % 600 == 0) || (bFirstTimeTH))
 					{
 						bFirstTimeTH = false;
@@ -619,8 +619,14 @@ bool CNetatmo::WriteToHardware(const char *pdata, const unsigned char /*length*/
 	}
 
 	const tRBUF *pCmd = reinterpret_cast<const tRBUF *>(pdata);
+
 	if (pCmd->LIGHTING2.packettype != pTypeLighting2)
 		return false; //later add RGB support, if someone can provide access
+
+	if ((int)(pCmd->LIGHTING2.id1) >> 4){
+		//id1 == 0x1### means boiler_status switch
+		return true;
+	}
 
 	bool bIsOn = (pCmd->LIGHTING2.cmnd == light2_sOn);
 
@@ -1134,8 +1140,7 @@ void CNetatmo::GetMeterDetails()
 	bRet = true;
 #else
 	std::vector<std::string> ExtraHeaders;
-	bRet = HTTPClient::GET(httpUrl, ExtraHeaders, sResult);
-	if (!bRet)
+	if (!HTTPClient::GET(httpUrl, ExtraHeaders, sResult))
 	{
 		_log.Log(LOG_ERROR, "Netatmo: Error connecting to Server...");
 		return;
@@ -1167,21 +1172,19 @@ void CNetatmo::GetMeterDetails()
 		if (m_bFirstTimeWeatherData)
 		{
 			m_bFirstTimeWeatherData = false;
-			bool bRet;
 #ifdef DEBUG_NetatmoWeatherStationR
 			//sResult = ReadFile("E:\\netatmo_mdetails.json");
 			sResult = ReadFile("E:\\gethomecoachsdata.json");
 #else
 			//Check if the user has an Home Coach device
 			httpUrl = MakeRequestURL(NETYPE_HOMECOACH);
-			bRet = HTTPClient::GET(httpUrl, ExtraHeaders, sResult);
-#endif
-			if (!bRet)
+			if (!HTTPClient::GET(httpUrl, ExtraHeaders, sResult))
 			{
 				_log.Log(LOG_ERROR, "Netatmo: Error connecting to Server...");
 				return;
 			}
-			bRet = ParseJSon(sResult, root);
+#endif
+			bool bRet = ParseJSon(sResult, root);
 			if ((!bRet) || (!root.isObject()))
 			{
 				_log.Log(LOG_ERROR, "Netatmo: Invalid data received...");
@@ -1208,16 +1211,14 @@ void CNetatmo::GetMeterDetails()
 #ifdef DEBUG_NetatmoWeatherStationR
 				//sResult = ReadFile("E:\\netatmo_mdetails.json");
 				sResult = ReadFile("E:\\homesdata.json");
-				bool ret = true;
 #else
 				httpUrl = MakeRequestURL(NETYPE_ENERGY);
-				bRet = HTTPClient::GET(httpUrl, ExtraHeaders, sResult);
-#endif
-				if (!bRet)
+				if (!HTTPClient::GET(httpUrl, ExtraHeaders, sResult))
 				{
 					_log.Log(LOG_ERROR, "Netatmo: Error connecting to Server...");
 					return;
 				}
+#endif
 				bRet = ParseJSon(sResult, root);
 				if ((!bRet) || (!root.isObject()))
 				{
@@ -1419,7 +1420,12 @@ bool CNetatmo::ParseHomeStatus(const std::string &sResult)
 				}
 
 				int batteryLevel = 255;
-
+				if (!module["boiler_status"].empty())
+				{
+					std::string aName = "Status";
+					bool bIsActive = (module["boiler_status"].asString() == "true");
+					SendSwitch(moduleID & 0x00FFFFFF | 0x10000000, 1, 255, (bIsActive == true), 0, aName);
+				}
 				if (!module["battery_level"].empty())
 				{
 					batteryLevel = module["battery_level"].asInt();
@@ -1480,18 +1486,18 @@ bool CNetatmo::ParseHomeStatus(const std::string &sResult)
 
 				if (!room["therm_measured_temperature"].empty())
 				{
-					SendTempSensor(roomID, 255, room["therm_measured_temperature"].asFloat(), roomName);
+					SendTempSensor(roomID & 0x00FFFFFF | 0x03000000, 255, room["therm_measured_temperature"].asFloat(), roomName);
 				}
 				if (!room["therm_setpoint_temperature"].empty())
 				{
-					SendSetPointSensor((uint8_t)((roomID & 0XFF0000) >> 16), (roomID & 0XFF00) >> 8, roomID & 0XFF, room["therm_setpoint_temperature"].asFloat(), roomName);
+					SendSetPointSensor((uint8_t)((roomID & 0X00FF0000 | 0x02000000) >> 16), (roomID & 0XFF00) >> 8, roomID & 0XFF, room["therm_setpoint_temperature"].asFloat(), roomName);
 				}
 				if (!room["therm_setpoint_mode"].empty())
 				{
 					std::string setpoint_mode = room["therm_setpoint_mode"].asString();
 					bool bIsAway = (setpoint_mode == "away");
 					std::string aName = "Away " + roomName;
-					SendSwitch(roomID & 0xFFFFFF, 1, 255, bIsAway, 0, aName);
+					SendSwitch(roomID & 0x00FFFFFF | 0x01000000, 1, 255, bIsAway, 0, aName);
 				}
 			}
 			iDevIndex++;

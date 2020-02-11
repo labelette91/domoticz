@@ -405,7 +405,7 @@ try
 						else
 							getCommand(OffCmd, OutCmd, level);
 //						m_mainworker.SwitchLight( SwitchIdx, OffCmd, 0  , _tColor(),  false,0 /*, !SwitchStateAsChanged */);
-  						m_mainworker.SwitchLight( SwitchIdx, OutCmd, level, _tColor(),  false,0 /*, !SwitchStateAsChanged */);
+  						m_mainworker.SwitchLight( SwitchIdx, OutCmd, level, _tColor(),  false,0,"VTHER" /*, !SwitchStateAsChanged */);
 
 						sleep_milliseconds(1000);
 						_log.Debug(DEBUG_NORM,"VTHER: Mn:%02d  Therm:%-10s(%2s) Room:%4.1f SetPoint:%4.1f Power:%3d LightId(%2ld):%d Kp:%3.f Ki:%3.f Integr:%3.1f Cmd:%s",Minute,ThermostatSwitchName, idxThermostat.c_str() , RoomTemperature,ThermostatTemperatureSet,PowerModulation,SwitchIdx,SwitchValue,CoefProportional,CoefIntegral, DeltaTemps[ThermostatId]->GetSum() /INTEGRAL_DURATION, OutCmd.c_str());

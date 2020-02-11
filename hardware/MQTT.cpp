@@ -273,7 +273,7 @@ void MQTT::on_message(const struct mosquitto_message *message)
 				else
 					level = root["level"].asInt();
 			}
-			if (!m_mainworker.SwitchLight(idx, switchcmd, level, NoColor, false, 0) == true)
+			if (!m_mainworker.SwitchLight(idx, switchcmd, level, NoColor, false, 0, "MQTT") == true)
 			{
 				_log.Log(LOG_ERROR, "MQTT: Error sending switch command!");
 			}
@@ -393,7 +393,7 @@ void MQTT::on_message(const struct mosquitto_message *message)
 
 			_log.Log(LOG_STATUS, "MQTT: setcolbrightnessvalue: ID: %" PRIx64 ", bri: %d, color: '%s'", idx, ival, color.toString().c_str());
 
-			if (!m_mainworker.SwitchLight(idx, "Set Color", ival, color, false, 0) == true)
+			if (!m_mainworker.SwitchLight(idx, "Set Color", ival, color, false, 0, "MQTT") == true)
 			{
 				_log.Log(LOG_ERROR, "MQTT: Error sending switch command!");
 			}
@@ -403,7 +403,7 @@ void MQTT::on_message(const struct mosquitto_message *message)
 			std::string switchcmd = root["switchcmd"].asString();
 			if ((switchcmd != "On") && (switchcmd != "Off") && (switchcmd != "Toggle"))
 				goto mqttinvaliddata;
-			if (!m_mainworker.SwitchScene(idx, switchcmd) == true)
+			if (!m_mainworker.SwitchScene(idx, switchcmd, "MQTT") == true)
 			{
 				_log.Log(LOG_ERROR, "MQTT: Error sending scene command!");
 			}
@@ -648,28 +648,31 @@ void MQTT::SendDeviceInfo(const int HwdID, const uint64_t DeviceRowIdx, const st
 	if (!m_IsConnected)
 		return;
 	std::vector<std::vector<std::string> > result;
-	result = m_sql.safe_query("SELECT DeviceID, Unit, Name, [Type], SubType, nValue, sValue, SwitchType, SignalLevel, BatteryLevel, Options, Description, LastLevel, Color FROM DeviceStatus WHERE (HardwareID==%d) AND (ID==%" PRIu64 ")", HwdID, DeviceRowIdx);
+	result = m_sql.safe_query("SELECT HardwareID, DeviceID, Unit, Name, [Type], SubType, nValue, sValue, SwitchType, SignalLevel, BatteryLevel, Options, Description, LastLevel, Color FROM DeviceStatus WHERE (HardwareID==%d) AND (ID==%" PRIu64 ")", HwdID, DeviceRowIdx);
 	if (!result.empty())
 	{
+		int iIndex = 0;
 		std::vector<std::string> sd = result[0];
-		std::string did = sd[0];
-		int dunit = atoi(sd[1].c_str());
-		std::string name = sd[2];
-		int dType = atoi(sd[3].c_str());
-		int dSubType = atoi(sd[4].c_str());
-		int nvalue = atoi(sd[5].c_str());
-		std::string svalue = sd[6];
-		_eSwitchType switchType = (_eSwitchType)atoi(sd[7].c_str());
-		int RSSI = atoi(sd[8].c_str());
-		int BatteryLevel = atoi(sd[9].c_str());
-		std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(sd[10]);
-		std::string description = sd[11];
-		int LastLevel = atoi(sd[12].c_str());
-		std::string sColor = sd[13];
+		std::string hwid = sd[iIndex++];
+		std::string did = sd[iIndex++];
+		int dunit = atoi(sd[iIndex++].c_str());
+		std::string name = sd[iIndex++];
+		int dType = atoi(sd[iIndex++].c_str());
+		int dSubType = atoi(sd[iIndex++].c_str());
+		int nvalue = atoi(sd[iIndex++].c_str());
+		std::string svalue = sd[iIndex++];
+		_eSwitchType switchType = (_eSwitchType)atoi(sd[iIndex++].c_str());
+		int RSSI = atoi(sd[iIndex++].c_str());
+		int BatteryLevel = atoi(sd[iIndex++].c_str());
+		std::map<std::string, std::string> options = m_sql.BuildDeviceOptions(sd[iIndex++]);
+		std::string description = sd[iIndex++];
+		int LastLevel = atoi(sd[iIndex++].c_str());
+		std::string sColor = sd[iIndex++];
 
 		Json::Value root;
 
 		root["idx"] = DeviceRowIdx;
+		root["hwid"] = hwid;
 		root["id"] = did;
 		root["unit"] = dunit;
 		root["name"] = name;
