@@ -7,6 +7,7 @@
 #include "localtime_r.h"
 #include "Logger.h"
 #include "mainworker.h"
+#include "../main/json_helper.h"
 #ifdef WITH_EXTERNAL_SQLITE
 #include <sqlite3.h>
 #else
@@ -3572,6 +3573,13 @@ void CSQLHelper::Do_Work()
 			{
 				m_mainworker.m_eventsystem.CustomCommand(itt->_idx, itt->_command);
 			}
+			else if (itt->_ItemType == TITEM_CUSTOM_EVENT)
+			{
+				Json::Value eventInfo;
+				eventInfo["name"] = itt->_ID;
+				eventInfo["data"] = itt->_sValue;
+				m_mainworker.m_notificationsystem.Notify(Notification::DZ_CUSTOM, Notification::STATUS_INFO, JSonToRawString(eventInfo));
+			}
 
 			++itt;
 		}
@@ -6104,7 +6112,7 @@ void CSQLHelper::AddCalendarTemperature()
 		std::vector<std::string> sddev = itt;
 		uint64_t ID = std::strtoull(sddev[0].c_str(), nullptr, 10);
 
-		result = safe_query("SELECT MIN(Temperature), MAX(Temperature), AVG(Temperature), MIN(Chill), MAX(Chill), AVG(Humidity), AVG(Barometer), MIN(DewPoint), MIN(SetPoint), MAX(SetPoint), AVG(SetPoint) FROM Temperature WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<'%q')",
+		result = safe_query("SELECT MIN(Temperature), MAX(Temperature), AVG(Temperature), MIN(Chill), MAX(Chill), AVG(Humidity), AVG(Barometer), MIN(DewPoint), MIN(SetPoint), MAX(SetPoint), AVG(SetPoint) FROM Temperature WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<='%q 00:00:00')",
 			ID,
 			szDateStart,
 			szDateEnd
@@ -6183,7 +6191,7 @@ void CSQLHelper::AddCalendarUpdateRain()
 
 		if (subType == sTypeRAINWU || subType == sTypeRAINByRate)
 		{
-			result = safe_query("SELECT Total, Total, Rate FROM Rain WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<'%q') ORDER BY ROWID DESC LIMIT 1",
+			result = safe_query("SELECT Total, Total, Rate FROM Rain WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<='%q 00:00:00') ORDER BY ROWID DESC LIMIT 1",
 				ID,
 				szDateStart,
 				szDateEnd
@@ -6191,7 +6199,7 @@ void CSQLHelper::AddCalendarUpdateRain()
 		}
 		else
 		{
-			result = safe_query("SELECT MIN(Total), MAX(Total), MAX(Rate) FROM Rain WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<'%q')",
+			result = safe_query("SELECT MIN(Total), MAX(Total), MAX(Rate) FROM Rain WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<='%q 00:00:00')",
 				ID,
 				szDateStart,
 				szDateEnd
@@ -6309,7 +6317,7 @@ void CSQLHelper::AddCalendarUpdateMeter()
 		}
 
 
-		result = safe_query("SELECT MIN(Value), MAX(Value), AVG(Value) FROM Meter WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<'%q')",
+		result = safe_query("SELECT MIN(Value), MAX(Value), AVG(Value) FROM Meter WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<='%q 00:00:00')",
 			ID,
 			szDateStart,
 			szDateEnd
@@ -6489,7 +6497,7 @@ void CSQLHelper::AddCalendarUpdateMultiMeter()
 		//_eMeterType metertype=(_eMeterType)switchtype;
 
 		result = safe_query(
-			"SELECT MIN(Value1), MAX(Value1), MIN(Value2), MAX(Value2), MIN(Value3), MAX(Value3), MIN(Value4), MAX(Value4), MIN(Value5), MAX(Value5), MIN(Value6), MAX(Value6) FROM MultiMeter WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<'%q')",
+			"SELECT MIN(Value1), MAX(Value1), MIN(Value2), MAX(Value2), MIN(Value3), MAX(Value3), MIN(Value4), MAX(Value4), MIN(Value5), MAX(Value5), MIN(Value6), MAX(Value6) FROM MultiMeter WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<='%q 00:00:00')",
 			ID,
 			szDateStart,
 			szDateEnd
@@ -6597,7 +6605,7 @@ void CSQLHelper::AddCalendarUpdateWind()
 		std::vector<std::string> sddev = itt;
 		uint64_t ID = std::strtoull(sddev[0].c_str(), nullptr, 10);
 
-		result = safe_query("SELECT AVG(Direction), MIN(Speed), MAX(Speed), MIN(Gust), MAX(Gust) FROM Wind WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<'%q')",
+		result = safe_query("SELECT AVG(Direction), MIN(Speed), MAX(Speed), MIN(Gust), MAX(Gust) FROM Wind WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<='%q 00:00:00')",
 			ID,
 			szDateStart,
 			szDateEnd
@@ -6655,7 +6663,7 @@ void CSQLHelper::AddCalendarUpdateUV()
 		std::vector<std::string> sddev = itt;
 		uint64_t ID = std::strtoull(sddev[0].c_str(), nullptr, 10);
 
-		result = safe_query("SELECT MAX(Level) FROM UV WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<'%q')",
+		result = safe_query("SELECT MAX(Level) FROM UV WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<='%q 00:00:00')",
 			ID,
 			szDateStart,
 			szDateEnd
@@ -6705,7 +6713,7 @@ void CSQLHelper::AddCalendarUpdatePercentage()
 		std::vector<std::string> sddev = itt;
 		uint64_t ID = std::strtoull(sddev[0].c_str(), nullptr, 10);
 
-		result = safe_query("SELECT MIN(Percentage), MAX(Percentage), AVG(Percentage) FROM Percentage WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<'%q')",
+		result = safe_query("SELECT MIN(Percentage), MAX(Percentage), AVG(Percentage) FROM Percentage WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<='%q 00:00:00')",
 			ID,
 			szDateStart,
 			szDateEnd
@@ -6759,7 +6767,7 @@ void CSQLHelper::AddCalendarUpdateFan()
 		std::vector<std::string> sddev = itt;
 		uint64_t ID = std::strtoull(sddev[0].c_str(), nullptr, 10);
 
-		result = safe_query("SELECT MIN(Speed), MAX(Speed), AVG(Speed) FROM Fan WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<'%q')",
+		result = safe_query("SELECT MIN(Speed), MAX(Speed), AVG(Speed) FROM Fan WHERE (DeviceRowID='%" PRIu64 "' AND Date>='%q' AND Date<='%q 00:00:00')",
 			ID,
 			szDateStart,
 			szDateEnd
@@ -7526,6 +7534,7 @@ bool CSQLHelper::BackupDatabase(const std::string &OutputFile)
 	// Close the database connection opened on database file zFilename
 	// and return the result of this function.
 	sqlite3_close(pFile);
+
 	return (rc == SQLITE_OK);
 }
 

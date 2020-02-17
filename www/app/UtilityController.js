@@ -3,7 +3,6 @@ define(['app', 'livesocket'], function (app) {
 		var $element = $('#main-view #utilitycontent').last();
 		
 		$scope.HasInitializedEditCustomSensorDialog = false;
-		$scope.broadcast_unsubscribe = undefined;
 
 		GetThermostatBigTest = function (item) {
 	            var bigtext;
@@ -446,29 +445,10 @@ define(['app', 'livesocket'], function (app) {
 					});
 				}
 			});
-
-			$scope.broadcast_unsubscribe = $scope.$on('jsonupdate', function (event, data) {
-				/*
-					When this event is caught, a widget status update is received.
-					We call RefreshItem to update the widget.
-				*/
-				if (typeof data.ServerTime != 'undefined') {
-					$rootScope.SetTimeAndSun(data.Sunrise, data.Sunset, data.ServerTime);
-				}
-				if (typeof data.ActTime != 'undefined') {
-					$.LastUpdateTime = parseInt(data.ActTime);
-				}
-				RefreshItem(data.item);
-			});
 		};
 
 		ShowUtilities = function () {
 			$('#modal').show();
-
-			if (typeof $scope.broadcast_unsubscribe != 'undefined') {
-				$scope.broadcast_unsubscribe();
-				$scope.broadcast_unsubscribe = undefined;
-			}
 
 			var htmlcontent = '';
 			var bShowRoomplan = false;
@@ -1069,6 +1049,10 @@ define(['app', 'livesocket'], function (app) {
 				$.myglobals.WeekdayStr.push($(this).text());
 			});
 
+			$scope.$on('device_update', function (event, deviceData) {
+				RefreshItem(deviceData);
+			});
+
 			var dialog_editutilitydevice_buttons = {};
 
 			dialog_editutilitydevice_buttons[$.t("Update")] = function () {
@@ -1588,10 +1572,6 @@ define(['app', 'livesocket'], function (app) {
 			});
 		};
 		$scope.$on('$destroy', function () {
-			if (typeof $scope.broadcast_unsubscribe != 'undefined') {
-				$scope.broadcast_unsubscribe();
-				$scope.broadcast_unsubscribe = undefined;
-			}
 			var popup = $("#setpoint_popup");
 			if (typeof popup != 'undefined') {
 				popup.hide();
