@@ -516,6 +516,15 @@
     <Filter Include="www\app\devices">
       <UniqueIdentifier>{ae84d173-7ab3-47ac-bafd-145b034278f0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Devices\OctoPrint">
+      <UniqueIdentifier>{bafd6feb-6df6-4592-aded-780e24eeea7c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Devices\eVehicles">
+      <UniqueIdentifier>{3404548b-df3a-4958-b308-34c7e7c15e59}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Devices\VirtualThermostat">
+      <UniqueIdentifier>{3dc44a64-2c92-4b1c-99ed-3ee26c8950e0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\CMakeLists.txt">
@@ -2281,6 +2290,18 @@
     <ClInclude Include="..\main\LuaTable.h">
       <Filter>EventSystem\Lua</Filter>
     </ClInclude>
+    <ClInclude Include="..\hardware\eVehicles\eVehicle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hardware\eVehicles\TeslaApi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hardware\eVehicles\VehicleApi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hardware\OctoPrintMQTT.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\webserver\Base64.cpp">
@@ -3152,6 +3173,18 @@
     </ClCompile>
     <ClCompile Include="..\main\NotificationSystem.cpp">
       <Filter>EventSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hardware\eVehicles\eVehicle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hardware\eVehicles\TeslaApi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hardware\OctoPrintMQTT.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hardware\VirtualThermostat.cpp">
+      <Filter>Devices\VirtualThermostat</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
