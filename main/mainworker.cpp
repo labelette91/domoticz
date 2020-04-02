@@ -180,7 +180,7 @@
 extern std::string szStartupFolder;
 extern std::string szUserDataFolder;
 extern std::string szWWWFolder;
-extern std::string szAppVersion;
+extern int iAppRevision;
 extern std::string szWebRoot;
 extern bool g_bUseUpdater;
 extern http::server::_eWebCompressionMode g_wwwCompressMode;
@@ -996,7 +996,7 @@ bool MainWorker::AddHardwareFromParams(
 		pHardware = new CTado(ID, Username, Password);
 		break;
 	case HTYPE_Tesla:
-		pHardware = new CeVehicle(ID, CeVehicle::Tesla, Username, Password, Mode1, Mode2, Extra);
+		pHardware = new CeVehicle(ID, CeVehicle::Tesla, Username, Password, Mode1, Mode2, Mode3, Extra);
 		break;
 	case HTYPE_Honeywell:
 		pHardware = new CHoneywell(ID, Username, Password, Extra);
@@ -1349,12 +1349,11 @@ bool MainWorker::IsUpdateAvailable(const bool bIsForced)
 	if (strarray.size() != 3)
 		return false;
 
-	int version = atoi(szAppVersion.substr(szAppVersion.find(".") + 1).c_str());
 	m_iRevision = atoi(strarray[2].c_str());
 #ifdef DEBUG_DOWNLOAD
 	m_bHaveUpdate = true;
 #else
-	m_bHaveUpdate = ((version != m_iRevision) && (version < m_iRevision));
+	m_bHaveUpdate = ((iAppRevision != m_iRevision) && (iAppRevision < m_iRevision));
 #endif
 	return m_bHaveUpdate;
 }
@@ -4989,6 +4988,9 @@ void MainWorker::decode_Lighting2(const CDomoticzHardwareBase* pHardware, const 
 			case light2_sSetGroupLevel:
 				sprintf(szTmp, "Set Group Level: %d", level);
 				WriteMessage(szTmp);
+				break;
+			case gswitch_sStop:
+				WriteMessage("Stop");
 				break;
 			default:
 				WriteMessage("UNKNOWN");

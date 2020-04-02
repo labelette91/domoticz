@@ -935,8 +935,9 @@ define(['app'], function (app) {
 				}
 				var defaultinterval = parseInt($("#hardwarecontent #divtesla #defaultinterval").val());
 				if (defaultinterval < 1) {
-					defaultinterval = 10;
+					defaultinterval = 20;
 				}
+				var allowwakeup = $("#hardwarecontent #divtesla #comboallowwakeup").val();
 				$.ajax({
 					url: "json.htm?type=command&param=updatehardware&htype=" + hardwaretype +
 					"&username=" + encodeURIComponent(username) +
@@ -947,7 +948,8 @@ define(['app'], function (app) {
 					"&datatimeout=" + datatimeout +
 					"&extra=" + vinnr +
 					"&Mode1=" + defaultinterval +
-					"&Mode2=" + activeinterval,
+					"&Mode2=" + activeinterval + 
+					"&Mode3=" + allowwakeup,
 					async: false,
 					dataType: 'json',
 					success: function (data) {
@@ -2157,8 +2159,9 @@ define(['app'], function (app) {
 				}
 				var defaultinterval = parseInt($("#hardwarecontent #divtesla #defaultinterval").val());
 				if (defaultinterval < 1) {
-					defaultinterval = 1;
+					defaultinterval = 20;
 				}
+				var allowwakeup = $("#hardwarecontent #divtesla #comboallowwakeup").val();
 				$.ajax({
 					url: "json.htm?type=command&param=addhardware&htype=" + hardwaretype +
 					"&username=" + encodeURIComponent(username) +
@@ -2168,7 +2171,8 @@ define(['app'], function (app) {
 					"&datatimeout=" + datatimeout +
 					"&extra=" + vinnr +
 					"&Mode1=" + defaultinterval +
-					"&Mode2=" + activeinterval,
+					"&Mode2=" + activeinterval +
+					"&Mode3=" + allowwakeup,
 					async: false,
 					dataType: 'json',
 					success: function (data) {
@@ -3686,6 +3690,7 @@ define(['app'], function (app) {
 							$("#hardwarecontent #hardwareparamstesla #vinnr").val(data["Extra"]);
 							$("#hardwarecontent #hardwareparamstesla #defaultinterval").val(data["Mode1"]);
 							$("#hardwarecontent #hardwareparamstesla #activeinterval").val(data["Mode2"]);
+							$("#hardwarecontent #hardwareparamstesla #comboallowwakeup").val(data["Mode3"]);
 						}
 						else if (data["Type"].indexOf("Satel Integra") >= 0) {
 							$("#hardwarecontent #hardwareparamspollinterval #pollinterval").val(data["Mode1"]);

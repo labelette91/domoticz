@@ -132,6 +132,7 @@ std::string szInternalCurrentCommand = "";
 
 
 std::string szAppVersion="???";
+int iAppRevision=0;
 std::string szAppHash="???";
 std::string szAppDate="???";
 std::string szPyVersion="None";
@@ -445,9 +446,8 @@ static size_t getExecutablePathName(char* pathName, size_t pathNameCapacity)
 
 void GetAppVersion()
 {
-	std::stringstream sstr;
-	sstr << VERSION_STRING << APPVERSION;
-	szAppVersion = sstr.str();
+	szAppVersion = VERSION_STRING;
+	iAppRevision = APPVERSION;
 	szAppHash = APPHASH;
 	char szTmp[200];
 	struct tm ltime;
@@ -734,11 +734,13 @@ int main(int argc, char**argv)
 		{
 			std::string szLevel = cmdLine.GetSafeArgument("-loglevel", 0, "");
 			_log.SetLogFlags(szLevel);
+			_log.Log(LOG_STATUS, "loglevel:%s", szLevel.c_str());
 		}
 		if (cmdLine.HasSwitch("-debuglevel"))
 		{
 			std::string szLevel = cmdLine.GetSafeArgument("-debuglevel", 0, "");
 			_log.SetDebugFlags(szLevel);
+			_log.Log(LOG_STATUS, "debuglevel:%s", szLevel.c_str());
 		}
 		if (cmdLine.HasSwitch("-notimestamps"))
 		{

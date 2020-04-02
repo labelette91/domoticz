@@ -3184,7 +3184,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\hardware\VirtualThermostat.cpp">
-      <Filter>Devices\VirtualThermostat</Filter>
+      <Filter>Devices</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
