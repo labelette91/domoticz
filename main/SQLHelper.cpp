@@ -8973,6 +8973,7 @@ std::map<std::string, std::string> CSQLHelper::BuildDeviceOptions(const std::str
 {
 	std::map<std::string, std::string> optionsMap;
 	if (!options.empty()) {
+		//std::string st;
 		//_log.Log(LOG_STATUS, "DEBUG : Build device options from '%s'...", options.c_str());
 		std::vector<std::string> optionsArray;
 		StringSplit(options, ";", optionsArray);
@@ -8987,12 +8988,12 @@ std::map<std::string, std::string> CSQLHelper::BuildDeviceOptions(const std::str
 				std::string optionName = oValue.substr(0, tpos);
 				oValue = oValue.substr(tpos + 1);
 				std::string optionValue = decode ? base64_decode(oValue) : oValue;
-				//_log.Log(LOG_STATUS, "DEBUG : Build device option ['%s': '%s'] => ['%s': '%s']", optionArray[0].c_str(), optionArray[1].c_str(), optionName.c_str(), optionValue.c_str());
+				//st += "[" +  optionName +  ":" +  optionValue +"]" ;
 				optionsMap.insert(std::pair<std::string, std::string>(optionName, optionValue));
 			}
 		}
+		//_log.Log(LOG_STATUS, "DEBUG : Build %d device(s) option(s) :%s", optionsMap.size(), st.c_str());
 	}
-	//_log.Log(LOG_STATUS, "DEBUG : Build %d device(s) option(s)", optionsMap.size());
 	return optionsMap;
 }
 
@@ -9029,7 +9030,7 @@ std::string CSQLHelper::FormatDeviceOptions(const std::map<std::string, std::str
 		for (const auto& itt : optionsMap)
 		{
 			i++;
-			//_log.Log(LOG_STATUS, "DEBUG : Reading device option ['%s', '%s']", itt->first.c_str(), itt->second.c_str());
+			//_log.Log(LOG_STATUS, "DEBUG : Reading device option ['%s', '%s']", itt.first.c_str(), itt.second.c_str());
 			std::string optionName = itt.first.c_str();
 			std::string optionValue = encode ? base64_encode(itt.second) : itt.second;
 			ssoptions << optionName << ":" << optionValue;
