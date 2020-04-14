@@ -42,7 +42,7 @@
 #include "../hardware/Tellstick.h"
 #include "../webserver/Base64.h"
 #include "../smtpclient/SMTPClient.h"
-#include "../json/json.h"
+#include <json/json.h>
 #include "../main/json_helper.h"
 #include "Logger.h"
 #include "SQLHelper.h"
@@ -4734,8 +4734,8 @@ namespace http {
 					}
 					else if (lighttype == 400) {
 						//Openwebnet Bus Blinds
-						dtype = pTypeLighting2;
-						subtype = sTypeAC;
+						dtype = pTypeGeneralSwitch;
+						subtype = sSwitchTypeAC;
 						devid = request::findValue(&req, "id");
 						sunitcode = request::findValue(&req, "unitcode");
 						if (
@@ -4746,8 +4746,8 @@ namespace http {
 					}
 					else if (lighttype == 401) {
 						//Openwebnet Bus Lights
-						dtype = pTypeLighting2;
-						subtype = sTypeAC;
+						dtype = pTypeGeneralSwitch;
+						subtype = sSwitchTypeAC;
 						devid = request::findValue(&req, "id");
 						sunitcode = request::findValue(&req, "unitcode");
 						if (
@@ -4759,8 +4759,8 @@ namespace http {
 					else if (lighttype == 402)
 					{
 						//Openwebnet Bus Auxiliary
-						dtype = pTypeLighting2;
-						subtype = sTypeAC;
+						dtype = pTypeGeneralSwitch;
+						subtype = sSwitchTypeAC;
 						devid = request::findValue(&req, "id");
 						sunitcode = request::findValue(&req, "unitcode");
 						if (
@@ -4807,8 +4807,8 @@ namespace http {
 					}
 					else if (lighttype == 407) {
 						//Openwebnet Bus Custom
-						dtype = pTypeLighting2;
-						subtype = sTypeAC;
+						dtype = pTypeGeneralSwitch;
+						subtype = sSwitchTypeAC;
 						devid = request::findValue(&req, "id");
 						sunitcode = request::findValue(&req, "unitcode");
 						std::string StrParam1 = request::findValue(&req, "StrParam1");
@@ -5369,8 +5369,8 @@ namespace http {
 					else if (lighttype == 400)
 					{
 						//Openwebnet Bus Blinds
-						dtype = pTypeLighting2;
-						subtype = sTypeAC;
+						dtype = pTypeGeneralSwitch;
+						subtype = sSwitchTypeAC;
 						devid = request::findValue(&req, "id");
 						sunitcode = request::findValue(&req, "unitcode");
 						if (
@@ -5382,8 +5382,8 @@ namespace http {
 					else if (lighttype == 401)
 					{
 						//Openwebnet Bus Lights
-						dtype = pTypeLighting2;
-						subtype = sTypeAC;
+						dtype = pTypeGeneralSwitch;
+						subtype = sSwitchTypeAC;
 						devid = request::findValue(&req, "id");
 						sunitcode = request::findValue(&req, "unitcode");
 						if (
@@ -5395,8 +5395,8 @@ namespace http {
 					else if (lighttype == 402)
 					{
 						//Openwebnet Bus Auxiliary
-						dtype = pTypeLighting2;
-						subtype = sTypeAC;
+						dtype = pTypeGeneralSwitch;
+						subtype = sSwitchTypeAC;
 						devid = request::findValue(&req, "id");
 						sunitcode = request::findValue(&req, "unitcode");
 						if (
@@ -5446,8 +5446,8 @@ namespace http {
 					}
 					else if (lighttype == 407) {
 						//Openwebnet Bus Custom
-						dtype = pTypeLighting2;
-						subtype = sTypeAC;
+						dtype = pTypeGeneralSwitch;
+						subtype = sSwitchTypeAC;
 						devid = request::findValue(&req, "id");
 						sunitcode = request::findValue(&req, "unitcode");
 						StrParam1 = request::findValue(&req, "StrParam1");

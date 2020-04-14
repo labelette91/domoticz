@@ -434,8 +434,8 @@ public:
 
 	std::map<std::string, std::string> BuildDeviceOptions(const std::string & options, const bool decode = true);
 	std::map<std::string, std::string> GetDeviceOptions(const std::string & idx, const bool decode = true);
-	std::string FormatDeviceOptions(const std::map<std::string, std::string> & optionsMap, const bool decode = true );
-	bool SetDeviceOptions(const uint64_t idx, const std::map<std::string, std::string> & options, const bool decode = true);
+	std::string FormatDeviceOptions(const std::map<std::string, std::string> & optionsMap, const bool encode = true );
+	bool SetDeviceOptions(const uint64_t idx, const std::map<std::string, std::string> & options, const bool encode = true);
 	bool UpdateDeviceOptions(const uint64_t idx, std::string options , const bool decode ) ;
 
 	float GetCounterDivider(const int metertype, const int dType, const float DefaultValue);
