@@ -6,7 +6,7 @@
 #include "../main/Helper.h"
 #include "../main/SQLHelper.h"
 
-#include "../json/json.h"
+#include <json/json.h>
 #include "../main/RFXtrx.h"
 #include "../main/mainworker.h"
 #include "../hardware/hardwaretypes.h"
@@ -291,7 +291,7 @@ int  ThermostatModeStringToInt(std::string & mode , std::string & AvailableMode)
 	std::vector<std::string> ModeStr;
 	StringSplit(AvailableMode, ",", ModeStr);
 
-	for (int i = 0; i<ModeStr.size(); i++)
+	for (size_t i = 0; i<ModeStr.size(); i++)
 		if (strcmp(mode.c_str(), ModeStr[i].c_str()) == 0)
 			return  i;
 	return 0;
@@ -314,38 +314,27 @@ void ImperiHome::ManageAction (std::string &device , std::string &action	 , std:
 {
       //the dev Id is DEVnnn_zzz : nnn is the ID 
 			std::string ID = getDeviceId(device);
+			const std::string User = "IMPE";
 
 			_log.Debug(DEBUG_NORM,"IMPE: Devices:%s Action:%s request:%s Value:%s",device.c_str(), action.c_str(), actionType.c_str() , actionValue.c_str());
 			if (actionType=="setStatus")
 			{
 				if (actionValue=="1" )
-					#ifndef __PI__
-					m_mainworker.SwitchLight( ID, "On" , "100" , "0", "0" ,0 );
-					#else
-					m_mainworker.SwitchLight( ID, "On" , "100" , "0" );
-					#endif					
+					m_mainworker.SwitchLight( ID, "On" , "100" , "0" , "0",  0, User);
 				else
-					#ifndef __PI__
-					m_mainworker.SwitchLight( ID, "Off", "0"   , "0", "0" ,0 );
-					#else
-					m_mainworker.SwitchLight( ID, "Off", "0" , "0" );
-					#endif
+					m_mainworker.SwitchLight( ID, "Off", "0"   , "0" , "0",  0, User);
 			}
 			else if (actionType=="setLevel"){
-					#ifndef __PI__
-					m_mainworker.SwitchLight( ID, "Set Level" , actionValue , "0" , "0",0 );
-					#else
-					m_mainworker.SwitchLight( ID, "Set Level" , actionValue , "0" );
-					#endif
+					m_mainworker.SwitchLight( ID, "Set Level" , actionValue , "0" ,"0", 0, User);
 			}
 			else if (actionType=="stopShutter"){
-				m_mainworker.SwitchLight(ID, "Stop", actionValue, "0", "0", 0);
+				m_mainworker.SwitchLight(ID, "Stop", actionValue, "0",  "0", 0, User);
 
 			}
 			else if (actionType=="pulseShutter"){
 			}
 			else if (actionType=="launchScene"){
-				m_mainworker.SwitchScene(ID, "On" ) ;
+				m_mainworker.SwitchScene(ID, "On", User) ;
 			}
 			else if (actionType=="setChoice"){
 			}
