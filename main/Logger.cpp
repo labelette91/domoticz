@@ -93,6 +93,7 @@ bool CLogger::SetDebugFlags(const std::string &sFlags)
 	StringSplit(sFlags, ",", flags);
 
 	uint32_t iFlags = 0;
+	s_debug_flags = sFlags;
 
 	for (auto &wflag : flags)
 	{
