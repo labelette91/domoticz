@@ -395,6 +395,9 @@ namespace http
 				"getauth", [this](auto &&session, auto &&req, auto &&root) { Cmd_GetAuth(session, req, root); }, true);
 			RegisterCommandCode(
 				"getuptime", [this](auto &&session, auto &&req, auto &&root) { Cmd_GetUptime(session, req, root); }, true);
+			
+			RegisterCommandCode("setdebuglevel", [this](auto &&session, auto &&req, auto &&root) { Cmd_SetDebugLevel(session, req, root); }); 
+
 
 			RegisterCommandCode("gethardwaretypes", [this](auto &&session, auto &&req, auto &&root) { Cmd_GetHardwareTypes(session, req, root); });
 			RegisterCommandCode("addhardware", [this](auto &&session, auto &&req, auto &&root) { Cmd_AddHardware(session, req, root); });
@@ -2125,6 +2128,24 @@ namespace http
 
 			m_mainworker.RemoveDomoticzHardware(hwID);
 			m_sql.DeleteHardware(idx);
+		}
+
+		//http://192.168.1.27:8080/json.htm?type=command&param=setdebuglevel&level=normal,hardware,received,test
+		//set tthe debeug level  string
+		void CWebServer::Cmd_SetDebugLevel(WebEmSession & session, const request& req, Json::Value &root)
+		{
+			root["status"] = "OK";
+			root["title"] = "SetDebugLevel";
+
+			std::string level = request::findValue(&req, "level");
+			if (!level.empty() )
+			{
+				_log.Debug(DEBUG_NORM, "SetDebugFlags: %s", level.c_str());
+				_log.SetDebugFlags(level);
+
+			}
+
+
 		}
 
 		void CWebServer::Cmd_GetLog(WebEmSession &session, const request &req, Json::Value &root)
