@@ -390,6 +390,7 @@ namespace http {
 
 			RegisterCommandCode("getversion", boost::bind(&CWebServer::Cmd_GetVersion, this, _1, _2, _3), true);
 			RegisterCommandCode("getlog", boost::bind(&CWebServer::Cmd_GetLog, this, _1, _2, _3));
+			RegisterCommandCode("setdebuglevel", boost::bind(&CWebServer::Cmd_SetDebugLevel, this, _1, _2, _3));
 			RegisterCommandCode("clearlog", boost::bind(&CWebServer::Cmd_ClearLog, this, _1, _2, _3));
 			RegisterCommandCode("getauth", boost::bind(&CWebServer::Cmd_GetAuth, this, _1, _2, _3), true);
 			RegisterCommandCode("getuptime", boost::bind(&CWebServer::Cmd_GetUptime, this, _1, _2, _3), true);
@@ -2166,6 +2167,24 @@ namespace http {
 
 			m_mainworker.RemoveDomoticzHardware(hwID);
 			m_sql.DeleteHardware(idx);
+		}
+
+		//http://192.168.1.27:8080/json.htm?type=command&param=setdebuglevel&level=normal,hardware,received,test
+		//set tthe debeug level  string
+		void CWebServer::Cmd_SetDebugLevel(WebEmSession & session, const request& req, Json::Value &root)
+		{
+			root["status"] = "OK";
+			root["title"] = "SetDebugLevel";
+
+			std::string level = request::findValue(&req, "level");
+			if (!level.empty() )
+			{
+				_log.Debug(DEBUG_NORM, "SetDebugFlags: %s", level.c_str());
+				_log.SetDebugFlags(level);
+
+			}
+
+
 		}
 
 		void CWebServer::Cmd_GetLog(WebEmSession & session, const request& req, Json::Value &root)
