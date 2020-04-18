@@ -89,7 +89,7 @@ bool CLogger::SetDebugFlags(const std::string &sFlags)
 	StringSplit(sFlags, ",", flags);
 
 	uint32_t iFlags = 0;
-
+	s_debug_flags = sFlags;
 	for (const auto & itt : flags)
 	{
 		std::string wflag = itt;
@@ -118,8 +118,6 @@ bool CLogger::SetDebugFlags(const std::string &sFlags)
 			iFlags |= DEBUG_PYTHON;
 		else if (wflag == "thread_id")
 			iFlags |= DEBUG_THREADIDS;
-		else
-			return false; //invalid flag
 	}
 	SetDebugFlags(iFlags);
 	return true;
@@ -268,6 +266,20 @@ void CLogger::Debug(const _eDebugLevel level, const char* logline, ...)
 	va_end(argList);
 	Debug(level, std::string(cbuffer));
 }
+
+void CLogger::Debug(const std::string& level , const char* logline, ...)
+{
+	//if level string is not in debug string flags
+	if (!IsDebugLevelEnabled(level))
+		return;
+	va_list argList;
+	char cbuffer[MAX_LOG_LINE_LENGTH];
+	va_start(argList, logline);
+	vsnprintf(cbuffer, sizeof(cbuffer), logline, argList);
+	va_end(argList);
+	Log(LOG_DEBUG_INT, std::string(cbuffer));
+}
+
 
 void CLogger::Debug(const _eDebugLevel level, const std::string& sLogline)
 {

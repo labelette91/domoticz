@@ -52,11 +52,21 @@ public:
 	void SetDebugFlags(const uint32_t iFlags) {
 		m_debug_flags = iFlags;
 	}
+	bool IsDebugLevelEnabled(const std::string& level) {
+		if (s_debug_flags.find(level) == std::string::npos)
+			return false;
+		else
+			return true;
+	}
 	bool IsDebugLevelEnabled(const _eDebugLevel level) {
 		if (!(m_log_flags & LOG_DEBUG_INT))
 			return false;
 		return (m_debug_flags & level);
 	}
+
+	//if level string is not in debug string flags
+	
+
 
 	void SetOutputFile(const char *OutputFile);
 
@@ -72,6 +82,7 @@ public:
 		__attribute__ ((format (printf, 3, 4)))
 #endif
 	;
+	void Debug(const std::string& level, const char* logline, ...);
 	void LogSequenceStart();
 	void LogSequenceAdd(const char* logline);
 	void LogSequenceAddNoLF(const char* logline);
@@ -101,5 +112,6 @@ private:
 	bool m_bEnableErrorsToNotificationSystem;
 	time_t m_LastLogNotificationsSend;
 	std::stringstream m_sequencestring;
+	std::string s_debug_flags;
 };
 extern CLogger _log;
