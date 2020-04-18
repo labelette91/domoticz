@@ -391,6 +391,7 @@ namespace http {
 			RegisterCommandCode("getversion", boost::bind(&CWebServer::Cmd_GetVersion, this, _1, _2, _3), true);
 			RegisterCommandCode("getlog", boost::bind(&CWebServer::Cmd_GetLog, this, _1, _2, _3));
 			RegisterCommandCode("setdebuglevel", boost::bind(&CWebServer::Cmd_SetDebugLevel, this, _1, _2, _3));
+			RegisterCommandCode("setloglevel", boost::bind(&CWebServer::Cmd_SetLogLevel, this, _1, _2, _3));
 			RegisterCommandCode("clearlog", boost::bind(&CWebServer::Cmd_ClearLog, this, _1, _2, _3));
 			RegisterCommandCode("getauth", boost::bind(&CWebServer::Cmd_GetAuth, this, _1, _2, _3), true);
 			RegisterCommandCode("getuptime", boost::bind(&CWebServer::Cmd_GetUptime, this, _1, _2, _3), true);
@@ -2170,7 +2171,7 @@ namespace http {
 		}
 
 		//http://192.168.1.27:8080/json.htm?type=command&param=setdebuglevel&level=normal,hardware,received,test
-		//set tthe debeug level  string
+		//set the debug level  string
 		void CWebServer::Cmd_SetDebugLevel(WebEmSession & session, const request& req, Json::Value &root)
 		{
 			root["status"] = "OK";
@@ -2181,6 +2182,23 @@ namespace http {
 			{
 				_log.Debug(DEBUG_NORM, "SetDebugFlags: %s", level.c_str());
 				_log.SetDebugFlags(level);
+
+			}
+
+
+		}
+		//http://192.168.1.27:8080/json.htm?type=command&param=setloglevel&level=normal,status,error,debug
+		//set the log level  string
+		void CWebServer::Cmd_SetLogLevel(WebEmSession& session, const request& req, Json::Value& root)
+		{
+			root["status"] = "OK";
+			root["title"] = "SeLogLevel";
+
+			std::string level = request::findValue(&req, "level");
+			if (!level.empty())
+			{
+				_log.Debug(DEBUG_NORM, "SetLogFlags: %s", level.c_str());
+				_log.SetLogFlags(level);
 
 			}
 
