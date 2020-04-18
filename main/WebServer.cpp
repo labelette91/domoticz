@@ -397,6 +397,7 @@ namespace http
 				"getuptime", [this](auto &&session, auto &&req, auto &&root) { Cmd_GetUptime(session, req, root); }, true);
 			
 			RegisterCommandCode("setdebuglevel", [this](auto &&session, auto &&req, auto &&root) { Cmd_SetDebugLevel(session, req, root); }); 
+			RegisterCommandCode("setloglevel"  , [this](auto &&session, auto &&req, auto &&root) { Cmd_SetLogLevel  (session, req, root); }); 
 
 
 			RegisterCommandCode("gethardwaretypes", [this](auto &&session, auto &&req, auto &&root) { Cmd_GetHardwareTypes(session, req, root); });
@@ -2131,7 +2132,7 @@ namespace http
 		}
 
 		//http://192.168.1.27:8080/json.htm?type=command&param=setdebuglevel&level=normal,hardware,received,test
-		//set tthe debeug level  string
+		//set the debug level  string
 		void CWebServer::Cmd_SetDebugLevel(WebEmSession & session, const request& req, Json::Value &root)
 		{
 			root["status"] = "OK";
@@ -2142,6 +2143,23 @@ namespace http
 			{
 				_log.Debug(DEBUG_NORM, "SetDebugFlags: %s", level.c_str());
 				_log.SetDebugFlags(level);
+
+			}
+
+
+		}
+		//http://192.168.1.27:8080/json.htm?type=command&param=setloglevel&level=normal,status,error,debug
+		//set the log level  string
+		void CWebServer::Cmd_SetLogLevel(WebEmSession& session, const request& req, Json::Value& root)
+		{
+			root["status"] = "OK";
+			root["title"] = "SeLogLevel";
+
+			std::string level = request::findValue(&req, "level");
+			if (!level.empty())
+			{
+				_log.Debug(DEBUG_NORM, "SetLogFlags: %s", level.c_str());
+				_log.SetLogFlags(level);
 
 			}
 
