@@ -1,0 +1,184 @@
+﻿<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+		<meta charset="utf-8">
+		<title>Domoticz</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<meta name="description" content="" />
+		<meta name="keywords" content="" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<link rel="shortcut icon" href="favicon.ico" />
+
+		<link rel="stylesheet" href="css/bootstrap.css">
+		<link rel="stylesheet" href="css/bootstrap-responsive.css" media="screen">
+		<link rel="stylesheet" href="css/ui-darkness/jquery-ui.min.css" />
+		<link rel="stylesheet" href="css/demo_table_jui.css" />
+		<link rel="stylesheet" href="css/jquery.uix.multiselect.css" />
+		<link rel="stylesheet" href="css/style.css" />
+		<link rel="stylesheet" href="css/colpick.css" />
+		<link rel="stylesheet" href="css/jquery-ui-timepicker-addon.css" />
+		<link rel="stylesheet" href="css/remote.css" />
+		<link rel="stylesheet" href="css/wheelcolorpicker.css" />
+		<link rel="stylesheet" href="js/noty/noty.css" />
+		<link rel="stylesheet" href="js/noty/relax.css" />
+		<link rel="stylesheet" href="app/events/Events.css" />
+		<link rel="stylesheet" href="app/devices/Devices.css" />
+		<link rel="stylesheet" href="acttheme/custom.css" />
+
+
+		<script src="js/babel-polyfill-6.26.0.js"></script>
+		<script src="js/jquery-3.4.1.min.js"></script>
+		<script src="js/i18next-1.8.0.min.js"></script>
+		<script src="js/bootstrap.min.js"></script>
+		<script src="js/bootbox.min.js"></script>
+		<script src="js/jquery-ui.min.js"></script>
+
+		<script src="js/jquery.ui.touch-punch.min.js"></script>
+		<script src="js/jquery.uix.multiselect.min.js"></script>
+		<script src="js/jquery.ddslick.min.js"></script>
+		<script src="js/colpick.js"></script>
+		<script src="js/jquery.wheelcolorpicker.js"></script>
+		<script src="js/noty/noty.min.js"></script>
+		<script charset="utf-8" src="js/data-tables/jquery.dataTables.min.js"></script>
+		<script charset="utf-8" src="js/data-tables/dataTables.tableTools.min.js"></script>
+		<script charset="utf-8" src="js/data-tables/dataTables.select.min.js"></script>
+		<script charset="utf-8" src="js/ZeroClipboard.js"></script>
+		<script charset="utf-8" src="js/date.format.js"></script>
+		<script charset="utf-8" src="js/highcharts/highcharts.js"></script>
+		<script charset="utf-8" src="js/highcharts/highcharts-more.js"></script>
+		<script charset="utf-8" src="js/highcharts/modules/sankey.js"></script>
+		<script charset="utf-8" src="js/highcharts/modules/dependency-wheel.js"></script>
+		<script charset="utf-8" src="js/highcharts/modules/exporting.js"></script>
+		<script charset="utf-8" src="js/highcharts/modules/xrange.js"></script>
+		<script charset="utf-8" src="js/highcharts/themes/dark-unica.js"></script>
+		<script src="js/export-csv.js"></script>
+		<script src="js/base64.min.js"></script>
+		<script charset="utf-8" src="js/domoticz.js"></script>
+		<script charset="utf-8" src="js/domoticzdevices.js"></script>
+		<script charset="utf-8" src="js/jquery-ui-timepicker-addon.js"></script>
+		<script charset="utf-8" src="acttheme/custom.js"></script>
+		<script data-main="app/main" src="js/require.js"></script>
+<!--		
+-->
+
+		<script charset="utf-8" src="js/domoticz.js"></script>
+		<script charset="utf-8" src="js/domoticzdevices.js"></script>
+
+		<script type="text/javascript" charset="utf-8" src="app/ihmSetpointTimers.js"></script>
+<!--		<script type="text/javascript" charset="utf-8" src="app/ihmShowTimers.js"></script> -->
+        <script type="text/javascript" charset="utf-8" src="app/thermostat.js"></script> 
+<script charset="utf-8" id="init-code">
+
+function getUrlVars() {
+    var vars = {};
+    var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+        vars[key] = value;
+    });
+    return vars;
+}
+// file:///C:/tmp/domoticz-git/www/index-util.html#/Offline?id=4&confor=20&eco=16&sensor=test
+// /?id=4&confor=20&eco=16
+//parametre url
+		$(document).ready(function() {
+			
+	$.myglobals = {
+		actlayout : "",
+		prevlayout : "",
+		ismobile: false,
+		ismobileint: false,
+		windscale: 1.0,
+		windsign: "m/s",
+		tempscale: 1.0,
+		tempsign: "C",
+		DegreeDaysBaseTemperature: 18.0,
+		historytype : 1,
+		LastPlanSelected: 0,
+		DashboardType: 0,
+		isproxied: false
+	};
+	window.myglobals=$.myglobals;			
+			
+			var id = getUrlVars()["id"];
+			var confor = getUrlVars()["confor"];
+			var eco    = getUrlVars()["eco"];
+			var sensor = decodeURI(getUrlVars()["sensor"]) ;//encodeURI
+      if (typeof id     == 'undefined')     id=4;
+      if (typeof confor == 'undefined')      confor=20;
+      if (typeof eco    == 'undefined')      eco=16;
+      if (typeof sensor == 'undefined')      sensor="test";
+			ShowSetpointWeeklyTimersFct.Show(id, sensor, eco, confor);			
+		});
+	</script>
+</head>
+<body>
+	<div id="main">
+<div id="editSetpointWeeklyTimers" style="display:none;">
+  <p style="height:50px;" align="center">
+      <input type="radio" name="when" id="when1" style="height:40px;width:40px;" value="Everyday" checked>&nbsp;<span data-i18n="Everyday" style="margin-right: 20px;">Everyday</span>
+      <input type="radio" name="when" id="when2" style="height:40px;width:40px;" value="Weekdays">&nbsp;<span data-i18n="Weekdays" style="margin-right: 20px;">Weekdays</span>
+      <input type="radio" name="when" id="when3" style="height:40px;width:40px;" value="Weekends">&nbsp;<span data-i18n="Weekends" style="margin-right: 20px;">Weekends</span>
+      <input type="radio" name="when" id="when4" style="height:40px;width:40px;" value="SelectedDays">&nbsp;<span data-i18n="Selected Days" style="margin-right: 20px;">SelectedDays</span>
+  </p>
+  <table BORDER="0">       
+	<tr>
+		<td align="right" ><label for="tvalue"><span data-i18n="Confor" onclick="ShowSetpointWeeklyTimersFct.selectConfButton();" >Confor</span>:</label></td>
+		<td><input type="text" id="tConf" style="width: 60px; padding: .2em;" class="text ui-widget-content ui-corner-all">
+		&nbsp;  
+    <label> <button id="cT1"  class="btn btn-th btn-conf" type="button"  style="width:70px;" onclick="ShowSetpointWeeklyTimersFct.selectConfButton();">Confor</button></label>
+    <label> <button id="cT2"  class="btn btn-th btn-conf" type="button"  style="width:70px;" onclick="ShowSetpointWeeklyTimersFct.SetConf(this);">-</button></label>
+    <label> <button id="cT3"  class="btn btn-th btn-conf" type="button"  style="width:70px;" onclick="ShowSetpointWeeklyTimersFct.SetConf(this);">+</button></label>
+<!--		
+    <label> <button id="cT4"  class="btn btn-th btn-conf" type="button"  onclick="SetConf(this);">18</button></label>
+    <label> <button id="cT5"  class="btn btn-th btn-conf" type="button"  onclick="SetConf(this);">19</button></label>
+    <label> <button id="cT6"  class="btn btn-th btn-conf" type="button"  onclick="SetConf(this);">20</button></label>
+    <label> <button id="cT7"  class="btn btn-th btn-conf" type="button"  onclick="SetConf(this);">21</button></label>
+    <label> <button id="cT8"  class="btn btn-th btn-conf" type="button"  onclick="SetConf(this);">22</button></label>
+    <label> <button id="cT9"  class="btn btn-th btn-conf" type="button"  onclick="SetConf(this);">23</button></label>
+    <label> <button id="cT10" class="btn btn-th btn-conf" type="button"  onclick="SetConf(this);">24</button></label>
+    <label> <button id="cT11" class="btn btn-th btn-conf" type="button"  onclick="SetConf(this);">25</button></label>
+-->    
+  </td>
+<!--		
+	</tr>
+	<tr>
+-->    
+		<td align="right" ><label for="tvalue"><span data-i18n="Eco" onclick="ShowSetpointWeeklyTimersFct.selectEcoButton();">Eco</span>:</label></td>
+		<td><input type="text" id="tEco" style="width: 60px; padding: .2em;" class="text ui-widget-content ui-corner-all">
+		&nbsp;  
+    <label> <button id="eT1"  class="btn btn-th btn-eco" type="button"  style="width:70px;" onclick="ShowSetpointWeeklyTimersFct.selectEcoButton();">Eco</button></label>
+    <label> <button id="eT2"  class="btn btn-th btn-eco" type="button"  style="width:70px;" onclick="ShowSetpointWeeklyTimersFct.SetEco(this);">-</button></label>
+    <label> <button id="eT3"  class="btn btn-th btn-eco" type="button"  style="width:70px;" onclick="ShowSetpointWeeklyTimersFct.SetEco(this);">+</button></label>
+<!--		
+    <label> <button id="eT4"  class="btn btn-th btn-eco" type="button"  onclick="SetEco(this);">18</button></label>
+    <label> <button id="eT5"  class="btn btn-th btn-eco" type="button"  onclick="SetEco(this);">19</button></label>
+    <label> <button id="eT6"  class="btn btn-th btn-eco" type="button"  onclick="SetEco(this);">20</button></label>
+    <label> <button id="eT7"  class="btn btn-th btn-eco" type="button"  onclick="SetEco(this);">21</button></label>
+    <label> <button id="eT8"  class="btn btn-th btn-eco" type="button"  onclick="SetEco(this);">22</button></label>
+    <label> <button id="eT9"  class="btn btn-th btn-eco" type="button"  onclick="SetEco(this);">23</button></label>
+    <label> <button id="eT10" class="btn btn-th btn-eco" type="button"  onclick="SetEco(this);">24</button></label>
+    <label> <button id="eT11" class="btn btn-th btn-eco" type="button"  onclick="SetEco(this);">25</button></label>
+-->    
+  </td>
+	</tr>
+  </table>
+  </div>		
+<div id="utilitycontent" class="container">
+</div>
+<div id="dialog-copy" title="Copy Timers" style="display:none;">
+		<form>
+				<label for="sensor"><span data-i18n="Sensor">Sensor</span>: </label>
+				<select id="sensor" style="width:250px" class="combobox ui-corner-all">
+
+				</select>
+		</form>
+</div>
+	<div id="notification" style="display: none;"></div>
+		
+	</div>
+</body>
+</html>

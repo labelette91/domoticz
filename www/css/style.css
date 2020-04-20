@@ -2175,3 +2175,23 @@ table.display thead th.sorting_disabled div.DataTables_sort_wrapper {
 	overflow-y: auto;
 	overflow-x: hidden;
 }
+
+.btn-timer {
+	font-family: Arial,Helvetica,sans-serif;
+	font-size: 10pt;
+    font-weight: bold;
+    height: 2.0em;
+    margin-left: 0px;
+    margin-right: 0px;
+    padding: 4px 4px;
+    width:40px;
+    height:40px;
+}
+.btn-confor {
+    background-image: linear-gradient(to bottom, #FF0000, #FF0000);
+    background-color: #FF0000;
+}
+.btn-info {
+    background-image: linear-gradient(to bottom, #0000FF, #0000FF);
+    background-color: #0000FF;
+}

@@ -843,6 +843,14 @@ define(['app', 'livesocket'], function (app) {
 									else {
 										xhtm += '<a class="btnsmall" href="' + timerLink + '" data-i18n="Timers">Timers</a> ';
 									}
+									timerLink ="utilityweekly.html?" + "id=" + item.idx + "&sensor=" + escape(item.Name) + "&eco=" + item.EcoTemp + "&confor=" + item.ConforTemp ;
+
+									if (item.Timers == "true") {
+										xhtm += '<a class="btnsmall-sel" href="' + timerLink + '" data-i18n="Weekly">Weekly</a> ';
+									}
+									else {
+										xhtm += '<a class="btnsmall" href="' + timerLink + '" data-i18n="Weekly">Weekly</a> ';
+									}
 								}
 							}
 							else if (item.Type == "Radiator 1") {

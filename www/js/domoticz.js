@@ -8019,3 +8019,39 @@ function MakeDatatableTranslations() {
 	$.DataTableLanguage["paginate"]["next"] = $.t("Next");
 	$.DataTableLanguage["paginate"]["last"] = $.t("Last");
 }
+function RefreshDeviceCombo(ComboName, filter, clear) {
+    //get list
+
+    $.List = [];
+    $.ajax({
+        url: "json.htm?type=devices&filter=" + filter + "&used=true&order=Name",
+        async: false,
+        dataType: 'json',
+        success: function (data) {
+            if (typeof data.result != 'undefined') {
+                $.each(data.result, function (i, item) {
+                    $.List.push({
+                        idx: item.idx,
+                        name: item.Name
+                    });
+                });
+            }
+        }
+    });
+
+
+    var Combo = $(ComboName);
+
+    if (clear) Combo.find('option').remove().end();
+
+    $.each($.List, function (i, item) {
+        var option = $('<option />');
+        option.attr('value', item.idx).text(item.name);
+        Combo.append(option);
+    });
+
+    var option = $('<option />');
+    option.attr('value', '0').text('');
+    //    Combo.append(option);
+
+}
