@@ -249,7 +249,7 @@ function clearDayTimer()
 }
 function istSelectedDay()
 {
-  return $("#utilitycontent #when4").prop('checked');
+  return true;
 }
 function fillDayTimer()
 {
@@ -310,7 +310,8 @@ createDayHourTable:   function ()
     for (var day= 0;day<7;day++) 
     {
         html+='<tr id="'+WeekDays[day]+'">\n';
-        html+='<td><input type="checkbox" id="Chk" checked/>&nbsp;<span data-i18n="'+Days[day]+'">'+Days[day]+'</span>&nbsp;</td>\n';
+//        html+='<td><input type="checkbox" id="Chk" checked/>&nbsp;<span data-i18n="'+Days[day]+'">'+Days[day]+'</span>&nbsp;</td>\n';
+        html+='<td><span data-i18n="'+Days[day]+'">'+Days[day]+'</span>&nbsp;</td>\n';
 
         for (var hour=0;hour<24;hour++)
         {
@@ -337,14 +338,11 @@ Show: function (devIdx, name, pEcoTemp, pConforTemp)
   	$.t  = TFunction ;
   }
 
-	if (typeof $.myglobals.test != 'undefined'){
 //  $.URL= "http://labelette91:catheri@192.168.1.5:8091/";
 //  $.URL= "http://192.168.1.5:8091/";
 //  $.URL= "http://catheri:catheri@192.168.1.27:8080/";
 	$.URL= "http:192.168.1.27:8080/";
-  }
-	else
-	  $.URL="";
+  $.URL="";
   
   var htmlcontent = '';
 
@@ -405,18 +403,7 @@ Show: function (devIdx, name, pEcoTemp, pConforTemp)
   $(window).mouseup(function(){
     $.MouseDown = false ;
   });
-  $("#utilitycontent #when1").click(function() {
-  	SetDays("Everyday",false);                    
-  });                                                              
-  $("#utilitycontent #when2").click(function() {
-  	SetDays("Weekdays",false);                    
-  });                                                              
-  $("#utilitycontent #when3").click(function() {
-  	SetDays("Weekends",false);                    
-  });                                                              
-  $("#utilitycontent #when4").click(function() {
-  	SetDays("",false);                           
-  });         
+  
 
    $("#utilitycontent #tConf").click(function() {
        ShowSetpointWeeklyTimersFct.selectConfButton();
