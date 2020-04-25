@@ -250,6 +250,7 @@
     <None Include="..\www\app\hardware\setup\ZWave.html" />
     <None Include="..\www\app\hardware\setup\ZWave.js" />
     <None Include="..\www\app\HistoryController.js" />
+    <None Include="..\www\app\ihmSetpointTimers.js" />
     <None Include="..\www\app\LightsController.js" />
     <None Include="..\www\app\livesocket.js" />
     <None Include="..\www\app\LogController.js" />

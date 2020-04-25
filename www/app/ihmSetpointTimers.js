@@ -14,6 +14,8 @@ function GetSetpointSettings (days , hour,min,val)
 	tsettings.days=days;
 	return tsettings;
 }  
+
+
 //read timer set point and store in DayTimer[day][hour]
 function getTimerSetPoints(idx)
 {
@@ -298,9 +300,9 @@ createDayHourTable:   function ()
 {
     var Days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]; 
     var WeekDays = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]; 
-
+	Days = WeekDays;
     var html=
-    '<table BORDER="0">\n'+
+    '<table BORDER="0" style="margin:auto;">\n'+
     '<tr id="time">    \n'+                                       
     '<td></td>         \n';
     for (var i=0;i<24;i++)
@@ -346,21 +348,45 @@ Show: function (devIdx, name, pEcoTemp, pConforTemp)
   
   var htmlcontent = '';
 
-  htmlcontent +=
-      '\t<table class="bannav" id="bannav" border="0" cellpadding="0" cellspacing="0" width="100%">\n' +
+  var bandeau =
+      '\t<table class="bandeau" id="bannav" border="0" cellpadding="0" cellspacing="0" style="margin:auto;">\n' +
       '\t<tr>\n' +
-      '\t  <td align="left"><a class="btnstylerev" onclick="ShowUtilities();" data-i18n="Back">Back</a></td>\n' +
-      '\t  <td><h2><span data-i18n="Name"></span>: ' + name + '</h2></td>\n' +
-      '\t  <td align="right"><a class="btnstyle" onclick="ShowSetpointWeeklyTimersFct.ProgCopy(' + devIdx + ');" data-i18n="Copy">Copy</a>\n' +
-      '\t                    <a class="btnstyle" onclick="ShowSetpointWeeklyTimersFct.ProgAdd(' + devIdx + ');" data-i18n="Add">Add</a></td>\n' +
+//      '\t  <td             ><a class="btnstylerev" onclick="ShowUtilities(); " data-i18n="Back">Back</a></td>\n' +
+//      '\t  <td             ><a class="btnstylerev" onclick="openFullscreen() ;" data-i18n="FullScreen">FullScreen</a></td>\n' +
+//      '\t  <td             ><a class="btnstylerev" onclick="closeFullscreen();" data-i18n="Exit">Exit</a></td>\n' +
+
+//      '\t  <td><h2><span data-i18n="Name"></span>: ' + name + '</h2></td>\n' +
+      '\t  <td             ><a class="btnstylerev" onclick="ShowSetpointWeeklyTimersFct.ProgCopy(' + devIdx + ');" data-i18n="Copy">Copy</a>\n' +
+      '\t                   <a class="btnstyle"    onclick="ShowSetpointWeeklyTimersFct.ProgAdd(' + devIdx + ');" data-i18n="Add">Add</a></td>\n' +
       '\t</tr>\n' +
       '\t</table>\n';
 
-    //			htmlcontent+='<p><h2><span data-i18n="Name"></span>: ' + name + '</h2></p><br>\n';
+    //			htmlcontent+='<p><h2><span data-i18n="Name"></span>Name: ' + name + '</h2></p><br>\n';
+  
 
+  htmlcontent += '<table border="0" cellpadding="0" cellspacing="0" style="margin:auto;"> \n'  ; 
+
+  htmlcontent += '<tr> \n'
+  htmlcontent += '<td><h1><span data-i18n="Name"></span>Name: ' + name + '</h1></td>\n' ;
+  htmlcontent += '</tr> \n'
+
+  htmlcontent += '<tr> <td/> </tr> n'
+
+  htmlcontent += '<tr> \n'
+  htmlcontent +=  bandeau;
+  htmlcontent += '</tr> \n'
+
+  htmlcontent += '<tr> \n'
   htmlcontent += $('#editSetpointWeeklyTimers').html();
+  htmlcontent += '</tr> \n'
+  htmlcontent += '<tr> \n'
   htmlcontent += ShowSetpointWeeklyTimersFct.createDayHourTable();
+  htmlcontent += '</tr> \n'
+  htmlcontent += '</table>\n';
+
   $('#utilitycontent').html(/*GetBackbuttonHTMLTable('ShowUtilities')+*/htmlcontent);
+
+
 //  $('#utilitycontent').i18n();
 
   SetEcoTemp($.EcoTemp);
@@ -389,20 +415,20 @@ Show: function (devIdx, name, pEcoTemp, pConforTemp)
     SetHoursTemp($.DayDeb,$.HourDeb , getConforVal() , getEcoVal() );  
   });
   
-  $("button.btn-timer").mouseup(function () {
-    $.MouseDown = false ;
-	$.DayEnd = $(this).prop("name") ;
-	$.HourEnd = $(this).prop("id") ;
-	if (istSelectedDay()){
-		for (var day=$.DayDeb;day<=$.DayEnd;day++)
-			for (var hour=$.HourDeb;hour<=$.HourEnd;hour++)
-				SetDayHourTemp( day,hour,getConforVal() , getEcoVal());
-	}
-  });
+//  $("button.btn-timer").mouseup(function () {
+//    $.MouseDown = false ;
+//	$.DayEnd = $(this).prop("name") ;
+//	$.HourEnd = $(this).prop("id") ;
+//	if (istSelectedDay()){
+//		for (var day=$.DayDeb;day<=$.DayEnd;day++)
+//			for (var hour=$.HourDeb;hour<=$.HourEnd;hour++)
+//				SetDayHourTemp( day,hour,getConforVal() , getEcoVal());
+//	}
+//  });
   
-  $(window).mouseup(function(){
-    $.MouseDown = false ;
-  });
+//  $(window).mouseup(function(){
+//    $.MouseDown = false ;
+//  });
   
 
    $("#utilitycontent #tConf").click(function() {
@@ -494,7 +520,7 @@ ProgAdd : function (devIdx) {
 ,
 selectConfButton : function ()
 {
-   $.each($("button.btn-conf"), function(i,item) {   $(item).addClass("btn-info");   });        
+   $.each($("button.btn-conf"), function(i,item) {   $(item).addClass("btn-confor");   });        
     $.each($("button.btn-eco") , function(i,item) {   $(item).removeClass("btn-info");   });       
     //   $('#utilitycontent #ConfCkb').prop('checked',true);
     //   $('#utilitycontent #EcoCkb').prop('checked',false);
@@ -503,7 +529,7 @@ selectConfButton : function ()
 ,
 selectEcoButton: function ()
 {
-    $.each($("button.btn-conf"), function(i,item) {   $(item).removeClass("btn-info");   });        
+    $.each($("button.btn-conf"), function(i,item) {   $(item).removeClass("btn-confor");   });        
     $.each($("button.btn-eco") , function(i,item) {   $(item).addClass("btn-info");   });        
     //	$('#utilitycontent #ConfCkb').prop('checked',false);
     //	$('#utilitycontent #EcoCkb').prop('checked',true);
@@ -533,6 +559,23 @@ SetEco: function(obj)
   SetEcoTemp(val)  ;
 //  SetEcoTemp($(obj).html())  ;    ;
     ShowSetpointWeeklyTimersFct.selectEcoButton();
+},
+//http://192.168.1.27:8080/json.htm?type=devices&filter=utility&used=true&rid=4
+getSensor: function(idx)
+{
+var result ;
+ $.ajax({
+			 url:"json.htm?type=devices&filter=utility&used=true&rid=" + idx, 
+			 async: false, 
+			 dataType: 'json',
+			 success: function(data) {
+				
+			  if (typeof data.result != 'undefined') {
+				result =  (data.result[0]) ;
+			  }
+			 }
+		  });	
+return result ;
 }
 
 

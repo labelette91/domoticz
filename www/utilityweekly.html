@@ -1,76 +1,116 @@
 ﻿<!DOCTYPE HTML>
 <html lang="en-US">
 <head>
-		<meta charset="utf-8">
-		<title>Domoticz</title>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
-		<meta name="apple-mobile-web-app-capable" content="yes" />
-		<meta name="mobile-web-app-capable" content="yes" />
-		<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta charset="utf-8">
+    <title>Domoticz</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 
-		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-		<meta name="description" content="" />
-		<meta name="keywords" content="" />
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<link rel="shortcut icon" href="favicon.ico" />
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="description" content="" />
+    <meta name="keywords" content="" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <link rel="shortcut icon" href="favicon.ico" />
 
-		<link rel="stylesheet" href="css/bootstrap.css">
-		<link rel="stylesheet" href="css/bootstrap-responsive.css" media="screen">
-		<link rel="stylesheet" href="css/ui-darkness/jquery-ui.min.css" />
-		<link rel="stylesheet" href="css/demo_table_jui.css" />
-		<link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="css/bootstrap-responsive.css" media="screen">
+    <link rel="stylesheet" href="css/ui-darkness/jquery-ui.min.css" />
+    <link rel="stylesheet" href="css/demo_table_jui.css" />
+    <link rel="stylesheet" href="css/style.css" />
 
 
-		<script src="js/jquery-3.4.1.min.js"></script>
-		<script src="js/i18next-1.8.0.min.js"></script>
-		<script src="js/bootstrap.min.js"></script>
-		<script src="js/bootbox.min.js"></script>
-		<script src="js/jquery-ui.min.js"></script>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/i18next-1.8.0.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/bootbox.min.js"></script>
+    <script src="js/jquery-ui.min.js"></script>
+    <script src="js/jquery.fullscreen-0.4.1.js"></script>
+    <script src="js/jquery.fullscreen-0.4.1.min.js"></script>
+    
 
-		<script src="js/jquery.ui.touch-punch.min.js"></script>
 
-		<script src="js/base64.min.js"></script>
-<!--		
--->
 
-		<script charset="utf-8" src="js/domoticz.js"></script>
-		<script charset="utf-8" src="js/domoticzdevices.js"></script>
+    <script src="js/jquery.ui.touch-punch.min.js"></script>
 
-		<script type="text/javascript" charset="utf-8" src="app/ihmSetpointTimers.js"></script>
-<!--		<script type="text/javascript" charset="utf-8" src="app/ihmShowTimers.js"></script> -->
+    <script src="js/base64.min.js"></script>
+    <!--
+    -->
 
-<script charset="utf-8" id="init-code">
+    <script charset="utf-8" src="js/domoticz.js"></script>
+    <script charset="utf-8" src="js/domoticzdevices.js"></script>
 
-function getUrlVars() {
-    var vars = {};
-    var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+    <script type="text/javascript" charset="utf-8" src="app/ihmSetpointTimers.js"></script>
+    <!--		<script type="text/javascript" charset="utf-8" src="app/ihmShowTimers.js"></script> -->
+
+    <script charset="utf-8" id="init-code">
+
+  var elem = document.documentElement;
+
+        /* View in fullscreen */
+        function openFullscreen() {
+        if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+        } else if (elem.mozRequestFullScreen) { /* Firefox */
+        elem.mozRequestFullScreen();
+        } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+        elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) { /* IE/Edge */
+        elem.msRequestFullscreen();
+        }
+        }
+
+        /* Close fullscreen */
+        function closeFullscreen() {
+        if (document.exitFullscreen) {
+        document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) { /* Firefox */
+        document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+        document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { /* IE/Edge */
+        document.msExitFullscreen();
+        }
+        }
+        function getUrlVars() {
+        var vars = {};
+        var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
         vars[key] = value;
-    });
-    return vars;
-}
-// file:///C:/tmp/domoticz-git/www/index-util.html#/Offline?id=4&confor=20&eco=16&sensor=test
-// /?id=4&confor=20&eco=16
-//parametre url
-		$(document).ready(function() {
-			
+        });
+        return vars;
+        }
+        // file:///C:/tmp/domoticz-git/www/index-util.html#/Offline?id=4&confor=20&eco=16&sensor=test
+        // /?id=4&confor=20&eco=16
+        //parametre url
+        $(document).ready(function() {
+
 	
-			var id = getUrlVars()["id"];
-			var confor = getUrlVars()["confor"];
-			var eco    = getUrlVars()["eco"];
-			var sensor = decodeURI(getUrlVars()["sensor"]) ;//encodeURI
-      if (typeof id     == 'undefined')     id=4;
-      if (typeof confor == 'undefined')      confor=20;
-      if (typeof eco    == 'undefined')      eco=16;
-      if (typeof sensor == 'undefined')      sensor="test";
-			ShowSetpointWeeklyTimersFct.Show(id, sensor, eco, confor);			
-		});
-	</script>
+        var id = getUrlVars()["id"];
+        var confor = getUrlVars()["confor"];
+        var eco    = getUrlVars()["eco"];
+        var sensor = decodeURI(getUrlVars()["sensor"]) ;//encodeURI
+        if (typeof id     == 'undefined')     id=4;
+        if ( sensor == 'undefined')      
+        {
+            var result = ShowSetpointWeeklyTimersFct.getSensor(id);
+            sensor = result.Name ;
+            confor = result.ConforTemp ;
+            eco    = result.EcoTemp    ;
+        
+        }
+        if (typeof confor == 'undefined')      confor=20;
+        if (typeof eco    == 'undefined')      eco=16;
+        ShowSetpointWeeklyTimersFct.Show(id, sensor, eco, confor);
+  
+        });
+    </script>
 </head>
 <body>
 	<div id="main">
-<div id="editSetpointWeeklyTimers" style="display:none;">
+<div id="editSetpointWeeklyTimers" style="display:none; margin:auto;">
   
-  <table BORDER="0">       
+  <table BORDER="0" style="margin:auto;">       
 	<tr>
 		<td align="right" ><label for="tvalue"><span data-i18n="Confor" onclick="ShowSetpointWeeklyTimersFct.selectConfButton();" >Confor</span>:</label></td>
 		<td><input type="text" id="tConf" style="width: 60px; padding: .2em;" class="text ui-widget-content ui-corner-all">
@@ -89,10 +129,10 @@ function getUrlVars() {
     <label> <button id="cT11" class="btn btn-th btn-conf" type="button"  onclick="SetConf(this);">25</button></label>
 -->    
   </td>
-<!--		
+		
 	</tr>
 	<tr>
--->    
+   
 		<td align="right" ><label for="tvalue"><span data-i18n="Eco" onclick="ShowSetpointWeeklyTimersFct.selectEcoButton();">Eco</span>:</label></td>
 		<td><input type="text" id="tEco" style="width: 60px; padding: .2em;" class="text ui-widget-content ui-corner-all">
 		&nbsp;  
@@ -113,7 +153,7 @@ function getUrlVars() {
 	</tr>
   </table>
   </div>		
-<div id="utilitycontent" class="container">
+<div id="utilitycontent" class="contain" style="margin:auto;">
 </div>
 <div id="dialog-copy" title="Copy Timers" style="display:none;">
 		<form>

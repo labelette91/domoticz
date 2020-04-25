@@ -2180,12 +2180,12 @@ table.display thead th.sorting_disabled div.DataTables_sort_wrapper {
 	font-family: Arial,Helvetica,sans-serif;
 	font-size: 10pt;
     font-weight: bold;
-    height: 2.0em;
+//    height: 2.0em;
     margin-left: 0px;
     margin-right: 0px;
-    padding: 4px 4px;
-    width:40px;
-    height:40px;
+    padding: 0px 0px;
+    width:36px;
+    height:36px;
 }
 .btn-confor {
     background-image: linear-gradient(to bottom, #FF0000, #FF0000);

@@ -1452,6 +1452,9 @@
       <Filter>www\app\devices</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="..\www\app\ihmSetpointTimers.js">
+      <Filter>www\app</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\webserver\Base64.h">
