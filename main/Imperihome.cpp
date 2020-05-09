@@ -349,7 +349,7 @@ void ImperiHome::ManageAction (std::string &device , std::string &action	 , std:
 				}
 				if (actionValue==OffMode){
 				}*/
-				CThermostatHardware *pThermostatHardware = reinterpret_cast<CThermostatHardware*>(m_mainworker.GetDeviceHardware(ID));
+				CThermostatHardware *pThermostatHardware = dynamic_cast<CThermostatHardware*>(m_mainworker.GetDeviceHardware(ID));
 				if (pThermostatHardware!=0)
 					m_mainworker.SetThermostatState (ID, ThermostatModeStringToInt( actionValue, pThermostatHardware->GetAvailableMode()) );
 
@@ -775,7 +775,7 @@ void ImperiHome::DeviceContent3(std::string &rep_content)
           {
 //            DevThermostat :
           CDomoticzHardwareBase* pHardware  = m_mainworker.GetDeviceHardware((*row)[ID].c_str());
-					CThermostatHardware *pThermostatHardware = reinterpret_cast<CThermostatHardware*>(pHardware);
+					CThermostatHardware *pThermostatHardware = dynamic_cast<CThermostatHardware*>(pHardware);
 					if (pThermostatHardware != 0)
 					{
 						//temperature
