@@ -1,4 +1,5 @@
 // define module
+// define module
 var ShowSetpointWeeklyTimersFct  = (function () {
 
 function GetSetpointSettings (days , hour,min,val)
@@ -112,11 +113,14 @@ function SetConforBkgd(obj){
 	obj.removeClass("btn-info");
 	obj.addClass("btn-confor");
 //	obj.addClass("btn-info");
+
+//obj.css({"background-color": "yellow"});
 }
 function SetEcoBkgd(obj){
-	obj.addClass("btn-info");
 	obj.removeClass("btn-confor");
+	obj.addClass("btn-info");
 //	obj.removeClass("btn-info");
+//obj.css({"background-color": "blue"});
 
 }
 function SetNoneBkgd(obj){
@@ -402,11 +406,16 @@ Show: function (devIdx, name, pEcoTemp, pConforTemp)
   SetDays("Everyday", false);
 
   
-//  $("button.btn-timer").mouseover(function () {
+  $("button.btn-timer").mouseover(function () {
 //     if ($.MouseDown){
 //        SetHoursTemp( $(this).prop("name"),$(this).prop("id"), getConforVal() , getEcoVal() );  
 //     }
-//  });
+  });
+
+  $("button.btn-timer").mouseenter(function () {
+  });
+  $("button.btn-timer").mouseout(function () {
+  });
   
   $("button.btn-timer").mousedown(function () {
     $.MouseDown = true ;
