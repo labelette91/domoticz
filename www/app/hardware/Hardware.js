@@ -539,6 +539,13 @@ define(['app'], function (app) {
                         return;
                     }
                     Mode1 = ratelimitp1;
+
+					var ensynchro = $("#hardwarecontent #hardwareparamsensynchro #ensynchro").val();
+                    if ((ensynchro == "") || (isNaN(ensynchro))) {
+                        ShowNotify($.t('Please enter time sinchronization!'), 2500, true);
+                        return;
+                    }
+                    Mode2 = ensynchro;
                 }
 				$.ajax({
 					url: "json.htm?type=command&param=updatehardware&htype=" + hardwaretype +
@@ -1768,6 +1775,13 @@ define(['app'], function (app) {
                         return;
                     }
                     Mode1 = ratelimitp1;
+
+					var ensynchro = $("#hardwarecontent #hardwareparamsensynchro #ensynchro").val();
+                    if ((ensynchro == "") || (isNaN(ensynchro))) {
+                        ShowNotify($.t('Please enter time sinchronization!'), 2500, true);
+                        return;
+                    }
+                    Mode2 = ensynchro;
 				}
 				$.ajax({
 					url: "json.htm?type=command&param=addhardware&htype=" + hardwaretype +
@@ -3610,6 +3624,12 @@ define(['app'], function (app) {
                                     RateLimit = 300;
                                 }
                                 $("#hardwarecontent #hardwareparamsratelimitp1 #ratelimitp1").val(RateLimit);
+
+								var ensynchro = parseInt(data["Mode2"]);
+                                if (ensynchro && (ensynchro < 5)) {
+                                    ensynchro = 5;
+                                }
+                                $("#hardwarecontent #hardwareparamsensynchro #ensynchro").val(ensynchro);
                             }
 							else if (data["Type"].indexOf("eHouse") >= 0) {
 								$("#hardwarecontent #hardwareparamspollinterval #pollinterval").val(data["Mode1"]);
@@ -3960,6 +3980,7 @@ define(['app'], function (app) {
 			$("#hardwarecontent #divmodelecodevices").hide();
 			$("#hardwarecontent #divcrcp1").hide();
 			$("#hardwarecontent #divratelimitp1").hide();
+			$("#hardwarecontent #divensynchro").hide();
 			$("#hardwarecontent #divlocation").hide();
 			$("#hardwarecontent #divphilipshue").hide();
 			$("#hardwarecontent #divwinddelen").hide();
@@ -3980,9 +4001,9 @@ define(['app'], function (app) {
 			$("#hardwarecontent #divrelaynet").hide();
 			$("#hardwarecontent #divgpio").hide();
 			$("#hardwarecontent #divsysfsgpio").hide();
-       	     		$("#hardwarecontent #divmodeldenkovidevices").hide();
-            		$("#hardwarecontent #divmodeldenkoviusbdevices").hide();
-            		$("#hardwarecontent #divmodeldenkovitcpdevices").hide();
+			$("#hardwarecontent #divmodeldenkovidevices").hide();
+            $("#hardwarecontent #divmodeldenkoviusbdevices").hide();
+            $("#hardwarecontent #divmodeldenkovitcpdevices").hide();
 			$("#hardwarecontent #divunderground").hide();
 			$("#hardwarecontent #divbuienradar").hide();
 			$("#hardwarecontent #divserial").hide();
@@ -4104,8 +4125,10 @@ define(['app'], function (app) {
 						}
 						else if (text.indexOf("MyHome OpenWebNet with LAN interface") >= 0) {
 							$("#hardwarecontent #divratelimitp1").show();
+							$("#hardwarecontent #divensynchro").show();
 							$("#hardwarecontent #hardwareparamsremote #tcpport").val(20000);
-							$("#hardwarecontent #divratelimitp1").val(300);
+							$("#hardwarecontent #hardwareparamsratelimitp1 #ratelimitp1").val(0);
+							$("#hardwarecontent #hardwareparamsensynchro #ensynchro").val(0);
 						}
 						else if (text.indexOf("Denkovi") >= 0) {
 							$("#hardwarecontent #divpollinterval").show();
