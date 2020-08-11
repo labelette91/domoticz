@@ -1,3 +1,28 @@
+[3.0.11]
+- Add sensorValue attribute to custom sensor
+- Add solarnoon as moment in time (like sunrise / sunset ) 
+
+[3.0.10]
+- Add NSS_GOOGLE_DEVICES for notification casting to Google home / Google chromecast
+- Add optional parm delay to domoticz.sendCommand, domoticz.email, domoticz.sms and domoticz.notify
+
+[3.0.9]
+- Add dump() as function to object types: camera-, customEvent, hardware, systemEvent, HTTPResponse, security and time. 
+- Add function toUTC to time object.
+- Allow table as parm to function makeTime
+
+[3.0.8]
+- Allow IPv6 ::1 as localhost in domoticz settings 
+- Fixed bug that occurred when using a decimal number in afterSec (openURL and emitEvent)
+- Implement optional use of parsetrigger parm in setValues to trigger any subsequent eventscripts
+- Updated round.utils to correctly handle negative numbers and round to zero decimals
+
+[3.0.7]
+- Add domoticz.hardware() as separate object class
+
+[3.0.6]
+- Add hardwareInfo() function
+
 [3.0.5]
 - add dumpSelection()
 - fixed settings.url

@@ -827,7 +827,6 @@
 		</table>
 	</div>
 	<div id="divratelimitp1">
-		<br>
 		<table class="display" id="hardwareparamsratelimitp1" border="0" cellpadding="0" cellspacing="20">
 			<tr valign="top">
 				<td align="right" style="width:110px"><label for="ratelimitp1"><span data-i18n="Rate Limit">Rate Limit</span>: </label></td>
@@ -837,6 +836,18 @@
 					<span data-i18n="This limits the amount of meter updates.">This limits the amount of meter updates.</span>
 					<br />
 				</td>
+			</tr>
+		</table>
+	</div>
+	<div id="divkeyp1p1">
+		<table class="display" border="0" cellpadding="0" cellspacing="20">
+			<tr>
+				<td align="right" style="width:110px"><label for="decryptionkey"><span data-i18n="Decryption Key">Decryption Key</span>:</label></td>
+				<td>
+					<input type="text" id="decryptionkey" style="width: 300px; padding: .2em;" class="text ui-widget-content ui-corner-all" />
+					<br />
+					(<span data-i18n="Use only when your provider encrypts the payload">Use only when your provider encrypts the payload</span>)
+					</td>
 			</tr>
 		</table>
 	</div>
@@ -966,6 +977,39 @@
 					<input type="text" id="location" style="width: 250px; padding: .2em;" class="text ui-widget-content ui-corner-all" /><br />
 					<span data-i18n="StationLatLong"></span>
 				</td>
+			</tr>
+		</table>
+	</div>
+	<div id="divopenweathermap">
+		<br>
+		<table class="display" id="hardwareparamsopenweathermap" border="0" cellpadding="0" cellspacing="20">
+			<tr>
+				<td align="right" style="width:110px"><label><span data-i18n="API Key"></span>:</label></td>
+				<td><input type="text" id="apikey" style="width: 250px; padding: .2em;" class="text ui-widget-content ui-corner-all" /></td>
+			</tr>
+			<tr>
+				<td align="right" style="width:110px"><label><span data-i18n="Location"></span>:</label></td>
+				<td>
+					<input type="text" id="location" style="width: 250px; padding: .2em;" class="text ui-widget-content ui-corner-all" /><br />
+					<span data-i18n="StationLatLong"></span><br />
+					<span data-i18n="(0 = Application default)"></span>
+				</td>
+			</tr>
+			<tr>
+				<td align="right" style="width:110px"><label for="addcurrent"><span data-i18n="Current Weather">Current Weather</span>:</label></td>
+				<td><input type="checkbox" id="addcurrent" checked="checked" />&nbsp;<label for="addcurrent">&nbsp;</label></td>
+			</tr>
+			<tr>
+				<td align="right" style="width:110px"><label for="adddayforecast"><span data-i18n="Daily forecast">Daily forecast</span>:</label></td>
+				<td><input type="checkbox" id="adddayforecast" />&nbsp;<label for="adddayforecast">&nbsp;Forecast for today and coming 7 days (if available).</label></td>
+			</tr>
+			<tr>
+				<td align="right" style="width:110px"><label for="addhourforecast"><span data-i18n="Hourly forecast">Hourly forecast</span>:</label></td>
+				<td><input type="checkbox" id="addhourforecast" />&nbsp;<label for="addhourforecast">&nbsp;Forecast for each hour for 48 hours (if available).</label></td>
+			</tr>
+			<tr>
+				<td align="right" style="width:110px"><label for="pollinterval"><span data-i18n="Poll Interval"></span>:</label></td>
+				<td><input type="text" id="intervalseconds" style="width: 80px; padding: .2em;" class="text ui-widget-content ui-corner-all" />&nbsp;(<span data-i18n="Seconds">Seconds</span>)</td>
 			</tr>
 		</table>
 	</div>

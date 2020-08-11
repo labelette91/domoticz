@@ -190,9 +190,9 @@ describe('Time', function()
 		end)
 
 		it('should have addDays', function()
-            if localNow.day ~= 1 then 
-                assert.is_same(localNow.day - 1 , t.addDays(-1).day )
-            end
+			if localNow.day ~= 1 then
+				assert.is_same(localNow.day - 1 , t.addDays(-1).day )
+			end
 		end)
 
 		it('should return nil when called with a non number',function()
@@ -203,12 +203,44 @@ describe('Time', function()
 	end)
 
 	describe('makeTime functions', function()
-		local t = Time( os.time()).makeTime('2017-06-05 02:04:00')
-		assert.is_same(23, t.week)
-		t = Time('2017-01-01 02:04:00')
-		assert.is_same(52, t.week)
-		t = Time('2016-01-01 02:04:00')
-		assert.is_same(53, t.week)
+
+		it('should have makeTime ' , function()
+
+			local timeFromString = Time( os.time()).makeTime('2017-06-05 02:04:00')
+			assert.is_same(23, timeFromString.week)
+			assert.is_same(2, timeFromString.hour)
+
+			local timeFromString = Time( os.time()).makeTime('2017-06-05 02:04:00', true)
+			assert.is_same(4, timeFromString.hour)
+
+			local timeFromTable = Time( os.time()).makeTime(timeFromString)
+			assert.is_same(23, timeFromTable.week)
+			assert.is_same(4, timeFromTable.hour)
+
+			local timeFromTable = Time( os.time()).makeTime(timeFromString, true)
+			assert.is_same(6, timeFromTable.hour)
+		end)
+	end)
+
+	describe('toUTC functions', function()
+
+		it('should have toUTC ' , function()
+
+			local timeFromString = Time( os.time()).makeTime('2017-06-05 02:04:00')
+			assert.is_same(23, timeFromString.week)
+
+			timeFromString = Time('2017-01-01 02:04:00')
+			assert.is_same(52, timeFromString.week)
+			timeFromString = Time('2016-01-01 02:04:00')
+			assert.is_same(53, timeFromString.week)
+			local timeFromTable = Time( os.time()).makeTime(timeFromString)
+			assert.is_same(53, timeFromTable.week)
+			assert.is_same(2, timeFromTable.hour)
+			local timeFromTable = Time( os.time()).makeTime(timeFromString, true)
+			assert.is_same(4, timeFromTable.hour)
+
+		end)
+
 	end)
 
 	describe('non UTC', function()
@@ -486,7 +518,7 @@ describe('Time', function()
 
 				it('should return proper result', function()
 					local t = Time('2020-01-22 19:33:21')
-							local atRules = 
+							local atRules =
 							{
 								{rule = 'at 20:45-21:00', expected = false },
 								{rule = 'at 23:00-01:30', expected = false },
@@ -1211,6 +1243,99 @@ describe('Time', function()
 				end)
 			end)
 
+			describe('at solarnoon', function()
+
+				it('should return true if it is at solarnoon', function()
+					_G.timeofday = { ['SunAtSouthInMinutes'] = 664 }
+					local t = Time('2017-01-01 11:04:00')
+					assert.is_true(t.ruleIsAtSolarnoon('at solarnoon'))
+				end)
+
+				it('should return if it is not at solarnoon', function()
+					_G.timeofday = { ['SunAtSouthInMinutes'] = 63 }
+					local t = Time('2017-01-01 01:04:00')
+					assert.is_false(t.ruleIsAtSolarnoon('at solarnoon'))
+				end)
+
+				it('should return nil if the rule is not present', function()
+					_G.timeofday = { ['SunAtSouthInMinutes'] = 64 }
+					local t = Time('2017-01-01 01:04:00')
+					assert.is_nil(t.ruleIsAtSolarnoon('at blabalbba'))
+				end)
+
+				it('should detect the rule within a random string', function()
+					_G.timeofday = { ['SunAtSouthInMinutes'] = 64 }
+					local t = Time('2017-01-01 01:04:00')
+					assert.is_true(t.ruleIsAtSolarnoon('some random at solarnoon text'))
+				end)
+			end)
+
+			describe('xx minutes before solarnoon', function()
+
+				it('should return true if it is xx minutes before solarnoon', function()
+					_G.timeofday = { ['SunAtSouthInMinutes'] = 64 }
+					local t = Time('2017-01-01 01:02:00')
+					assert.is_true(t.ruleIsBeforeSolarnoon('2 minutes before solarnoon'))
+				end)
+
+				it('should return if it is more than 2 minutes before solarnoon', function()
+					_G.timeofday = { ['SunAtSouthInMinutes'] = 64 }
+					local t = Time('2017-01-01 01:01:00')
+					assert.is_false(t.ruleIsBeforeSolarnoon('2 minutes before solarnoon'))
+				end)
+
+				it('should return if it is less than 2 minutes before solarnoon', function()
+					_G.timeofday = { ['SunAtSouthInMinutes'] = 64 }
+					local t = Time('2017-01-01 01:03:00')
+					assert.is_false(t.ruleIsBeforeSolarnoon('2 minutes before solarnoon'))
+				end)
+
+				it('should return nil if the rule is not present', function()
+					_G.timeofday = { ['SunAtSouthInMinutes'] = 64 }
+					local t = Time('2017-01-01 01:04:00')
+					assert.is_nil(t.ruleIsBeforeSolarnoon('minutes before solarnoon'))
+				end)
+
+				it('should detect the rule within a random string', function()
+					_G.timeofday = { ['SunAtSouthInMinutes'] = 64 }
+					local t = Time('2017-01-01 01:02:00')
+					assert.is_true(t.ruleIsBeforeSolarnoon('some random 2 minutes before solarnoon text'))
+				end)
+			end)
+
+			describe('xx minutes after solarnoon', function()
+
+				it('should return true if it is xx minutes after solarnoon', function()
+					_G.timeofday = { ['SunAtSouthInMinutes'] = 64 }
+					local t = Time('2017-01-01 01:06:00')
+					assert.is_true(t.ruleIsAfterSolarnoon('2 minutes after solarnoon'))
+				end)
+
+				it('should return if it is more less 2 minutes after solarnoon', function()
+					_G.timeofday = { ['SunAtSouthInMinutes'] = 64 }
+					local t = Time('2017-01-01 01:05:00')
+					assert.is_false(t.ruleIsAfterSolarnoon('2 minutes after solarnoon'))
+				end)
+
+				it('should return if it is more than 2 minutes after solarnoon', function()
+					_G.timeofday = { ['SunAtSouthInMinutes'] = 64 }
+					local t = Time('2017-01-01 01:07:00')
+					assert.is_false(t.ruleIsAfterSolarnoon('2 minutes after solarnoon'))
+				end)
+
+				it('should return nil if the rule is not present', function()
+					_G.timeofday = { ['SunAtSouthInMinutes'] = 64 }
+					local t = Time('2017-01-01 01:04:00')
+					assert.is_nil(t.ruleIsAfterSolarnoon('minutes after solarnoon'))
+				end)
+
+				it('should detect the rule within a random string', function()
+					_G.timeofday = { ['SunAtSouthInMinutes'] = 64 }
+					local t = Time('2017-01-01 01:06:00')
+					assert.is_true(t.ruleIsAfterSolarnoon('some random 2 minutes after solarnoon text'))
+				end)
+			end)
+
 			describe('between', function()
 
 				it('should return nil if there is no range set', function()
@@ -1332,6 +1457,21 @@ describe('Time', function()
 						assert.is_false(t.ruleMatchesBetweenRange('between sunset and sunrise'))
 					end)
 
+					it('between solarnoon and sunrise', function()
+						_G.timeofday = {
+							['SunriseInMinutes'] = 360 , -- 06:00
+							['SunsetInMinutes'] = 1080 ,
+							['SunAtSouthInMinutes'] = 720
+						}
+
+						-- time between 07:00 and 12:00
+						local t = Time('2017-01-01 07:04:00')
+						assert.is_true(t.ruleMatchesBetweenRange('between sunrise and solarnoon'))
+
+						t = Time('2017-01-01 17:00:00')
+						assert.is_false(t.ruleMatchesBetweenRange('between sunrise and solarnoon'))
+					end)
+
 					it('every x minute between sunset and sunrise', function()
 						_G.timeofday = {
 							['SunriseInMinutes'] = 360 , -- 06:00
@@ -1388,10 +1528,10 @@ describe('Time', function()
 
 						assert.is_true(t.ruleMatchesBetweenRange(rule))
 					end)
-	
+
 					it('between two times', function()
 						local t = Time('2020-01-22 19:33:21')
-							local betweenRules = 
+							local betweenRules =
 							{
 								{rule = 'between 20:45 and 21:00',		expected = false },
 								{rule = 'between 23:00 and 01:30',		expected = false },
@@ -1424,9 +1564,9 @@ describe('Time', function()
 								{rule = 'between 22:00 and 22:15',		expected = false },
 								{rule = 'between 22:15 and 22:30',		expected = false },
 								{rule = 'between 22:30 and 23:00',		expected = false },
-								{rule = 'between 00:00 and 23:23',		expected = true }, 
+								{rule = 'between 00:00 and 23:23',		expected = true },
 							}
-		
+
 						for index, ruleRow in ipairs(betweenRules) do
 							if ruleRow.expected == false then
 								assert.is_false(t.matchesRule(ruleRow.rule))
@@ -1623,7 +1763,7 @@ describe('Time', function()
 					local t = Time('2017-06-05 02:04:00')
 					assert.is_false(t.ruleIsOnDate('on 6/5'))
 					assert.is_false(t.ruleIsOnDate('on 1/01-2/2,31/12,6/5,1/1'))
- 
+
 					t = Time('2018-12-3 02:04:00')
 					assert.is_true(t.ruleIsOnDate('on 03/12'))
 					assert.is_true(t.ruleIsOnDate('on 3/12'))
@@ -1805,7 +1945,7 @@ describe('Time', function()
 							assert.is_true(t.matchesRule('at 00:30-23:55 on 01/' .. fromMonth .. '-31/' .. toMonth))
 						else
 							assert.is_false(t.matchesRule('at 00:30-23:55 on 01/' .. fromMonth .. '-31/' .. toMonth))
-						end			
+						end
 					end)
 				end
 			end
@@ -1819,7 +1959,7 @@ describe('Time', function()
 							assert.is_true(t.matchesRule('at 00:30-23:55 on */' .. fromMonth .. '-*/' .. toMonth))
 						else
 							assert.is_false(t.matchesRule('at 00:30-23:55 on */' .. fromMonth .. '-*/' .. toMonth))
-						end			
+						end
 					end)
 				end
 			end

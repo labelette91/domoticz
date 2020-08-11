@@ -85,7 +85,7 @@ local function EventHelpers(domoticz, mainMethod)
 		if (storageDef ~= nil) then
 			-- load the datafile for this module
 			ok, fileStorage = pcall(require, module)
-			if type(fileStorage) == boolean then
+			if type(fileStorage) == 'boolean' then
 				utils.log('Problem with module: ' .. module, utils.LOG_ERROR)
 			end
 			package.loaded[module] = nil -- no caching
@@ -1060,8 +1060,14 @@ local function EventHelpers(domoticz, mainMethod)
 			domoticz = self.domoticz
 		end
 
-		if (_G.notification == nil) then
+		if (_G.notification == nil or _G.notification.customevent == nil ) then
 			return
+		end
+
+		for _, row in ipairs(_G.notification.customevent) do
+			 if row.data.name:match('^___%a*__$') then
+				table.insert(self.domoticz.commandArray, { [ row.data.name:sub(4,-3) ] = row.data.data })
+			 end
 		end
 
 		local customEventScripts = self.getEventBindings('customEvents', nil)

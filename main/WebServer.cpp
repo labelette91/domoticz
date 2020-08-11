@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "WebServer.h"
 #include "WebServerHelper.h"
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <iostream>
 #include <fstream>
 #include "mainworker.h"
@@ -24,6 +24,7 @@
 #include "../hardware/AccuWeather.h"
 #include "../hardware/OpenWeatherMap.h"
 #include "../hardware/Buienradar.h"
+#include "../hardware/Meteorologisk.h"
 #include "../hardware/Kodi.h"
 #include "../hardware/Limitless.h"
 #include "../hardware/LogitechMediaServer.h"
@@ -65,7 +66,10 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+using namespace boost::placeholders;
+
 #include "../hardware/VirtualThermostat.h"
+
 #define round(a) ( int ) ( a + .5 )
 
 extern std::string szStartupFolder;
@@ -631,6 +635,8 @@ namespace http {
 
 			RegisterCommandCode("zwaveisnodeincluded", boost::bind(&CWebServer::Cmd_ZWaveIsNodeIncluded, this, _1, _2, _3));
 			RegisterCommandCode("zwaveisnodeexcluded", boost::bind(&CWebServer::Cmd_ZWaveIsNodeExcluded, this, _1, _2, _3));
+			RegisterCommandCode("zwaveisnodereplaced", boost::bind(&CWebServer::Cmd_ZWaveIsNodeReplaced, this, _1, _2, _3));
+			RegisterCommandCode("zwaveishasnodefaileddone", boost::bind(&CWebServer::Cmd_ZWaveIsHasNodeFailedDone, this, _1, _2, _3));
 
 			RegisterCommandCode("zwavesoftreset", boost::bind(&CWebServer::Cmd_ZWaveSoftReset, this, _1, _2, _3));
 			RegisterCommandCode("zwavehardreset", boost::bind(&CWebServer::Cmd_ZWaveHardReset, this, _1, _2, _3));
@@ -642,6 +648,8 @@ namespace http {
 			RegisterCommandCode("zwavegroupinfo", boost::bind(&CWebServer::Cmd_ZWaveGroupInfo, this, _1, _2, _3));
 			RegisterCommandCode("zwavecancel", boost::bind(&CWebServer::Cmd_ZWaveCancel, this, _1, _2, _3));
 			RegisterCommandCode("applyzwavenodeconfig", boost::bind(&CWebServer::Cmd_ApplyZWaveNodeConfig, this, _1, _2, _3));
+			RegisterCommandCode("zwavehasnodefailed", boost::bind(&CWebServer::Cmd_ZWaveHasNodeFailed, this, _1, _2, _3));
+			RegisterCommandCode("zwavereplacefailednode", boost::bind(&CWebServer::Cmd_ZWaveReplaceFailedNode, this, _1, _2, _3));
 			RegisterCommandCode("requestzwavenodeconfig", boost::bind(&CWebServer::Cmd_ZWaveRequestNodeConfig, this, _1, _2, _3));
 			RegisterCommandCode("requestzwavenodeinfo", boost::bind(&CWebServer::Cmd_ZWaveRequestNodeInfo, this, _1, _2, _3));
 			RegisterCommandCode("zwavestatecheck", boost::bind(&CWebServer::Cmd_ZWaveStateCheck, this, _1, _2, _3));
@@ -1189,9 +1197,6 @@ namespace http {
 			else if (htype == HTYPE_RaspberryBMP085) {
 				//all fine here!
 			}
-			else if (htype == HTYPE_VirtualThermostat) {
-				//all fine here!
-			}
 			else if (htype == HTYPE_RaspberryHTU21D) {
 				//all fine here!
 			}
@@ -1341,6 +1346,8 @@ namespace http {
 				//All fine here
 			}
 			else if (htype == HTYPE_EcoCompteur) {
+				//all fine here!
+			} else if (htype == HTYPE_Meteorologisk) {
 				//all fine here!
 			}
 			else
@@ -1590,9 +1597,6 @@ namespace http {
 			else if (htype == HTYPE_RaspberryBMP085) {
 				//All fine here
 			}
-			else if (htype == HTYPE_VirtualThermostat) {
-				//all fine here!
-			}
 			else if (htype == HTYPE_RaspberryHTU21D) {
 				//All fine here
 			}
@@ -1738,6 +1742,9 @@ namespace http {
 				//All fine here
 			}
 			else if (htype == HTYPE_EnphaseAPI) {
+				//all fine here!
+			}
+			else if(htype == HTYPE_Meteorologisk) {
 				//all fine here!
 			}
 			else
@@ -3054,7 +3061,10 @@ namespace http {
 			}
 			Json::Value eventInfo;
 			eventInfo["name"] = request::findValue(&req, "event");
-			eventInfo["data"] = request::findValue(&req, "data");
+			if (!req.content.empty())
+				eventInfo["data"] = req.content.c_str(); // data from POST
+			else
+				eventInfo["data"] = request::findValue(&req, "data"); // data in URL
 
 			if (eventInfo["name"].empty())
 			{
@@ -3072,7 +3082,6 @@ namespace http {
 			std::string sstate = request::findValue(&req, "state");
 			std::string idx = request::findValue(&req, "idx");
 			std::string name = HTMLSanitizer::Sanitize(request::findValue(&req, "name"));
-			_log.Debug(DEBUG_WEBSERVER, "WEBS SetThermostatState  State cmd Id:%s Name:%s State:%s", idx.c_str(), name.c_str(), sstate.c_str());
 
 			if (
 				(idx.empty()) ||
@@ -4732,6 +4741,72 @@ namespace http {
 						devid = id;
 						sunitcode = "0";
 					}
+					else if (lighttype == 308)
+					{
+						//Casafan
+						dtype = pTypeFan;
+						subtype = sTypeCasafan;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 309)
+					{
+						//FT1211R
+						dtype = pTypeFan;
+						subtype = sTypeFT1211R;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 310)
+					{
+						//Falmec
+						dtype = pTypeFan;
+						subtype = sTypeFalmec;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 311)
+					{
+						//Lucci Air DC II
+						dtype = pTypeFan;
+						subtype = sTypeLucciAirDCII;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 312)
+					{
+						//Itho ECO
+						dtype = pTypeFan;
+						subtype = sTypeIthoECO;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 313)
+					{
+						//Novy
+						dtype = pTypeFan;
+						subtype = sTypeNovy;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
 					else if (lighttype == 400) {
 						//Openwebnet Bus Blinds
 						dtype = pTypeGeneralSwitch;
@@ -5360,6 +5435,72 @@ namespace http {
 						//Westinghouse
 						dtype = pTypeFan;
 						subtype = sTypeWestinghouse;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 308)
+					{
+						//Casafan
+						dtype = pTypeFan;
+						subtype = sTypeCasafan;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 309)
+					{
+						//FT1211R
+						dtype = pTypeFan;
+						subtype = sTypeFT1211R;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 310)
+					{
+						//Falmec
+						dtype = pTypeFan;
+						subtype = sTypeFalmec;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 311)
+					{
+						//Lucci Air DC II
+						dtype = pTypeFan;
+						subtype = sTypeLucciAirDCII;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 312)
+					{
+						//Itho ECO
+						dtype = pTypeFan;
+						subtype = sTypeIthoECO;
+						std::string id = request::findValue(&req, "id");
+						if (id.empty())
+							return;
+						devid = id;
+						sunitcode = "0";
+					}
+					else if (lighttype == 313)
+					{
+						//Novy
+						dtype = pTypeFan;
+						subtype = sTypeNovy;
 						std::string id = request::findValue(&req, "id");
 						if (id.empty())
 							return;
@@ -9137,6 +9278,15 @@ namespace http {
 								root["result"][ii]["forecast_url"] = base64_encode(forecast_url);
 							}
 						}
+						else if (pHardware->HwdType == HTYPE_Meteorologisk)
+						{
+							CMeteorologisk* pWHardware = reinterpret_cast<CMeteorologisk*>(pHardware);
+							std::string forecast_url = pWHardware->GetForecastURL();
+							if (forecast_url != "")
+							{
+								root["result"][ii]["forecast_url"] = base64_encode(forecast_url);
+							}
+						}
 					}
 
 					if ((pHardware != NULL) && (pHardware->HwdType == HTYPE_PythonPlugin))
@@ -10039,6 +10189,7 @@ namespace http {
 							sprintf(szTmp, "%" PRIu64, total_real);
 
 							float divider = m_sql.GetCounterDivider(int(metertype), int(dType), float(AddjValue2));
+
 							float musage = 0.0f;
 							switch (metertype)
 							{
@@ -10056,7 +10207,8 @@ namespace http {
 								sprintf(szTmp, "%d Liter", round(musage));
 								break;
 							case MTYPE_COUNTER:
-								sprintf(szTmp, "%" PRIu64, total_real);
+								musage = float(total_real) / divider;
+								sprintf(szTmp, "%g", musage);
 								if (!ValueUnits.empty())
 								{
 									strcat(szTmp, " ");
@@ -10099,7 +10251,7 @@ namespace http {
 							root["result"][ii]["Counter"] = szTmp;
 							break;
 						case MTYPE_COUNTER:
-							sprintf(szTmp, "%g %s", meteroffset + dvalue, ValueUnits.c_str());
+							sprintf(szTmp, "%g %s", meteroffset + (dvalue / divider), ValueUnits.c_str());
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["Counter"] = szTmp;
 							root["result"][ii]["ValueQuantity"] = ValueQuantity;
@@ -10161,7 +10313,7 @@ namespace http {
 								sprintf(szTmp, "%.3f m3", musage);
 								break;
 							case MTYPE_COUNTER:
-								sprintf(szTmp, "%" PRIu64, total_real);
+								sprintf(szTmp, "%g", float(total_real) / divider);
 								if (!ValueUnits.empty())
 								{
 									strcat(szTmp, " ");
@@ -10202,7 +10354,7 @@ namespace http {
 							root["result"][ii]["Counter"] = szTmp;
 							break;
 						case MTYPE_COUNTER:
-							sprintf(szTmp, "%" PRIu64 " %s", static_cast<uint64_t>(meteroffset + dvalue), ValueUnits.c_str());
+							sprintf(szTmp, "%g %s", meteroffset + (dvalue / divider), ValueUnits.c_str());
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["Counter"] = szTmp;
 							root["result"][ii]["ValueQuantity"] = ValueQuantity;
@@ -10269,7 +10421,7 @@ namespace http {
 							root["result"][ii]["Counter"] = szTmp;
 							break;
 						case MTYPE_COUNTER:
-							sprintf(szTmp, "%g %s", meteroffset + dvalue, ValueUnits.c_str());
+							sprintf(szTmp, "%g %s", meteroffset + (dvalue / divider), ValueUnits.c_str());
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["Counter"] = szTmp;
 							root["result"][ii]["ValueQuantity"] = ValueQuantity;
@@ -10334,7 +10486,7 @@ namespace http {
 								sprintf(szTmp, "%.3f m3", musage);
 								break;
 							case MTYPE_COUNTER:
-								sprintf(szTmp, "%llu %s", total_real, ValueUnits.c_str());
+								sprintf(szTmp, "%g %s", float(total_real) / divider, ValueUnits.c_str());
 								break;
 							default:
 								strcpy(szTmp, "0");
@@ -10364,7 +10516,7 @@ namespace http {
 							sprintf(szTmp, "%.03f", musage);
 							break;
 						case MTYPE_COUNTER:
-							sprintf(szTmp, "%llu", total_actual);
+							sprintf(szTmp, "%g", float(total_actual) / divider);
 							break;
 						default:
 							strcpy(szTmp, "0");
@@ -10392,7 +10544,7 @@ namespace http {
 							sprintf(szTmp, "%.3f m3", musage);
 							break;
 						case MTYPE_COUNTER:
-							sprintf(szTmp, "%llu %s", acounter, ValueUnits.c_str());
+							sprintf(szTmp, "%g %s", float(acounter) / divider, ValueUnits.c_str());
 							break;
 						default:
 							strcpy(szTmp, "0");
@@ -10738,20 +10890,6 @@ namespace http {
 							root["result"][ii]["SetPoint"] = szTmp;
 							root["result"][ii]["HaveTimeout"] = bHaveTimeout;
 							root["result"][ii]["TypeImg"] = "override_mini";
-							if (_hardwareNames[hardwareID].HardwareTypeVal == HTYPE_VirtualThermostat)
-							{
-
-								TOptionMap optionsMap = m_sql.BuildDeviceOptions(sOptions, false);
-
-								//build option values
-								for (const auto & itt : optionsMap)
-								{
-									std::string optionName = itt.first.c_str();
-									std::string optionValue = itt.second;
-									root["result"][ii][optionName.c_str()] = optionValue.c_str();
-								}
-								root["result"][ii]["nValue"] = nValue;
-							}
 						}
 					}
 					else if (dType == pTypeRadiator1)
@@ -12432,10 +12570,26 @@ namespace http {
 			std::string smessage = request::findValue(&req, "message");
 			if (smessage.empty())
 				return;
-			root["status"] = "OK";
 			root["title"] = "AddLogMessage";
 
-			_log.Log(LOG_STATUS, "%s", smessage.c_str());
+			_eLogLevel logLevel = LOG_STATUS;
+			std::string slevel = request::findValue(&req, "level");
+			if (!slevel.empty())
+			{
+				if ((slevel == "1") || (slevel == "normal"))
+					logLevel = LOG_NORM;
+				else if ((slevel == "2") || (slevel == "status"))
+					logLevel = LOG_STATUS;
+				else if ((slevel == "4") || (slevel == "error"))
+					logLevel = LOG_ERROR;
+				else {
+					root["status"] = "ERR";
+					return;
+				}
+			}
+			root["status"] = "OK";
+
+			_log.Log(logLevel, "%s", smessage.c_str());
 		}
 
 		void CWebServer::Cmd_ClearShortLog(WebEmSession & session, const request& req, Json::Value &root)
@@ -13850,14 +14004,6 @@ namespace http {
 								double tvalue = ConvertTemperature(atof(sd[0].c_str()), tempsign);
 								root["result"][ii]["te"] = tvalue;
 							}
-							//chill == romm temperature
-              //humidity = ppower
-							if ((dType == pTypeThermostat) && (dSubType == sTypeThermSetpoint))
-							{
-								double tvalue = ConvertTemperature(atof(sd[1].c_str()), tempsign);
-								root["result"][ii]["ch"] = tvalue;
-								root["result"][ii]["hu"] = sd[2];
-							}
 							if (
 								((dType == pTypeWIND) && (dSubType == sTypeWIND4)) ||
 								((dType == pTypeWIND) && (dSubType == sTypeWINDNoTemp))
@@ -14501,7 +14647,7 @@ namespace http {
 												sprintf(szTmp, "%.3f", TotalValue / divider);
 												break;
 											case MTYPE_COUNTER:
-												sprintf(szTmp, "%.1f", TotalValue);
+												sprintf(szTmp, "%g", TotalValue / divider);
 												break;
 											default:
 												strcpy(szTmp, "0");
@@ -14547,7 +14693,7 @@ namespace http {
 										sprintf(szTmp, "%.3f", TotalValue / divider);
 										break;
 									case MTYPE_COUNTER:
-										sprintf(szTmp, "%.1f", TotalValue);
+										sprintf(szTmp, "%g", TotalValue / divider);
 										break;
 									default:
 										strcpy(szTmp, "0");
@@ -14642,7 +14788,7 @@ namespace http {
 													sprintf(szTmp, "%.3f", TotalValue / divider);
 													break;
 												case MTYPE_COUNTER:
-													sprintf(szTmp, "%.1f", TotalValue);
+													sprintf(szTmp, "%g", TotalValue / divider);
 													break;
 												default:
 													strcpy(szTmp, "0");
@@ -14702,7 +14848,7 @@ namespace http {
 												sprintf(szTmp, "%.3f", TotalValue / divider);
 												break;
 											case MTYPE_COUNTER:
-												sprintf(szTmp, "%.1f", TotalValue);
+												sprintf(szTmp, "%g", TotalValue / divider);
 												break;
 											default:
 												strcpy(szTmp, "0");
@@ -14746,7 +14892,7 @@ namespace http {
 									sprintf(szTmp, "%.3f", TotalValue / divider);
 									break;
 								case MTYPE_COUNTER:
-									sprintf(szTmp, "%.1f", TotalValue);
+									sprintf(szTmp, "%g", TotalValue / divider);
 									break;
 								default:
 									strcpy(szTmp, "0");
@@ -15229,7 +15375,8 @@ namespace http {
 									szValue = szTmp;
 									break;
 								case MTYPE_COUNTER:
-									//value already set above!
+									sprintf(szTmp, "%g", atof(szValue.c_str()) / divider);
+									szValue = szTmp;
 									break;
 								default:
 									szValue = "0";
@@ -15329,7 +15476,8 @@ namespace http {
 								szValue = szTmp;
 								break;
 							case MTYPE_COUNTER:
-								//value already set above!
+								sprintf(szTmp, "%g", atof(szValue.c_str()) / divider);
+								szValue = szTmp;
 								break;
 							default:
 								szValue = "0";
@@ -16497,10 +16645,10 @@ namespace http {
 									root["result"][ii]["c"] = szTmp;
 									break;
 								case MTYPE_COUNTER:
-									sprintf(szTmp, "%.0f", atof(szValue.c_str()));
+									sprintf(szTmp, "%g", atof(szValue.c_str()) / divider);
 									root["result"][ii]["v"] = szTmp;
 									if (fcounter != 0)
-										sprintf(szTmp, "%.0f", AddjValue + ((fcounter - atof(szValue.c_str()))));
+										sprintf(szTmp, "%g", AddjValue + ((fcounter - atof(szValue.c_str())) / divider));
 									else
 										strcpy(szTmp, "0");
 									root["result"][ii]["c"] = szTmp;
@@ -16537,7 +16685,7 @@ namespace http {
 									root["resultprev"][iPrev]["v"] = szTmp;
 									break;
 								case MTYPE_COUNTER:
-									sprintf(szTmp, "%.0f", atof(szValue.c_str()));
+									sprintf(szTmp, "%g", atof(szValue.c_str()) / divider);
 									root["resultprev"][iPrev]["v"] = szTmp;
 									break;
 								}
@@ -16816,9 +16964,9 @@ namespace http {
 								root["result"][ii]["c"] = szTmp;
 								break;
 							case MTYPE_COUNTER:
-								sprintf(szTmp, "%.0f", atof(szValue.c_str()));
+								sprintf(szTmp, "%g", atof(szValue.c_str()) / divider);
 								root["result"][ii]["v"] = szTmp;
-								sprintf(szTmp, "%.0f", AddjValue + ((atof(sValue.c_str()) - atof(szValue.c_str()))));
+								sprintf(szTmp, "%g", AddjValue + ((atof(sValue.c_str()) - atof(szValue.c_str())) / divider));
 								root["result"][ii]["c"] = szTmp;
 								break;
 							}

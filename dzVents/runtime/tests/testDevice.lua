@@ -28,7 +28,7 @@ local function getDevice_(
 	additionalRootData,
 	additionalDataData,
 	hardwareType,
-	hardwaryTypeValue,
+	hardwareTypeValue,
 	baseType,
 	dummyLogger,
 	batteryLevel,
@@ -78,7 +78,7 @@ local function getDevice_(
 		["_state"] = state,
 		["hardwareName"] = "hw1",
 		["hardwareType"] = hardwareType,
-		["hardwareTypeValue"] = hardwaryTypeValue,
+		["hardwareTypeValue"] = hardwareTypeValue,
 		["hardwareID"] = 1,
 		['protected'] = true,
 		['_nValue'] = 123,
@@ -743,7 +743,7 @@ describe('device', function()
 			end
 			local test = 'sValue'
 			device.setValues(12,test,13,14,test)
-			assert.is_same('http://127.0.0.1:8080/json.htm?type=command&param=udevice&idx=1&nvalue=12&svalue=sValue;13;14;sValue', res)
+			assert.is_same('http://127.0.0.1:8080/json.htm?type=command&param=udevice&idx=1&nvalue=12&svalue=sValue;13;14;sValue&parsetrigger=false', res)
 		end)
 
 		it('should detect an evohome device', function()
@@ -1097,11 +1097,25 @@ describe('device', function()
 		it('should detect a custom sensor device', function()
 			local device = getDevice(domoticz, {
 				['name'] = 'myDevice',
-				['subType'] = 'Custom Sensor'
+				['subType'] = 'Custom Sensor',
+				['rawData'] = { [1]="12" }
 			})
 
 			device.updateCustomSensor(12)
 			assert.is_same({ { ["UpdateDevice"] = {idx=1, nValue=0, sValue="12", _trigger=true} } }, commandArray)
+
+			assert.is_same(12, device.sensorValue)
+			assert.is_same('number' , type(device.sensorValue) )
+
+			local device = getDevice(domoticz, {
+				['name'] = 'myDevice',
+				['subType'] = 'Custom Sensor',
+				['rawData'] = { [1]="12a" }
+			})
+
+			assert.is_same('12a', device.sensorValue)
+			assert.is_same('string', type(device.sensorValue))
+
 		end)
 
 		it('should detect a solar radiation device', function()
@@ -1526,6 +1540,42 @@ describe('device', function()
 
 				group.setDescription('groupie')
 				assert.is_same('http://127.0.0.1:8080/json.htm?type=updatescene&scenetype=1&idx=1&name=myGroup&description=groupie', res)
+			end)
+		end)
+
+		describe('hardware', function()
+
+			it('should detect hardware', function()
+				local hardware = getDevice(domoticz, {
+					['baseType'] = 'hardware',
+					['name'] = 'myHardware',
+					['hardwareType'] = 'myHardware type',
+					['hardwareTypeValue'] = '234',
+				})
+
+				assert.is_false(hardware.isHTTPResponse)
+				assert.is_false(hardware.isVariable)
+				assert.is_false(hardware.isTimer)
+				assert.is_false(hardware.isDevice)
+				assert.is_false(hardware.isGroup)
+				assert.is_false(hardware.isScene)
+				assert.is_false(hardware.isSecurity)
+				assert.is_true(hardware.isHardware)
+			end)
+
+			it('should return attributes correctly', function()
+				local hardware = getDevice(domoticz, {
+					['baseType'] = 'hardware',
+					['name'] = 'myHardware',
+					['hardwareType'] = 'myHardware type',
+					['hardwareTypeValue'] = 234,
+				})
+
+				assert.is_equal(hardware.name,'myHardware' )
+				assert.is_equal(hardware.hardwareType,'myHardware type' )
+				assert.is_equal(hardware.hardwareTypeValue,234)
+				assert.is_true(hardware.isHardware)
+
 			end)
 		end)
 

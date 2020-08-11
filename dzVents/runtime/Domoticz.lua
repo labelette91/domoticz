@@ -29,8 +29,8 @@ local function Domoticz(settings)
 
 	-- check if the user set a lat/lng
 	-- if not, then daytime, nighttime is incorrect
-	if (_G.timeofday['SunriseInMinutes'] == 0 and _G.timeofday['SunsetInMinutes'] == 0) then
-		utils.log('No information about sunrise and sunset available. Please set lat/lng information in settings.', utils.LOG_ERROR)
+	if not(globalvariables.locationSet) then
+		utils.log('No information about longitude / latitude available. Please set lat/lng information in settings.', utils.LOG_ERROR)
 	end
 
 	nowTime['isDayTime'] = timeofday['Daytime']
@@ -39,6 +39,7 @@ local function Domoticz(settings)
 	nowTime['isNightTime'] = timeofday['Nighttime']
 	nowTime['sunriseInMinutes'] = timeofday['SunriseInMinutes']
 	nowTime['sunsetInMinutes'] = timeofday['SunsetInMinutes']
+	nowTime['solarnoonInMinutes'] = timeofday['SunAtSouthInMinutes']
 	nowTime['civTwilightStartInMinutes'] = timeofday['CivTwilightStartInMinutes']
 	nowTime['civTwilightEndInMinutes'] = timeofday['CivTwilightEndInMinutes']
 
@@ -49,6 +50,7 @@ local function Domoticz(settings)
 		['devices'] = {},
 		['scenes'] = {},
 		['groups'] = {},
+		['hardware'] = {},
 		['changedDevices'] = {},
 		['changedVariables'] = {},
 		['security'] = globalvariables['Security'],
@@ -70,16 +72,19 @@ local function Domoticz(settings)
 	merge(self, constants)
 	merge(self.utils, utils)
 
-	-- add domoticz commands to the commandArray
-	function self.sendCommand(command, value)
-		table.insert(self.commandArray, { [command] = value })
-
+	-- add domoticz commands to the commandArray or delay
+	function self.sendCommand(command, value, delay)
+		if delay and tonumber(delay) then
+			self.emitEvent('___' .. command .. '__' , value ).afterSec(delay)
+		else
+			table.insert(self.commandArray, { [command] = value })
+		end
 		-- return a reference to the newly added item
-		return self.commandArray[#self.commandArray], command, value
+		return self.commandArray[#self.commandArray], command, value, delay
 	end
 
 	-- have domoticz send a push notification
-	function self.notify(subject, message, priority, sound, extra, subSystems)
+	function self.notify(subject, message, priority, sound, extra, subSystems, delay)
 		-- set defaults
 		if (priority == nil) then priority = self.PRIORITY_NORMAL end
 		if (message == nil) then message = '' end
@@ -117,18 +122,18 @@ local function Domoticz(settings)
 				.. '#' .. strip(sound)
 				.. '#' .. strip(extra)
 				.. '#' .. strip(_subSystem)
-				self.sendCommand('SendNotification', data)
-	
+				self.sendCommand('SendNotification', data, delay)
+
 	end
 
 	-- have domoticz send an email
-	function self.email(subject, message, mailTo)
+	function self.email(subject, message, mailTo, delay)
 		if (mailTo == nil) then
 			utils.log('No mail-to is provided', utils.LOG_ERROR)
 		else
 			if (subject == nil) then subject = '' end
 			if (message == nil) then message = '' end
-			self.sendCommand('SendEmail', subject .. '#' .. message .. '#' .. mailTo)
+			self.sendCommand('SendEmail', subject .. '#' .. message .. '#' .. mailTo, delay)
 		end
 	end
 
@@ -156,8 +161,8 @@ local function Domoticz(settings)
 	end
 
 	-- have domoticz send an sms
-	function self.sms(message)
-		self.sendCommand('SendSMS', message)
+	function self.sms(message, delay)
+		self.sendCommand('SendSMS', message, delay)
 	end
 
 	function self.emitEvent(eventname, data)
@@ -248,6 +253,31 @@ local function Domoticz(settings)
 		end
 	end
 
+	-- get information from hardware
+	function self.hardwareInfo( id )
+		local hardware, deviceNames, deviceIds = {}, {}, {}
+
+		local hardwareDevices = self.devices().filter(function(dv)
+			return dv.hardwareId == id or dv.hardwareName == id
+		end).forEach(function(sdv)
+			table.insert(deviceNames, sdv.name)
+			table.insert(deviceIds, sdv.id)
+		end)
+
+		if #deviceNames > 0 then
+			local aDevice = self.devices(deviceNames[1])
+
+			hardware.name = aDevice.hardwareName
+			hardware.id = aDevice.hardwareID
+			hardware.type = aDevice.hardwareType
+			hardware.typeValue = aDevice.TypeValue
+			hardware.deviceNames = deviceNames
+			hardware.deviceIds = deviceIds
+		end
+
+		return hardware
+	end
+
 	-- send a scene switch command
 	function self.setScene(scene, value)
 		utils.log('setScene is deprecated. Please use the scene object directly.', utils.LOG_INFO)
@@ -259,7 +289,6 @@ local function Domoticz(settings)
 		utils.log('switchGroup is deprecated. Please use the group object directly.', utils.LOG_INFO)
 		return TimedCommand(self, 'Group:' .. group, value, 'device', group.state)
 	end
-
 	if (_G.TESTMODE) then
 		function self._getUtilsInstance()
 			return utils
@@ -289,18 +318,15 @@ local function Domoticz(settings)
 		self.utils.dumpTable(settings, '> ', file)
 	end
 
-	function self.logDevice(device, file)
-		self.utils.dumpTable(device, '> ', file)
-	end
-
-	function self.logCamera(camera, file)
-		self.utils.dumpTable(camera, '> ', file)
+	function self.logObject(object, file, objectType )
+		self.utils.dumpTable(object, objectType .. '> ', file)
 	end
 
 	self.__cameras = {}
 	self.__devices = {}
 	self.__scenes = {}
 	self.__groups = {}
+	self.__hardware = {}
 	self.__variables = {}
 
 	function self._getItemFromData(baseType, id)
@@ -341,6 +367,9 @@ local function Domoticz(settings)
 		elseif (baseType == 'camera') then
 			cache = self.__cameras
 			constructor = Camera
+		elseif (baseType == 'hardware') then
+			cache = self.__hardware
+			constructor = Device
 		else
 			-- ehhhh
 		end
@@ -365,10 +394,10 @@ local function Domoticz(settings)
 
 		local noObjectMessage = 'There is no ' .. baseType .. ' with that name or id: ' .. tostring(id)
 
-		if (baseType == 'scene' or baseType == 'group') then
-			-- special case for scenes and groups
-			-- as they may not be in the collection if Domoticz wasn't restarted after creating the scene or group.
-				noObjectMessage = noObjectMessage .. '. If you just created the '.. baseType .. ' you may have to restart Domoticz to make it become visible to dzVents.'
+		if (baseType == 'scene' or baseType == 'group' or baseType == 'hardware') then
+			-- special case for hardware, scenes and groups
+			-- as they may not be in the collection if Domoticz wasn't restarted after creating the hardware, scene or group.
+			noObjectMessage = noObjectMessage .. '. If you just created the '.. baseType .. ' you may have to restart Domoticz to make it become visible to dzVents.'
 		end
 		utils.log(noObjectMessage, utils.LOG_ERROR)
 	end
@@ -532,6 +561,14 @@ local function Domoticz(settings)
 			return self._getObject('camera', id)
 		else
 			return self._setIterators({}, true, 'camera', false)
+		end
+	end
+
+	function self.hardware(id)
+		if (id ~= nil) then
+			return self._getObject('hardware', id)
+		else
+			return self._setIterators({}, true, 'hardware', false)
 		end
 	end
 
