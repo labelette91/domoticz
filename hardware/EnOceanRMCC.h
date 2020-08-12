@@ -2,7 +2,7 @@
 #define	CEnOceanRMCC_H
 
 #include "EnOcean.h"
-#include "../json/json.h"
+#include <json/json.h>
 
 #include <string>
 
