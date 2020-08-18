@@ -10940,7 +10940,7 @@ namespace http {
 							else
 							{
 								//Imperial
-								sprintf(szTmp, "%.1f in", vis*0.6214f);
+								sprintf(szTmp, "%.1f in", vis * 0.3937007874015748f);
 							}
 							root["result"][ii]["Data"] = szTmp;
 							root["result"][ii]["HaveTimeout"] = bHaveTimeout;
@@ -14318,7 +14318,12 @@ namespace http {
 								root["result"][ii]["d"] = sd[1].substr(0, 16);
 								float fValue = float(atof(sd[0].c_str())) / vdiv;
 								if (metertype == 1)
-									fValue *= 0.6214f;
+								{
+									if ((dType == pTypeGeneral) && (dSubType == sTypeDistance))
+										fValue *= 0.3937007874015748f; //inches
+									else
+										fValue *= 0.6214f; //miles
+								}
 								if ((dType == pTypeGeneral) && (dSubType == sTypeVoltage))
 									sprintf(szTmp, "%.3f", fValue);
 								else if ((dType == pTypeGeneral) && (dSubType == sTypeCurrent))
@@ -16245,8 +16250,18 @@ namespace http {
 
 								if (metertype == 1)
 								{
-									fValue1 *= 0.6214f;
-									fValue2 *= 0.6214f;
+									if ((dType == pTypeGeneral) && (dSubType == sTypeDistance))
+									{
+										//Inches
+										fValue1 *= 0.3937007874015748f;
+										fValue2 *= 0.3937007874015748f;
+									}
+									else
+									{
+										//Miles
+										fValue1 *= 0.6214f;
+										fValue2 *= 0.6214f;
+									}
 								}
 								if (
 									((dType == pTypeGeneral) && (dSubType == sTypeVoltage)) ||
@@ -16849,8 +16864,18 @@ namespace http {
 							float fValue2 = float(atof(result[0][1].c_str())) / vdiv;
 							if (metertype == 1)
 							{
-								fValue1 *= 0.6214f;
-								fValue2 *= 0.6214f;
+								if ((dType == pTypeGeneral) && (dSubType == sTypeDistance))
+								{
+									//Inches
+									fValue1 *= 0.3937007874015748f;
+									fValue2 *= 0.3937007874015748f;
+								}
+								else
+								{
+									//Miles
+									fValue1 *= 0.6214f;
+									fValue2 *= 0.6214f;
+								}
 							}
 
 							if ((dType == pTypeGeneral) && (dSubType == sTypeVoltage))

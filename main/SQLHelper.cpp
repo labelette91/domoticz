@@ -7824,16 +7824,28 @@ bool CSQLHelper::BackupDatabase(const std::string& OutputFile)
 
 	// Open the sqlite3_backup object used to accomplish the transfer
 	pBackup = sqlite3_backup_init(pFile, "main", m_dbase, "main");
+
+	time_t startTime = time(nullptr);
+
 	if (pBackup)
 	{
 		// Each iteration of this loop copies 5 database pages from database
 		// pDb to the backup database.
 		do {
-			rc = sqlite3_backup_step(pBackup, 5);
+			rc = sqlite3_backup_step(pBackup, 256);
 			//xProgress(  sqlite3_backup_remaining(pBackup), sqlite3_backup_pagecount(pBackup) );
-			//if( rc==SQLITE_OK || rc==SQLITE_BUSY || rc==SQLITE_LOCKED ){
-			  //sqlite3_sleep(250);
-			//}
+			if( rc==SQLITE_OK || rc==SQLITE_BUSY || rc==SQLITE_LOCKED ){
+			  sqlite3_sleep(250);
+			}
+			if (rc == SQLITE_BUSY || rc == SQLITE_LOCKED) {
+				time_t actTime = time(nullptr);
+				if (actTime - startTime > 2 * 60)
+				{
+					//Backup should be done in 2 minutes
+					_log.Log(LOG_ERROR, "SQLHelper: Problem making backup! Check destination folder/rights. Process timeout!");
+					break;
+				}
+			}
 		} while (rc == SQLITE_OK || rc == SQLITE_BUSY || rc == SQLITE_LOCKED);
 
 		/* Release resources allocated by backup_init(). */
