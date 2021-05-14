@@ -216,8 +216,10 @@ enum _eHardwareTypes {
 	HTYPE_OctoPrint,			//119
 	HTYPE_Tesla,                //120
 	HTYPE_Meteorologisk,        //121
+	HTYPE_Mercedes,				//122
 
 	HTYPE_VirtualThermostat,	//
+
 	HTYPE_END
 };
 

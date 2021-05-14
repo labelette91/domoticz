@@ -1003,6 +1003,9 @@ bool MainWorker::AddHardwareFromParams(
 	case HTYPE_Tesla:
 		pHardware = new CeVehicle(ID, CeVehicle::Tesla, Username, Password, Mode1, Mode2, Mode3, Extra);
 		break;
+	case HTYPE_Mercedes:
+		pHardware = new CeVehicle(ID, CeVehicle::Mercedes, Username, Password, Mode1, Mode2, Mode3, Extra);
+		break;
 	case HTYPE_Honeywell:
 		pHardware = new CHoneywell(ID, Username, Password, Extra);
 		break;
@@ -3317,9 +3320,15 @@ void MainWorker::decode_Wind(const CDomoticzHardwareBase* pHardware, const tRBUF
 		strDirection = "---";
 
 	dDirection = round(dDirection);
-
+	
 	int intSpeed = (pResponse->WIND.av_speedh * 256) + pResponse->WIND.av_speedl;
 	int intGust = (pResponse->WIND.gusth * 256) + pResponse->WIND.gustl;
+
+	float AddjValue = 0.0f;
+	float AddjMulti = 1.0f;
+	m_sql.GetAddjustment(pHardware->m_HwdID, ID.c_str(), Unit, devType, subType, AddjValue, AddjMulti);
+	intSpeed = int(float(intSpeed) * AddjMulti);
+	intGust = int(float(intGust) * AddjMulti);
 
 	if (pResponse->WIND.subtype == sTypeWIND6)
 	{
@@ -3349,9 +3358,6 @@ void MainWorker::decode_Wind(const CDomoticzHardwareBase* pHardware, const tRBUF
 				return;
 			}
 
-			float AddjValue = 0.0f;
-			float AddjMulti = 1.0f;
-			m_sql.GetAddjustment(pHardware->m_HwdID, ID.c_str(), Unit, devType, subType, AddjValue, AddjMulti);
 			temp += AddjValue;
 
 			if (!pResponse->WIND.chillsign)
@@ -3366,9 +3372,6 @@ void MainWorker::decode_Wind(const CDomoticzHardwareBase* pHardware, const tRBUF
 		}
 		else if (pResponse->WIND.subtype == sTypeWINDNoTemp)
 		{
-			float AddjValue = 0.0f;
-			float AddjMulti = 1.0f;
-			m_sql.GetAddjustment(pHardware->m_HwdID, ID.c_str(), Unit, devType, subType, AddjValue, AddjMulti);
 			temp += AddjValue;
 
 			if (!pResponse->WIND.chillsign)
@@ -12367,10 +12370,24 @@ bool MainWorker::SwitchLightInt(const std::vector<std::string>& sd, std::string 
 				}
 			}
 		}
-		else if (((switchtype == STYPE_BlindsPercentage) ||
-			(switchtype == STYPE_BlindsPercentageInverted)) &&
-			(gswitch.cmnd == gswitch_sSetLevel) && (level == 100))
-			gswitch.cmnd = gswitch_sOn;
+		else if (
+			(
+				(switchtype == STYPE_BlindsPercentage)
+				|| (switchtype == STYPE_BlindsPercentageInverted)
+				|| (switchtype == STYPE_VenetianBlindsUS)
+				|| (switchtype == STYPE_VenetianBlindsEU)
+				)
+			&& (gswitch.cmnd == gswitch_sSetLevel) && (level == 100)
+		) {
+			if (pHardware->HwdType == HTYPE_OpenZWave)
+			{
+				//For Multilevel switches, 255 (0xFF) means Restore to most recent (non-zero) level,
+				//which is perfect for dimmers, but for blinds (and using the slider), we set it to 99%
+				level = 99;
+			}
+			else
+				gswitch.cmnd = gswitch_sOn;
+		}
 
 		gswitch.level = (uint8_t)level;
 		gswitch.rssi = 12;
@@ -13568,7 +13585,7 @@ void MainWorker::HeartbeatCheck()
 						}
 					}
 					else {
-						totNum = pHardware->m_DataTimeout / 60;
+						totNum = pHardware->m_DataTimeout / 86400;
 						if (totNum == 1) {
 							sDataTimeout = "Day";
 						}

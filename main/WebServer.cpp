@@ -1026,8 +1026,7 @@ namespace http {
 						bDoAdd = false;
 					}
 #endif
-
-		}
+				}
 #endif
 #endif
 #ifndef WITH_OPENZWAVE
@@ -1047,9 +1046,11 @@ namespace http {
 #endif
 				if (ii == HTYPE_PythonPlugin)
 					bDoAdd = false;
+
 				if (bDoAdd)
 					_htypes[Hardware_Type_Desc(ii)] = ii;
-	}
+			}
+
 			//return a sorted hardware list
 			int ii = 0;
 			for (const auto & itt : _htypes)
@@ -1259,6 +1260,7 @@ namespace http {
 				(htype == HTYPE_THERMOSMART) ||
 				(htype == HTYPE_Tado) ||
 				(htype == HTYPE_Tesla) ||
+				(htype == HTYPE_Mercedes) ||
 				(htype == HTYPE_Netatmo)
 				)
 			{
@@ -1656,6 +1658,7 @@ namespace http {
 				(htype == HTYPE_THERMOSMART) ||
 				(htype == HTYPE_Tado) ||
 				(htype == HTYPE_Tesla) ||
+				(htype == HTYPE_Mercedes) ||
 				(htype == HTYPE_Netatmo)
 				)
 			{
@@ -14996,6 +14999,7 @@ namespace http {
 
 							int intSpeed = atoi(sd[1].c_str());
 							int intGust = atoi(sd[2].c_str());
+
 							if (m_sql.m_windunit != WINDUNIT_Beaufort)
 							{
 								sprintf(szTmp, "%.1f", float(intSpeed) * m_sql.m_windscale);
