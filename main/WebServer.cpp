@@ -10893,6 +10893,21 @@ namespace http {
 							root["result"][ii]["SetPoint"] = szTmp;
 							root["result"][ii]["HaveTimeout"] = bHaveTimeout;
 							root["result"][ii]["TypeImg"] = "override_mini";
+							if (_hardwareNames[hardwareID].HardwareTypeVal == HTYPE_VirtualThermostat)
+							{
+
+								TOptionMap optionsMap = m_sql.BuildDeviceOptions(sOptions, false);
+
+								//build option values
+								for (const auto & itt : optionsMap)
+								{
+									std::string optionName = itt.first.c_str();
+									std::string optionValue = itt.second;
+									root["result"][ii][optionName.c_str()] = optionValue.c_str();
+								}
+								root["result"][ii]["nValue"] = nValue;
+							}
+
 						}
 					}
 					else if (dType == pTypeRadiator1)
