@@ -145,6 +145,7 @@
 #include "../hardware/Buienradar.h"
 #include "../hardware/OctoPrintMQTT.h"
 #include "../hardware/Meteorologisk.h"
+#include "../hardware/AirconWithMe.h"
 
 // load notifications configuration
 #include "../notifications/NotificationHelper.h"
@@ -1126,6 +1127,9 @@ bool MainWorker::AddHardwareFromParams(
 		break;
 	case HTYPE_Meteorologisk:
 		pHardware = new CMeteorologisk(ID, Password); //Password is location here.
+		break;
+	case HTYPE_AirconWithMe:
+		pHardware = new CAirconWithMe(ID, Address, Port, Username, Password);
 		break;
 	}
 
@@ -12728,7 +12732,7 @@ bool MainWorker::SetSetPointInt(const std::vector<std::string>& sd, const float 
 		else if (pHardware->HwdType == HTYPE_Tado)
 		{
 			CTado* pGateway = reinterpret_cast<CTado*>(pHardware);
-			pGateway->SetSetpoint(ID4, TempValue);
+			pGateway->SetSetpoint(ID2, ID3, ID4, TempValue);
 		}
 		else if (pHardware->HwdType == HTYPE_Netatmo)
 		{

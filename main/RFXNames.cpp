@@ -282,8 +282,8 @@ static const STR_TABLE_SINGLE	HardwareTypeTable[] =
 	{ HTYPE_DenkoviTCPDevices, "Denkovi Modules with LAN (TCP) Interface",			"Denkovi" },
 	{ HTYPE_OctoPrint, "OctoPrint (MQTT/Gina Haussge) with LAN interface",			"OctoPrint" },
 	{ HTYPE_Meteorologisk, "Meteorologisk institutt Norway (Weather Lookup)",		"Meteorologisk" },
-	
-	{ HTYPE_VirtualThermostat, "Virtual Thermostat" , "VirtualThermostat" },
+	{ HTYPE_VirtualThermostat, "Virtual Thermostat"							,       "VirtualThermostat" },
+	{ HTYPE_AirconWithMe, "AirconWithMe Wifi Airco module",							"AirconWithMe" },
 	{ 0, NULL, NULL }
 };
 
