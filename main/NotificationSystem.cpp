@@ -27,11 +27,9 @@ const CNotificationSystem::_tNotificationStatusTable CNotificationSystem::status
 	{ Notification::STATUS_WARNING,        "warning"         }
 };
 
-CNotificationSystem::CNotificationSystem(void)
-{
-}
+CNotificationSystem::CNotificationSystem() = default;
 
-CNotificationSystem::~CNotificationSystem(void)
+CNotificationSystem::~CNotificationSystem()
 {
 	Stop();
 }
@@ -58,7 +56,7 @@ void CNotificationSystem::UnlockNotificationQueueThread()
 {
 	// Push dummy message to unlock queue
 	_tNotificationQueue item;
-	item.trigger = NULL;
+	item.trigger = nullptr;
 	m_notificationqueue.push(item);
 }
 
@@ -117,7 +115,7 @@ bool CNotificationSystem::NotifyWait(const Notification::_eType type, const Noti
 
 bool CNotificationSystem::Register(CNotificationObserver* pNotifier)
 {
-	if (pNotifier == NULL)
+	if (pNotifier == nullptr)
 		return false;
 
 	boost::unique_lock<boost::shared_mutex> lock(m_mutex);
@@ -132,7 +130,7 @@ bool CNotificationSystem::Register(CNotificationObserver* pNotifier)
 
 bool CNotificationSystem::Unregister(CNotificationObserver* pNotifier)
 {
-	if (pNotifier == NULL)
+	if (pNotifier == nullptr)
 		return false;
 
 	if (m_notifiers.size() > 0)

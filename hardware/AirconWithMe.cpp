@@ -49,13 +49,6 @@ CAirconWithMe::CAirconWithMe(const int id, const std::string& ipaddress, const u
     };
 }
 
-
-CAirconWithMe::~CAirconWithMe(void)
-{
-
-}
-
-
 bool CAirconWithMe::StartHardware()
 {
 	RequestStart();
@@ -92,7 +85,7 @@ void CAirconWithMe::Do_Work()
 		countdown--;
 		if (countdown % 12 == 0) 
 		{
-			m_LastHeartbeat = mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 		if (countdown == 0) 
 		{

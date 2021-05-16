@@ -20,13 +20,13 @@
 
 #define round(a) ( int ) ( a + .5 )
 
-C1Wire::C1Wire(const int ID, const int sensorThreadPeriod, const int switchThreadPeriod, const std::string& path) :
-	m_system(NULL),
-	m_sensorThreadPeriod(sensorThreadPeriod),
-	m_switchThreadPeriod(switchThreadPeriod),
-	m_path(path),
-	m_bSensorFirstTime(true),
-	m_bSwitchFirstTime(true)
+C1Wire::C1Wire(const int ID, const int sensorThreadPeriod, const int switchThreadPeriod, const std::string &path)
+	: m_system(nullptr)
+	, m_sensorThreadPeriod(sensorThreadPeriod)
+	, m_switchThreadPeriod(switchThreadPeriod)
+	, m_path(path)
+	, m_bSensorFirstTime(true)
+	, m_bSwitchFirstTime(true)
 {
 	m_HwdID = ID;
 
@@ -38,10 +38,6 @@ C1Wire::C1Wire(const int ID, const int sensorThreadPeriod, const int switchThrea
 		m_switchThreadPeriod = 100;
 
 	DetectSystem();
-}
-
-C1Wire::~C1Wire()
-{
 }
 
 void C1Wire::DetectSystem()
@@ -86,7 +82,7 @@ bool C1Wire::StartHardware()
 	m_bIsStarted = true;
 	sOnConnected(this);
 	StartHeartbeatThread();
-	return (m_threadSensors != NULL && m_threadSwitches != NULL);
+	return (m_threadSensors != nullptr && m_threadSwitches != nullptr);
 }
 
 bool C1Wire::StopHardware()
@@ -109,7 +105,7 @@ bool C1Wire::StopHardware()
 	if (m_system)
 	{
 		delete m_system;
-		m_system = NULL;
+		m_system = nullptr;
 	}
 	StopHeartbeatThread();
 	return true;
@@ -532,7 +528,7 @@ void C1Wire::ReportVoltage(const std::string& /*deviceId*/, const int unit, cons
 
 	tsen.RFXSENSOR.msg1 = (BYTE)(voltage / 256);
 	tsen.RFXSENSOR.msg2 = (BYTE)(voltage - (tsen.RFXSENSOR.msg1 * 256));
-	sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXSENSOR, NULL, 255);
+	sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXSENSOR, nullptr, 255);
 }
 
 void C1Wire::ReportIlluminance(const std::string& deviceId, const float illuminescence)

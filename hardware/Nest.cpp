@@ -63,10 +63,6 @@ m_Password(CURLEncode::URLEncode(Password))
 	Init();
 }
 
-CNest::~CNest(void)
-{
-}
-
 void CNest::Init()
 {
 	m_AccessToken = "";
@@ -110,7 +106,7 @@ void CNest::Do_Work()
 		sec_counter++;
 		if (sec_counter % 12 == 0)
 		{
-			m_LastHeartbeat = mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 
 		if (sec_counter % NEST_POLL_INTERVAL == 0)
@@ -307,7 +303,7 @@ void CNest::UpdateSmokeSensor(const unsigned char Idx, const bool bOn, const std
 			bNoChange = true;
 		if (bNoChange)
 		{
-			time_t now = time(0);
+			time_t now = time(nullptr);
 			struct tm ltime;
 			localtime_r(&now, &ltime);
 
@@ -725,7 +721,7 @@ bool CNest::SetAway(const unsigned char Idx, const bool bIsAway)
 
 	Json::Value root;
 	root["away"] = bIsAway;
-	root["away_timestamp"] = (int)mytime(NULL);
+	root["away_timestamp"] = (int)mytime(nullptr);
 	root["away_setter"] = 0;
 
 	std::string sResult;

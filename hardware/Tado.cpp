@@ -28,10 +28,6 @@
 #define TADO_TOKEN_MAXLOOPS 12		// Default token validity is 600 seconds before it needs to be refreshed.
 									// Each cycle takes 30-35 seconds, so let's stay a bit on the safe side.
 
-CTado::~CTado(void)
-{
-}
-
 CTado::CTado(const int ID, const std::string &username, const std::string &password):
 m_TadoUsername(username),
 m_TadoPassword(password)
@@ -538,7 +534,7 @@ void CTado::Do_Work()
 		iSecCounter++;
 		if (iSecCounter % 12 == 0)
 		{
-			m_LastHeartbeat = mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 
 		if (iSecCounter % TADO_POLL_INTERVAL == 0)

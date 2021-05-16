@@ -21,17 +21,13 @@
 
 extern http::server::CWebServerHelper m_webservers;
 
-OTGWBase::OTGWBase(void) :
-	m_Version("--")
+OTGWBase::OTGWBase()
+	: m_Version("--")
 {
 	m_OutsideTemperatureIdx=0;//use build in
 	m_bufferpos = 0;
 	m_OverrideTemperature = 0.0f;
 	m_bRequestVersion = true;
-}
-
-OTGWBase::~OTGWBase(void)
-{
 }
 
 void OTGWBase::SetModes(const int Mode1, const int /*Mode2*/, const int /*Mode3*/, const int /*Mode4*/, const int /*Mode5*/, const int /*Mode6*/)
@@ -253,7 +249,7 @@ void OTGWBase::GetGatewayDetails()
 
 void OTGWBase::SendTime()
 {
-	time_t atime = mytime(NULL);
+	time_t atime = mytime(nullptr);
 	struct tm ltime;
 	localtime_r(&atime, &ltime);
 
@@ -555,7 +551,7 @@ namespace http {
 			cmnd = rcmnd + rdata;
 
 			OTGWBase *pOTGW = reinterpret_cast<OTGWBase*>(m_mainworker.GetHardware(atoi(idx.c_str())));
-			if (pOTGW == NULL)
+			if (pOTGW == nullptr)
 				return;
 
 			_log.Log(LOG_STATUS, "User: %s initiated a manual command: %s", session.username.c_str(), cmnd.c_str());

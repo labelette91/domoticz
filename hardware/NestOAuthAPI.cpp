@@ -40,10 +40,6 @@ CNestOAuthAPI::CNestOAuthAPI(const int ID, const std::string &apikey, const std:
 	Init();
 }
 
-CNestOAuthAPI::~CNestOAuthAPI(void)
-{
-}
-
 void CNestOAuthAPI::Init()
 {
 	m_bDoLogin = true;
@@ -85,7 +81,7 @@ void CNestOAuthAPI::Do_Work()
 		sec_counter++;
 		if (sec_counter % 12 == 0)
 		{
-			m_LastHeartbeat = mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 
 		if (sec_counter % NEST_POLL_INTERVAL == 0)
@@ -325,7 +321,7 @@ void CNestOAuthAPI::UpdateSmokeSensor(const unsigned char Idx, const bool bOn, c
 			bNoChange = true;
 		if (bNoChange)
 		{
-			time_t now = time(0);
+			time_t now = time(nullptr);
 			struct tm ltime;
 			localtime_r(&now, &ltime);
 

@@ -44,10 +44,6 @@ BleBox::BleBox(const int id, const int pollIntervalsec)
 	SetSettings(pollIntervalsec);
 }
 
-BleBox::~BleBox()
-{
-}
-
 bool BleBox::StartHardware()
 {
 	RequestStart();
@@ -84,7 +80,7 @@ void BleBox::Do_Work()
 		sec_counter++;
 
 		if (sec_counter % 12 == 0) {
-			m_LastHeartbeat = mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 
 		if (sec_counter % m_PollInterval == 0)
@@ -769,7 +765,7 @@ namespace http {
 
 			std::string hwid = request::findValue(&req, "idx");
 			CDomoticzHardwareBase* pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, HTYPE_BleBox);
-			if (pBaseHardware == NULL)
+			if (pBaseHardware == nullptr)
 				return;
 
 			root["status"] = "OK";
@@ -841,7 +837,7 @@ namespace http {
 				)
 				return;
 			CDomoticzHardwareBase * pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, HTYPE_BleBox);
-			if (pBaseHardware == NULL)
+			if (pBaseHardware == nullptr)
 				return;
 			BleBox * pHardware = reinterpret_cast<BleBox*>(pBaseHardware);
 
@@ -875,7 +871,7 @@ namespace http {
 				)
 				return;
 			CDomoticzHardwareBase * pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, HTYPE_BleBox);
-			if (pBaseHardware == NULL)
+			if (pBaseHardware == nullptr)
 				return;
 			BleBox * pHardware = reinterpret_cast<BleBox*>(pBaseHardware);
 
@@ -900,7 +896,7 @@ namespace http {
 				)
 				return;
 			CDomoticzHardwareBase * pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, HTYPE_BleBox);
-			if (pBaseHardware == NULL)
+			if (pBaseHardware == nullptr)
 				return;
 			BleBox * pHardware = reinterpret_cast<BleBox*>(pBaseHardware);
 
@@ -920,7 +916,7 @@ namespace http {
 
 			std::string hwid = request::findValue(&req, "idx");
 			CDomoticzHardwareBase* pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, HTYPE_BleBox);
-			if (pBaseHardware == NULL)
+			if (pBaseHardware == nullptr)
 				return;
 			BleBox * pHardware = reinterpret_cast<BleBox*>(pBaseHardware);
 
@@ -945,7 +941,7 @@ namespace http {
 				)
 				return;
 			CDomoticzHardwareBase * pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, HTYPE_BleBox);
-			if (pBaseHardware == NULL)
+			if (pBaseHardware == nullptr)
 				return;
 			BleBox * pHardware = reinterpret_cast<BleBox*>(pBaseHardware);
 
@@ -964,7 +960,7 @@ namespace http {
 
 			std::string hwid = request::findValue(&req, "idx");
 			CDomoticzHardwareBase* pBaseHardware = m_mainworker.GetHardwareByIDType(hwid, HTYPE_BleBox);
-			if (pBaseHardware == NULL)
+			if (pBaseHardware == nullptr)
 				return;
 			BleBox * pHardware = reinterpret_cast<BleBox*>(pBaseHardware);
 

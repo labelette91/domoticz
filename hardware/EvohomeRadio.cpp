@@ -112,12 +112,10 @@ CEvohomeRadio::CEvohomeRadio(const int ID, const std::string& UserContID)
 	RegisterDecoder(cmdSync, boost::bind(&CEvohomeRadio::DecodeSync, this, _1));
 }
 
-
-CEvohomeRadio::~CEvohomeRadio(void)
+CEvohomeRadio::~CEvohomeRadio()
 {
 	m_bIsStarted = false;
 }
-
 
 void CEvohomeRadio::RegisterDecoder(unsigned int cmd, fnc_evohome_decode fndecoder)
 {
@@ -1392,7 +1390,7 @@ void CEvohomeRadio::RXRelay(uint8_t nDevNo, uint8_t nDemand, int nID)
 	tsen.devno = nDevNo;
 	tsen.demand = nDemand;
 	tsen.updatetype = CEvohomeRadio::updDemand;
-	sDecodeRXMessage(this, (const unsigned char*)&tsen, NULL, -1);
+	sDecodeRXMessage(this, (const unsigned char *)&tsen, nullptr, -1);
 }
 
 bool CEvohomeRadio::DecodeHeatDemand(CEvohomeMsg& msg)
@@ -1747,8 +1745,9 @@ bool CEvohomeRadio::DecodeDeviceInfo(CEvohomeMsg& msg)
 		nAlertType = 2;
 	}
 
-	if (nFaultCode == 0x04) { sprintf(sFaultCode, "BATTERY LOW"); }
-	else if (nFaultCode == 0x06) { sprintf(sFaultCode, "COMMS FAULT"); }
+	if (nFaultCode == 0x03) { sprintf(sFaultCode, "MAINS LOW"); }
+ 	else if (nFaultCode == 0x04) { sprintf(sFaultCode, "BATTERY LOW"); }
+ 	else if (nFaultCode == 0x06) { sprintf(sFaultCode, "COMMS FAULT"); }
 	else if (nFaultCode == 0x0a) { sprintf(sFaultCode, "SENSOR ERROR"); }
 	else { sprintf(sFaultCode, "UNKNOWN(%02x)", nFaultCode); }
 
@@ -1811,14 +1810,14 @@ bool CEvohomeRadio::DecodeBatteryInfo(CEvohomeMsg& msg)
 			tsen.type = pTypeEvohomeZone;
 			tsen.subtype = sTypeEvohomeZone;
 			tsen.zone = nDevNo;
-			sDecodeRXMessage(this, (const unsigned char*)&tsen, NULL, nBattery);
+			sDecodeRXMessage(this, (const unsigned char *)&tsen, nullptr, nBattery);
 
 			if (AllSensors)
 			{
 				tsen.type = pTypeEvohomeZone;
 				tsen.subtype = sTypeEvohomeZone;
 				tsen.zone += 12;
-				sDecodeRXMessage(this, (const unsigned char*)&tsen, NULL, nBattery); // Update Zone device battery level
+				sDecodeRXMessage(this, (const unsigned char *)&tsen, nullptr, nBattery); // Update Zone device battery level
 			}
 
 			_tEVOHOME3 tsen2;
@@ -1831,7 +1830,7 @@ bool CEvohomeRadio::DecodeBatteryInfo(CEvohomeMsg& msg)
 			tsen2.demand = 0;
 			tsen2.updatetype = CEvohomeRadio::updBattery;
 			tsen2.battery_level = nBattery;
-			sDecodeRXMessage(this, (const unsigned char*)&tsen2, NULL, nBattery);
+			sDecodeRXMessage(this, (const unsigned char *)&tsen2, nullptr, nBattery);
 		}
 		else
 		{
@@ -1839,7 +1838,7 @@ bool CEvohomeRadio::DecodeBatteryInfo(CEvohomeMsg& msg)
 			tsen.type = pTypeEvohomeZone;
 			tsen.subtype = sTypeEvohomeZone;
 			tsen.zone = nDevNo;
-			sDecodeRXMessage(this, (const unsigned char*)&tsen, NULL, nBattery);  // Update Relay device battery level
+			sDecodeRXMessage(this, (const unsigned char *)&tsen, nullptr, nBattery); // Update Relay device battery level
 		}
 	}
 	else if (msg.id[0].GetIDType() == CEvohomeID::devSensor)
@@ -2020,7 +2019,7 @@ namespace http {
 			std::string type = request::findValue(&req, "devtype");
 			int HwdID = atoi(idx.c_str());
 			CDomoticzHardwareBase* pHardware = m_mainworker.GetHardware(HwdID);
-			if (pHardware == NULL)
+			if (pHardware == nullptr)
 				return;
 			if (pHardware->HwdType != HTYPE_EVOHOME_SERIAL && pHardware->HwdType != HTYPE_EVOHOME_TCP)
 				return;

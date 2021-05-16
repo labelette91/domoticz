@@ -521,11 +521,6 @@ bt_openwebnet::bt_openwebnet(const std::string& who, const std::string& what, co
 }
 
 
-// destructor
-bt_openwebnet::~bt_openwebnet()
-{
-}
-
 // creates the open message *who*what*where*when##
 void bt_openwebnet::CreateMsgOpen(const std::string& who, const std::string& what, const std::string& where, const std::string& when)
 {
@@ -701,7 +696,7 @@ void bt_openwebnet::CreateSetDateTimeMsgOpen(const std::string& tzString)
 	CreateNullMsgOpen();
   	
 	char frame_dt[50];
-	time_t now = mytime(NULL);
+	time_t now = mytime(nullptr);
 	struct tm ltime;
 	localtime_r(&now, &ltime);
 	//strftime(frame_dt, sizeof(frame_dt)-1, "*#13**#22*%H*%M*%S*001*%u*%d*%m*%Y##", &ltime); //set date time 

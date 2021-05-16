@@ -74,10 +74,6 @@ m_Password(Password)
 	Init();
 }
 
-CAtagOne::~CAtagOne(void)
-{
-}
-
 void CAtagOne::SetModes(const int Mode1, const int /*Mode2*/, const int /*Mode3*/, const int /*Mode4*/, const int /*Mode5*/, const int /*Mode6*/)
 {
 	m_OutsideTemperatureIdx = Mode1;
@@ -259,7 +255,7 @@ void CAtagOne::Do_Work()
 	{
 		sec_counter++;
 		if (sec_counter % 12 == 0) {
-			m_LastHeartbeat=mytime(NULL);
+			m_LastHeartbeat = mytime(nullptr);
 		}
 		if (sec_counter % AtagOne_POLL_INTERVAL == 0)
 		{

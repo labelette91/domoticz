@@ -93,45 +93,15 @@ struct _tGuiLanguage {
 	const char* szLong;
 };
 
-static const _tGuiLanguage guiLanguage[] =
-{
-	{ "en", "English" },
-	{ "sq", "Albanian" },
-	{ "ar", "Arabic" },
-	{ "bs", "Bosnian" },
-	{ "bg", "Bulgarian" },
-	{ "ca", "Catalan" },
-	{ "zh", "Chinese" },
-	{ "cs", "Czech" },
-	{ "da", "Danish" },
-	{ "nl", "Dutch" },
-	{ "et", "Estonian" },
-	{ "de", "German" },
-	{ "el", "Greek" },
-	{ "fr", "French" },
-	{ "fi", "Finnish" },
-	{ "he", "Hebrew" },
-	{ "hu", "Hungarian" },
-	{ "is", "Icelandic" },
-	{ "it", "Italian" },
-	{ "lt", "Lithuanian" },
-	{ "lv", "Latvian" },
-	{ "mk", "Macedonian" },
-	{ "no", "Norwegian" },
-	{ "fa", "Persian" },
-	{ "pl", "Polish" },
-	{ "pt", "Portuguese" },
-	{ "ro", "Romanian" },
-	{ "ru", "Russian" },
-	{ "sr", "Serbian" },
-	{ "sk", "Slovak" },
-	{ "sl", "Slovenian" },
-	{ "es", "Spanish" },
-	{ "sv", "Swedish" },
-	{ "zh_TW", "Taiwanese" },
-	{ "tr", "Turkish" },
-	{ "uk", "Ukrainian" },
-	{ NULL, NULL }
+static const _tGuiLanguage guiLanguage[] = {
+	{ "en", "English" },	{ "sq", "Albanian" },	{ "ar", "Arabic" },    { "bs", "Bosnian" },	 { "bg", "Bulgarian" },
+	{ "ca", "Catalan" },	{ "zh", "Chinese" },	{ "cs", "Czech" },     { "da", "Danish" },	 { "nl", "Dutch" },
+	{ "et", "Estonian" },	{ "de", "German" },	{ "el", "Greek" },     { "fr", "French" },	 { "fi", "Finnish" },
+	{ "he", "Hebrew" },	{ "hu", "Hungarian" },	{ "is", "Icelandic" }, { "it", "Italian" },	 { "lt", "Lithuanian" },
+	{ "lv", "Latvian" },	{ "mk", "Macedonian" }, { "no", "Norwegian" }, { "fa", "Persian" },	 { "pl", "Polish" },
+	{ "pt", "Portuguese" }, { "ro", "Romanian" },	{ "ru", "Russian" },   { "sr", "Serbian" },	 { "sk", "Slovak" },
+	{ "sl", "Slovenian" },	{ "es", "Spanish" },	{ "sv", "Swedish" },   { "zh_TW", "Taiwanese" }, { "tr", "Turkish" },
+	{ "uk", "Ukrainian" },	{ nullptr, nullptr },
 };
 
 extern http::server::CWebServerHelper m_webservers;
@@ -139,17 +109,17 @@ extern http::server::CWebServerHelper m_webservers;
 namespace http {
 	namespace server {
 
-		CWebServer::CWebServer(void) : session_store()
+		CWebServer::CWebServer()
+			: session_store()
 		{
-			m_pWebEm = NULL;
+			m_pWebEm = nullptr;
 			m_bDoStop = false;
 #ifdef WITH_OPENZWAVE
 			m_ZW_Hwidx = -1;
 #endif
 		}
 
-
-		CWebServer::~CWebServer(void)
+		CWebServer::~CWebServer()
 		{
 			// RK, we call StopServer() instead of just deleting m_pWebEm. The Do_Work thread might still be accessing that object
 			StopServer();
@@ -518,6 +488,7 @@ namespace http {
 
 			RegisterCommandCode("getconfig", boost::bind(&CWebServer::Cmd_GetConfig, this, _1, _2, _3), true);
 			RegisterCommandCode("getlocation", boost::bind(&CWebServer::Cmd_GetLocation, this, _1, _2, _3));
+			RegisterCommandCode("getforecastconfig", boost::bind(&CWebServer::Cmd_GetForecastConfig, this, _1, _2, _3));
 			RegisterCommandCode("sendnotification", boost::bind(&CWebServer::Cmd_SendNotification, this, _1, _2, _3));
 			RegisterCommandCode("emailcamerasnapshot", boost::bind(&CWebServer::Cmd_EmailCameraSnapshot, this, _1, _2, _3));
 			RegisterCommandCode("udevice", boost::bind(&CWebServer::Cmd_UpdateDevice, this, _1, _2, _3));
@@ -698,7 +669,7 @@ namespace http {
 			m_bDoStop = true;
 			try
 			{
-				if (m_pWebEm == NULL)
+				if (m_pWebEm == nullptr)
 					return;
 				m_pWebEm->Stop();
 				if (m_thread) {
@@ -706,7 +677,7 @@ namespace http {
 					m_thread.reset();
 				}
 				delete m_pWebEm;
-				m_pWebEm = NULL;
+				m_pWebEm = nullptr;
 			}
 			catch (...)
 			{
@@ -716,28 +687,28 @@ namespace http {
 
 		void CWebServer::SetWebCompressionMode(const _eWebCompressionMode gzmode)
 		{
-			if (m_pWebEm == NULL)
+			if (m_pWebEm == nullptr)
 				return;
 			m_pWebEm->SetWebCompressionMode(gzmode);
 		}
 
 		void CWebServer::SetAuthenticationMethod(const _eAuthenticationMethod amethod)
 		{
-			if (m_pWebEm == NULL)
+			if (m_pWebEm == nullptr)
 				return;
 			m_pWebEm->SetAuthenticationMethod(amethod);
 		}
 
 		void CWebServer::SetWebTheme(const std::string &themename)
 		{
-			if (m_pWebEm == NULL)
+			if (m_pWebEm == nullptr)
 				return;
 			m_pWebEm->SetWebTheme(themename);
 		}
 
 		void CWebServer::SetWebRoot(const std::string &webRoot)
 		{
-			if (m_pWebEm == NULL)
+			if (m_pWebEm == nullptr)
 				return;
 			m_pWebEm->SetWebRoot(webRoot);
 		}
@@ -2167,7 +2138,8 @@ namespace http {
 			int hwID = atoi(idx.c_str());
 
 			CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(hwID);
-			if ((pBaseHardware != NULL) && (pBaseHardware->HwdType == HTYPE_DomoticzInternal)) {
+			if ((pBaseHardware != nullptr) && (pBaseHardware->HwdType == HTYPE_DomoticzInternal))
+			{
 				// DomoticzInternal cannot be removed
 				return;
 			}
@@ -2653,7 +2625,7 @@ namespace http {
 		void CWebServer::Cmd_GetUptime(WebEmSession & session, const request& req, Json::Value &root)
 		{
 			//this is used in the about page, we are going to round the seconds a bit to display nicer
-			time_t atime = mytime(NULL);
+			time_t atime = mytime(nullptr);
 			time_t tuptime = atime - m_StartTime;
 			//round to 5 seconds (nicer in about page)
 			tuptime = ((tuptime / 5) * 5) + 5;
@@ -2727,7 +2699,9 @@ namespace http {
 					machine = "armv7l";
 				}
 
-				if (((machine != "armv6l") && (machine != "armv7l") && (systemname != "windows") && (machine != "x86_64") && (machine != "aarch64")) || (strstr(my_uname.release, "ARCH+") != NULL))
+				if (((machine != "armv6l") && (machine != "armv7l") && (systemname != "windows") && (machine != "x86_64")
+				     && (machine != "aarch64"))
+				    || (strstr(my_uname.release, "ARCH+") != nullptr))
 					szHistoryURL = "https://www.domoticz.com/download.php?channel=beta&type=history";
 				else
 					szHistoryURL = "https://www.domoticz.com/download.php?channel=beta&type=history&system=" + systemname + "&machine=" + machine;
@@ -2805,7 +2779,7 @@ namespace http {
 			root["TempSign"] = m_sql.m_tempsign;
 
 #ifndef NOCLOUD
-			bool bEnableTabProxy = request::get_req_header(&req, "X-From-MyDomoticz") != NULL;
+			bool bEnableTabProxy = request::get_req_header(&req, "X-From-MyDomoticz") != nullptr;
 #else
 			bool bEnableTabProxy = false;
 #endif
@@ -2868,9 +2842,9 @@ namespace http {
 				struct dirent *ent;
 				std::string templatesFolder = szWWWFolder + "/templates";
 				int iFile = 0;
-				if ((lDir = opendir(templatesFolder.c_str())) != NULL)
+				if ((lDir = opendir(templatesFolder.c_str())) != nullptr)
 				{
-					while ((ent = readdir(lDir)) != NULL)
+					while ((ent = readdir(lDir)) != nullptr)
 					{
 						std::string filename = ent->d_name;
 						size_t pos = filename.find(".htm");
@@ -2885,6 +2859,7 @@ namespace http {
 			}
 		}
 
+		// Could now be obsolete as only 1 usage was found in Forecast screen, which now uses other command
 		void CWebServer::Cmd_GetLocation(WebEmSession& session, const request& req, Json::Value& root)
 		{
 			if (session.rights == -1)
@@ -2892,6 +2867,7 @@ namespace http {
 				session.reply_status = reply::forbidden;
 				return;//Only auth user allowed
 			}
+			root["title"] = "GetLocation";
 			std::string Latitude = "1";
 			std::string Longitude = "1";
 			std::string sValue;
@@ -2904,10 +2880,115 @@ namespace http {
 				{
 					Latitude = strarray[0];
 					Longitude = strarray[1];
+					root["status"] = "OK";
 				}
 			}
 			root["Latitude"] = Latitude;
 			root["Longitude"] = Longitude;
+		}
+
+		void CWebServer::Cmd_GetForecastConfig(WebEmSession& session, const request& req, Json::Value& root)
+		{
+			if (session.rights == -1)
+			{
+				session.reply_status = reply::forbidden;
+				return;//Only auth user allowed
+			}
+
+			std::string Latitude = "1";
+			std::string Longitude = "1";
+			std::string sValue, sFURL, forecast_url;
+			std::stringstream ss, sURL;
+			uint8_t iSucces = 0;
+			bool iFrame = true;
+
+			root["title"] = "GetForecastConfig";
+			root["status"] = "Error";
+
+			if (m_sql.GetPreferencesVar("Location", sValue))
+			{
+				std::vector<std::string> strarray;
+				StringSplit(sValue, ";", strarray);
+
+				if (strarray.size() == 2)
+				{
+					Latitude = strarray[0];
+					Longitude = strarray[1];
+					iSucces++;
+				}
+				root["Latitude"] = Latitude;
+				root["Longitude"] = Longitude;
+				sValue = "";
+				sValue.clear();
+			}
+
+			root["Forecasthardware"] = "0";
+			if (m_sql.GetUserVariable("forecasthardware", USERVARTYPE_INTEGER, sValue))
+			{
+				root["Forecasthardware"] = sValue;
+				sValue = "";
+				sValue.clear();
+			}
+
+			if (root["Forecasthardware"] != "0")
+			{
+				int iHardwareID = atoi(root["Forecasthardware"].asString().c_str());
+				CDomoticzHardwareBase* pHardware = m_mainworker.GetHardware(iHardwareID);
+				if (pHardware != nullptr)
+				{
+					if (pHardware->HwdType == HTYPE_OpenWeatherMap)
+					{
+						root["Forecasthardwaretype"] = HTYPE_OpenWeatherMap;
+						COpenWeatherMap *pWHardware = reinterpret_cast<COpenWeatherMap*>(pHardware);
+						forecast_url = pWHardware->GetForecastURL();
+						if (forecast_url != "")
+						{
+							sFURL = forecast_url;
+							iFrame = false;
+						}
+						Json::Value forecast_data = pWHardware->GetForecastData();
+						if (!forecast_data.empty())
+						{
+							root["Forecastdata"] = forecast_data;
+						}
+					}
+					else if (pHardware->HwdType == HTYPE_BuienRadar)
+					{
+						root["Forecasthardwaretype"] = HTYPE_BuienRadar;
+						CBuienRadar *pWHardware = reinterpret_cast<CBuienRadar*>(pHardware);
+						forecast_url = pWHardware->GetForecastURL();
+						if (forecast_url != "")
+						{
+							sFURL = forecast_url;
+						}
+					}
+					else
+					{
+						root["Forecasthardware"] = "0";	// reset to 0
+					}
+				}
+				else
+				{
+					_log.Debug(DEBUG_WEBSERVER, "Forecastconfig: Could not find hardware (not active?) for ID %s!", root["Forecasthardware"].asString().c_str());
+					root["Forecasthardware"] = "0";	// reset to 0
+				}
+			}
+
+			if (root["Forecasthardware"] == "0" && iSucces == 1)
+			{
+				// No forecast device, but we have geo coords, so enough for fallback
+				iSucces++;
+			}
+			else if (!sFURL.empty())
+			{
+				root["Forecasturl"] = sFURL;
+				iSucces++;
+			}
+
+			if (iSucces == 2)
+			{
+				root["status"] = "OK";
+			}
 		}
 
 		void CWebServer::Cmd_SendNotification(WebEmSession & session, const request& req, Json::Value &root)
@@ -4333,7 +4414,7 @@ namespace http {
 						return;
 					sunitcode = sgroupcode;//Button A or B
 					CDomoticzHardwareBase *pBaseHardware = reinterpret_cast<CDomoticzHardwareBase*>(m_mainworker.GetHardware(atoi(hwdid.c_str())));
-					if (pBaseHardware == NULL)
+					if (pBaseHardware == nullptr)
 						return;
 					if ((pBaseHardware->HwdType != HTYPE_EnOceanESP2) && (pBaseHardware->HwdType != HTYPE_EnOceanESP3)
 						&& (pBaseHardware->HwdType != HTYPE_USBtinGateway) )
@@ -4911,7 +4992,7 @@ namespace http {
 				}
 				// ----------- If needed convert to GeneralSwitch type (for o.a. RFlink) -----------
 				CDomoticzHardwareBase *pBaseHardware = reinterpret_cast<CDomoticzHardwareBase*>(m_mainworker.GetHardware(atoi(hwdid.c_str())));
-				if (pBaseHardware != NULL)
+				if (pBaseHardware != nullptr)
 				{
 					if ((pBaseHardware->HwdType == HTYPE_RFLINKUSB) || (pBaseHardware->HwdType == HTYPE_RFLINKTCP)) {
 						ConvertToGeneralSwitchType(devid, dtype, subtype);
@@ -5014,7 +5095,7 @@ namespace http {
 						return;
 					sunitcode = sgroupcode;//Button A/B
 					CDomoticzHardwareBase *pBaseHardware = reinterpret_cast<CDomoticzHardwareBase*>(m_mainworker.GetHardware(atoi(hwdid.c_str())));
-					if (pBaseHardware == NULL)
+					if (pBaseHardware == nullptr)
 						return;
 					if ((pBaseHardware->HwdType != HTYPE_EnOceanESP2) && (pBaseHardware->HwdType != HTYPE_EnOceanESP3)
 						&& (pBaseHardware->HwdType != HTYPE_USBtinGateway) )
@@ -5628,7 +5709,7 @@ namespace http {
 
 				// ----------- If needed convert to GeneralSwitch type (for o.a. RFlink) -----------
 				CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardware(atoi(hwdid.c_str()));
-				if (pBaseHardware != NULL)
+				if (pBaseHardware != nullptr)
 				{
 					if ((pBaseHardware->HwdType == HTYPE_RFLINKUSB) || (pBaseHardware->HwdType == HTYPE_RFLINKTCP)) {
 						ConvertToGeneralSwitchType(devid, dtype, subtype);
@@ -5766,7 +5847,8 @@ namespace http {
 						{
 							std::string hdwid = result[0][0];
 							CDomoticzHardwareBase *pBaseHardware = reinterpret_cast<CDomoticzHardwareBase*>(m_mainworker.GetHardware(atoi(hdwid.c_str())));
-							if (pBaseHardware != NULL) {
+							if (pBaseHardware != nullptr)
+							{
 								_eHardwareTypes type = pBaseHardware->HwdType;
 								root["result"][ii]["val"] = NTYPE_PAUSED;
 								root["result"][ii]["text"] = Notification_Type_Desc(NTYPE_PAUSED, 0);
@@ -6256,7 +6338,8 @@ namespace http {
 				root["title"] = "UpdateNotification";
 
 				std::string recoverymsg;
-				if ((srecovery == "1") && (m_notifications.CustomRecoveryMessage(strtoull(idx.c_str(), NULL, 0), recoverymsg, true)))
+				if ((srecovery == "1")
+				    && (m_notifications.CustomRecoveryMessage(strtoull(idx.c_str(), nullptr, 0), recoverymsg, true)))
 				{
 					scustommessage.append(";;");
 					scustommessage.append(recoverymsg);
@@ -7029,7 +7112,7 @@ namespace http {
 					if (strarray.size() == 10)
 					{
 						struct tm loctime;
-						time_t now = mytime(NULL);
+						time_t now = mytime(nullptr);
 
 						localtime_r(&now, &loctime);
 						//strftime(szTmp, 80, "%b %d %Y %X", &loctime);
@@ -7054,7 +7137,7 @@ namespace http {
 			else if (cparam == "getServerTime") {
 
 				struct tm loctime;
-				time_t now = mytime(NULL);
+				time_t now = mytime(nullptr);
 
 				localtime_r(&now, &loctime);
 				//strftime(szTmp, 80, "%b %d %Y %X", &loctime);
@@ -7944,7 +8027,7 @@ namespace http {
 			std::map<std::string, std::string> _ltypes;
 			char szTmp[200];
 			int ii = 0;
-			while (guiLanguage[ii].szShort != NULL)
+			while (guiLanguage[ii].szShort != nullptr)
 			{
 				_ltypes[guiLanguage[ii].szLong] = guiLanguage[ii].szShort;
 				ii++;
@@ -8507,7 +8590,7 @@ namespace http {
 		{
 			std::vector<std::vector<std::string> > result;
 
-			time_t now = mytime(NULL);
+			time_t now = mytime(nullptr);
 			struct tm tm1;
 			localtime_r(&now, &tm1);
 			struct tm tLastUpdate;
@@ -9237,7 +9320,7 @@ namespace http {
 					root["result"][ii]["Protected"] = (iProtected != 0);
 
 					CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(hardwareID);
-					if (pHardware != NULL)
+					if (pHardware != nullptr)
 					{
 						if (pHardware->HwdType == HTYPE_SolarEdgeAPI)
 						{
@@ -9300,7 +9383,7 @@ namespace http {
 						}
 					}
 
-					if ((pHardware != NULL) && (pHardware->HwdType == HTYPE_PythonPlugin))
+					if ((pHardware != nullptr) && (pHardware->HwdType == HTYPE_PythonPlugin))
 					{
 						// Device ID special formatting should not be applied to Python plugins
 						root["result"][ii]["ID"] = sd[1];
@@ -9402,7 +9485,7 @@ namespace http {
 
 						bHaveTimeout = false;
 #ifdef WITH_OPENZWAVE
-						if (pHardware != NULL)
+						if (pHardware != nullptr)
 						{
 							if (pHardware->HwdType == HTYPE_OpenZWave)
 							{
@@ -9606,7 +9689,7 @@ namespace http {
 						}
 						else if (switchtype == STYPE_Media)
 						{
-							if ((pHardware != NULL) && (pHardware->HwdType == HTYPE_LogitechMediaServer))
+							if ((pHardware != nullptr) && (pHardware->HwdType == HTYPE_LogitechMediaServer))
 								root["result"][ii]["TypeImg"] = "LogitechMediaServer";
 							else
 								root["result"][ii]["TypeImg"] = "Media";
@@ -10106,7 +10189,7 @@ namespace http {
 						if (strarray.size() == 2)
 						{
 							//get lowest value of today, and max rate
-							time_t now = mytime(NULL);
+							time_t now = mytime(nullptr);
 							struct tm ltime;
 							localtime_r(&now, &ltime);
 							char szDate[40];
@@ -10181,7 +10264,7 @@ namespace http {
 						}
 
 						//get value of today
-						time_t now = mytime(NULL);
+						time_t now = mytime(nullptr);
 						struct tm ltime;
 						localtime_r(&now, &ltime);
 						char szDate[40];
@@ -10289,7 +10372,7 @@ namespace http {
 						float divider = m_sql.GetCounterDivider(int(metertype), int(dType), float(AddjValue2));
 
 						//get value of today
-						time_t now = mytime(NULL);
+						time_t now = mytime(nullptr);
 						struct tm ltime;
 						localtime_r(&now, &ltime);
 						char szDate[40];
@@ -10460,7 +10543,7 @@ namespace http {
 						float divider = m_sql.GetCounterDivider(int(metertype), int(dType), float(AddjValue2));
 
 						//get value of today
-						time_t now = mytime(NULL);
+						time_t now = mytime(nullptr);
 						struct tm ltime;
 						localtime_r(&now, &ltime);
 						char szDate[40];
@@ -10652,7 +10735,7 @@ namespace http {
 							root["result"][ii]["HaveTimeout"] = bHaveTimeout;
 
 							//get value of today
-							time_t now = mytime(NULL);
+							time_t now = mytime(nullptr);
 							struct tm ltime;
 							localtime_r(&now, &ltime);
 							char szDate[40];
@@ -10695,7 +10778,7 @@ namespace http {
 						root["result"][ii]["SwitchTypeVal"] = MTYPE_GAS;
 
 						//get lowest value of today
-						time_t now = mytime(NULL);
+						time_t now = mytime(nullptr);
 						struct tm ltime;
 						localtime_r(&now, &ltime);
 						char szDate[40];
@@ -10814,7 +10897,7 @@ namespace http {
 						{
 							double total = atof(strarray[1].c_str()) / 1000;
 
-							time_t now = mytime(NULL);
+							time_t now = mytime(nullptr);
 							struct tm ltime;
 							localtime_r(&now, &ltime);
 							char szDate[40];
@@ -11232,7 +11315,7 @@ namespace http {
 							if (!bAddedSupportedModes)
 							{
 								int smode = 0;
-								while (ZWave_Thermostat_Fan_Modes[smode] != NULL)
+								while (ZWave_Thermostat_Fan_Modes[smode] != nullptr)
 								{
 									sprintf(szTmp, "%d;%s;", smode, ZWave_Thermostat_Fan_Modes[smode]);
 									modes += szTmp;
@@ -11358,7 +11441,7 @@ namespace http {
 						case sTypeRego6XXCounter:
 						{
 							//get value of today
-							time_t now = mytime(NULL);
+							time_t now = mytime(nullptr);
 							struct tm ltime;
 							localtime_r(&now, &ltime);
 							char szDate[40];
@@ -11389,7 +11472,7 @@ namespace http {
 						}
 					}
 #ifdef ENABLE_PYTHON
-					if (pHardware != NULL)
+					if (pHardware != nullptr)
 					{
 						if (pHardware->HwdType == HTYPE_PythonPlugin)
 						{
@@ -11407,7 +11490,10 @@ namespace http {
 
 		void CWebServer::UploadFloorplanImage(WebEmSession & session, const request& req, std::string & redirect_uri)
 		{
-			redirect_uri = "/index.html";
+			Json::Value root;
+			root["title"] = "UploadFloorplanImage";
+			root["status"] = "ERR";
+
 			if (session.rights != 2)
 			{
 				session.reply_status = reply::forbidden;
@@ -11424,8 +11510,13 @@ namespace http {
 			if (!result.empty())
 			{
 				if (!m_sql.safe_UpdateBlobInTableWithID("Floorplans", "Image", result[0][0], imagefile))
+				{
 					_log.Log(LOG_ERROR, "SQL: Problem inserting floorplan image into database! ");
+				}
+				else
+					root["status"] = "OK";
 			}
+			redirect_uri = root.toStyledString();
 		}
 
 		void CWebServer::GetFloorplanImage(WebEmSession & session, const request& req, reply & rep)
@@ -11465,7 +11556,7 @@ namespace http {
 				session.reply_status = reply::forbidden;
 				return; //Only admin user allowed
 			}
-			time_t now = mytime(NULL);
+			time_t now = mytime(nullptr);
 			Json::Value backupInfo;
 
 			backupInfo["type"] = "Web";
@@ -11488,7 +11579,7 @@ namespace http {
 					}
 				}
 				reply::set_download_file(&rep, backupInfo["location"].asString(), szAttachmentName);
-				backupInfo["duration"] = difftime(mytime(NULL),now);
+				backupInfo["duration"] = difftime(mytime(nullptr), now);
 				m_mainworker.m_notificationsystem.Notify(Notification::DZ_BACKUP_DONE, Notification::STATUS_INFO, JSonToRawString(backupInfo));
 			}
 		}
@@ -11787,7 +11878,7 @@ namespace http {
 				sstr >> LastUpdate;
 			}
 
-			time_t now = mytime(NULL);
+			time_t now = mytime(nullptr);
 			struct tm tm1;
 			localtime_r(&now, &tm1);
 			struct tm tLastUpdate;
@@ -11940,7 +12031,7 @@ namespace http {
 
 					//Special case for openzwave (status for nodes queried)
 					CDomoticzHardwareBase *pHardware = m_mainworker.GetHardware(atoi(sd[0].c_str()));
-					if (pHardware != NULL)
+					if (pHardware != nullptr)
 					{
 						if (
 							(pHardware->HwdType == HTYPE_RFXtrx315) ||
@@ -12682,7 +12773,7 @@ namespace http {
 			else
 			{
 				//Update
-				time_t now = mytime(NULL);
+				time_t now = mytime(nullptr);
 				struct tm ltime;
 				localtime_r(&now, &ltime);
 				m_sql.safe_query("UPDATE MobileDevices SET Active=%d, SenderID='%q', LastUpdate='%04d-%02d-%02d %02d:%02d:%02d' WHERE (UUID == '%q')",
@@ -12815,7 +12906,7 @@ namespace http {
 
 			//Check which device is newer
 
-			time_t now = mytime(NULL);
+			time_t now = mytime(nullptr);
 			struct tm tm1;
 			localtime_r(&now, &tm1);
 			struct tm LastUpdateTime_A;
@@ -13881,7 +13972,7 @@ namespace http {
 			if (srange == "")
 				return;
 
-			time_t now = mytime(NULL);
+			time_t now = mytime(nullptr);
 			struct tm tm1;
 			localtime_r(&now, &tm1);
 
@@ -16740,7 +16831,7 @@ namespace http {
 					if ((sactmonth != "") || (sactyear != ""))
 					{
 						struct tm loctime;
-						time_t now = mytime(NULL);
+						time_t now = mytime(nullptr);
 						localtime_r(&now, &loctime);
 						if ((sactmonth != "") && (sactyear != ""))
 						{

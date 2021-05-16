@@ -31,7 +31,7 @@ namespace http {
 
 		CProxyClient::CProxyClient() : ASyncTCP(PROXY_SECURE)
 		{
-			m_pDomServ = NULL;
+			m_pDomServ = nullptr;
 			/* use default value for tcp timeouts */
 			SetTimeout(PROXY_TIMEOUT);
 		}
@@ -169,7 +169,7 @@ namespace http {
 				return;
 			}
 			// response variables
-			boost::asio::mutable_buffers_1 _buf(NULL, 0);
+			boost::asio::mutable_buffers_1 _buf(nullptr, 0);
 			/// The reply to be sent back to the client.
 			http::server::reply reply_;
 
@@ -469,9 +469,7 @@ namespace http {
 			m_pDomServ = domserv;
 		}
 
-		CProxyClient::~CProxyClient()
-		{
-		}
+		CProxyClient::~CProxyClient() = default;
 
 		void CProxyClient::Connect(http::server::cWebem *webEm)
 		{
@@ -491,10 +489,7 @@ namespace http {
 			return (_apikey != "" && _password != "" && _allowed_subsystems != 0);
 		}
 
-
-		CProxyManager::CProxyManager()
-		{
-		}
+		CProxyManager::CProxyManager() = default;
 
 		CProxyManager::~CProxyManager()
 		{
@@ -625,7 +620,7 @@ namespace http {
 					return TCPClients[i];
 				}
 			}
-			return NULL;
+			return nullptr;
 		}
 
 		DomoticzTCP *CProxySharedData::findSlaveById(const std::string &instanceid)
@@ -635,7 +630,7 @@ namespace http {
 					return TCPClients[i];
 				}
 			}
-			return NULL;
+			return nullptr;
 		}
 
 		void CProxySharedData::RestartTCPClients()
