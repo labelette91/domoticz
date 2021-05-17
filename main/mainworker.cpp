@@ -1045,7 +1045,7 @@ bool MainWorker::AddHardwareFromParams(
 		pHardware = new BleBox(ID, Mode1);
 		break;
 	case HTYPE_OpenWeatherMap:
-		pHardware = new COpenWeatherMap(ID, Username, Password, Mode1, Mode2);
+		pHardware = new COpenWeatherMap(ID, Username, Password, Mode1, Mode2, Mode3, Mode4);
 		break;
 	case HTYPE_Ec3kMeterTCP:
 		pHardware = new Ec3kMeterTCP(ID, Address, Port);
@@ -1206,7 +1206,7 @@ bool MainWorker::Start()
 	{
 		char szPort[100];
 		sprintf(szPort, "%d", rnvalue);
-		m_sharedserver.sDecodeRXMessage.connect([this](auto hw, auto rx, auto name, auto battery, auto userName) { DecodeRXMessage(hw, rx, name, battery, userName); });
+		m_sharedserver.sDecodeRXMessage.connect([this](auto hw, auto rx, auto name, auto battery, auto user) { DecodeRXMessage(hw, rx, name, battery, user); });
 		m_sharedserver.StartServer("::", szPort);
 
 		LoadSharedUsers();
@@ -12411,7 +12411,9 @@ bool MainWorker::SwitchEvoModal(const std::string& idx, const std::string& statu
 		nStatus = CEvohomeBase::cmEvoAutoWithEco;
 	else if (status == "DayOff")
 		nStatus = CEvohomeBase::cmEvoDayOff;
-	else if (status == "Custom")
+	else if (status == "DayOffWithEco")
+		nStatus = CEvohomeBase::cmEvoDayOffWithEco;
+ 	else if (status == "Custom")
 		nStatus = CEvohomeBase::cmEvoCustom;
 	else if (status == "Auto")
 		nStatus = CEvohomeBase::cmEvoAuto;
