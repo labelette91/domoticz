@@ -104,9 +104,9 @@ namespace Plugins {
 	  bool HasNodeFailed(int Unit);
 
 	  std::string m_PluginKey;
-	  void *m_DeviceDict;
-	  void *m_ImageDict;
-	  void *m_SettingsDict;
+	  PyDictObject*	m_DeviceDict;
+	  PyDictObject* m_ImageDict;
+	  PyDictObject* m_SettingsDict;
 	  std::string m_HomeFolder;
 	  PluginDebugMask m_bDebug;
 	  bool m_bTracing;
@@ -167,6 +167,10 @@ namespace Plugins {
 		{
 			return (m_pObject != NULL);
 		}
+		operator CDevice *() const
+		{
+			return (CDevice *)m_pObject;
+		}
 		PyObject **operator&()
 		{
 			return &m_pObject;
@@ -178,6 +182,20 @@ namespace Plugins {
 		void operator=(PyObject *pObject)
 		{
 			m_pObject = pObject;
+		}
+		void operator++()
+		{
+			if (m_pObject)
+			{
+				Py_INCREF(m_pObject);
+			}
+		}
+		void operator--()
+		{
+			if (m_pObject)
+			{
+				Py_DECREF(m_pObject);
+			}
 		}
 		~PyBorrowedRef()
 		{
@@ -199,6 +217,18 @@ namespace Plugins {
 				Py_XDECREF(m_pObject);
 			}
 			m_pObject = pObject;
+		}
+		void operator+=(PyObject *pObject)
+		{
+			if (m_pObject)
+			{
+				Py_XDECREF(m_pObject);
+			}
+			m_pObject = pObject;
+			if (m_pObject)
+			{
+				Py_INCREF(m_pObject);
+			}
 		}
 		~PyNewRef()
 		{
