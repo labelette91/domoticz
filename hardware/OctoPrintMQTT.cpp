@@ -184,9 +184,7 @@ bool COctoPrintMQTT::ConnectIntEx()
 			_log.Log(LOG_ERROR, "OCTO_MQTT: Failed enabling TLS mode, return code: %d (CA certificate: '%s')", rc, m_CAFilename.c_str());
 			return false;
 		}
-		else {
-			_log.Log(LOG_STATUS, "OCTO_MQTT: enabled TLS mode");
-		}
+		_log.Log(LOG_STATUS, "OCTO_MQTT: enabled TLS mode");
 	}
 	rc = username_pw_set((!m_UserName.empty()) ? m_UserName.c_str() : nullptr, (!m_Password.empty()) ? m_Password.c_str() : nullptr);
 
@@ -502,7 +500,7 @@ void COctoPrintMQTT::on_message(const struct mosquitto_message *message)
 					}
 					if (bIsPrintStatus)
 					{
-						SendSwitch(1, 1, 255, bIsPrinting, 0, "Printing");
+						SendSwitch(1, 1, 255, bIsPrinting, 0, "Printing", m_Name);
 						SendTextSensor(TID_PRINTING, 1, 255, szEventName, "Print Status");
 					}
 				}

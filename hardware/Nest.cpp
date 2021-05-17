@@ -128,10 +128,9 @@ void CNest::SendSetPointSensor(const unsigned char Idx, const float Temp, const 
 	thermos.id3=0;
 	thermos.id4=Idx;
 	thermos.dunit=0;
-
 	thermos.temp=Temp;
 
-	sDecodeRXMessage(this, (const unsigned char *)&thermos, defaultname.c_str(), 255);
+	sDecodeRXMessage(this, (const unsigned char *)&thermos, defaultname.c_str(), 255, nullptr);
 }
 
 
@@ -178,7 +177,7 @@ void CNest::UpdateSwitch(const unsigned char Idx, const bool bOn, const std::str
 	lcmd.LIGHTING2.level = (BYTE)level;
 	lcmd.LIGHTING2.filler = 0;
 	lcmd.LIGHTING2.rssi = 12;
-	sDecodeRXMessage(this, (const unsigned char *)&lcmd.LIGHTING2, defaultname.c_str(), 255);
+	sDecodeRXMessage(this, (const unsigned char *)&lcmd.LIGHTING2, defaultname.c_str(), 255, m_Name.c_str());
 }
 
 bool CNest::Login()
@@ -253,9 +252,9 @@ void CNest::Logout()
 
 bool CNest::WriteToHardware(const char *pdata, const unsigned char /*length*/)
 {
-	if (m_UserName.size() == 0)
+	if (m_UserName.empty())
 		return false;
-	if (m_Password.size() == 0)
+	if (m_Password.empty())
 		return false;
 
 	const tRBUF *pCmd = reinterpret_cast<const tRBUF *>(pdata);
@@ -344,7 +343,7 @@ void CNest::UpdateSmokeSensor(const unsigned char Idx, const bool bOn, const std
 
 	if (!bDeviceExits)
 	{
-		m_mainworker.PushAndWaitRxMessage(this, (const unsigned char *)&lcmd.LIGHTING2, defaultname.c_str(), 255);
+		m_mainworker.PushAndWaitRxMessage(this, (const unsigned char *)&lcmd.LIGHTING2, defaultname.c_str(), 255, m_Name.c_str());
 		//Assign default name for device
 		m_sql.safe_query("UPDATE DeviceStatus SET Name='%q' WHERE (HardwareID==%d) AND (DeviceID=='%q')", defaultname.c_str(), m_HwdID, szIdx);
 		result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID==%d) AND (DeviceID=='%q')", m_HwdID, szIdx);
@@ -354,7 +353,7 @@ void CNest::UpdateSmokeSensor(const unsigned char Idx, const bool bOn, const std
 		}
 	}
 	else
-		sDecodeRXMessage(this, (const unsigned char *)&lcmd.LIGHTING2, defaultname.c_str(), 255);
+		sDecodeRXMessage(this, (const unsigned char *)&lcmd.LIGHTING2, defaultname.c_str(), 255, m_Name.c_str());
 }
 
 
@@ -364,9 +363,9 @@ void CNest::GetMeterDetails()
 #ifdef DEBUG_NextThermostatR
 	sResult = ReadFile("E:\\nest.json");
 #else
-	if (m_UserName.size()==0)
+	if (m_UserName.empty())
 		return;
-	if (m_Password.size()==0)
+	if (m_Password.empty())
 		return;
 	if (m_bDoLogin)
 	{
@@ -415,14 +414,14 @@ void CNest::GetMeterDetails()
 	//Protect
 	if (bHaveTopaz)
 	{
-		if (root["topaz"].size() < 1)
+		if (root["topaz"].empty())
 		{
 			_log.Log(LOG_ERROR, "Nest: request not successful, restarting..!");
 			m_bDoLogin = true;
 			return;
 		}
 		Json::Value::Members members = root["topaz"].getMemberNames();
-		if (members.size() < 1)
+		if (members.empty())
 		{
 			_log.Log(LOG_ERROR, "Nest: request not successful, restarting..!");
 			m_bDoLogin = true;
@@ -440,14 +439,12 @@ void CNest::GetMeterDetails()
 			std::string devName = devstring;
 			if (!root["where"].empty())
 			{
-				for (Json::Value::iterator itWhere = root["where"].begin(); itWhere != root["where"].end(); ++itWhere)
+				for (auto iwhere : root["where"])
 				{
-					Json::Value iwhere = *itWhere;
 					if (!iwhere["wheres"].empty())
 					{
-						for (Json::Value::iterator itWhereNest = iwhere["wheres"].begin(); itWhereNest != iwhere["wheres"].end(); ++itWhereNest)
+						for (auto iwhereItt : iwhere["wheres"])
 						{
-							Json::Value iwhereItt = *itWhereNest;
 							if (!iwhereItt["where_id"].empty())
 							{
 								std::string tmpWhereid = iwhereItt["where_id"].asString();
@@ -459,7 +456,6 @@ void CNest::GetMeterDetails()
 							}
 						}
 					}
-
 				}
 			}
 			bool bIAlarm = false;
@@ -536,7 +532,7 @@ void CNest::GetMeterDetails()
 	//Thermostat
 	if (!bHaveShared)
 		return;
-	if (root["shared"].size()<1)
+	if (root["shared"].empty())
 	{
 		if (bHaveTopaz)
 			return;
@@ -554,9 +550,9 @@ void CNest::GetMeterDetails()
 		std::string StructureID = ittStructure.key().asString();
 		std::string StructureName = nstructure["name"].asString();
 
-		for (Json::Value::iterator ittDevice = nstructure["devices"].begin(); ittDevice != nstructure["devices"].end(); ++ittDevice)
+		for (auto &ittDevice : nstructure["devices"])
 		{
-			std::string devID = (*ittDevice).asString();
+			std::string devID = ittDevice.asString();
 			if (devID.find("device.")==std::string::npos)
 				continue;
 			std::string Serial = devID.substr(7);
@@ -582,9 +578,8 @@ void CNest::GetMeterDetails()
 				{
 					if (!root["where"][StructureID].empty())
 					{
-						for (Json::Value::iterator ittWheres = root["where"][StructureID]["wheres"].begin(); ittWheres != root["where"][StructureID]["wheres"].end(); ++ittWheres)
+						for (auto nwheres : root["where"][StructureID]["wheres"])
 						{
-							Json::Value nwheres = *ittWheres;
 							if (nwheres["where_id"] == where_id)
 							{
 								Name = StructureName + " " + nwheres["name"].asString();
@@ -635,7 +630,7 @@ void CNest::GetMeterDetails()
 			if (!nstructure["away"].empty())
 			{
 				bool bIsAway = nstructure["away"].asBool();
-				SendSwitch((iThermostat * 3) + 3, 1, 255, bIsAway, 0, Name + " Away");
+				SendSwitch((iThermostat * 3) + 3, 1, 255, bIsAway, 0, Name + " Away", m_Name);
 			}
 
 			//Manual Eco mode
@@ -643,7 +638,7 @@ void CNest::GetMeterDetails()
 			{
 				std::string sCurrentHvacMode = ndevice["eco"]["mode"].asString();
 				bool bIsManualEcoMode = (sCurrentHvacMode == "manual-eco");
-				SendSwitch((iThermostat * 3) + 4, 1, 255, bIsManualEcoMode, 0, Name + " Manual Eco Mode");
+				SendSwitch((iThermostat * 3) + 4, 1, 255, bIsManualEcoMode, 0, Name + " Manual Eco Mode", m_Name);
 			}
 
 			iThermostat++;
@@ -653,9 +648,9 @@ void CNest::GetMeterDetails()
 
 void CNest::SetSetpoint(const int idx, const float temp)
 {
-	if (m_UserName.size() == 0)
+	if (m_UserName.empty())
 		return;
-	if (m_Password.size() == 0)
+	if (m_Password.empty())
 		return;
 
 	if (m_bDoLogin == true)
@@ -698,9 +693,9 @@ void CNest::SetSetpoint(const int idx, const float temp)
 
 bool CNest::SetAway(const unsigned char Idx, const bool bIsAway)
 {
-	if (m_UserName.size() == 0)
+	if (m_UserName.empty())
 		return false;
-	if (m_Password.size() == 0)
+	if (m_Password.empty())
 		return false;
 
 	if (m_bDoLogin == true)
@@ -738,9 +733,9 @@ bool CNest::SetAway(const unsigned char Idx, const bool bIsAway)
 
 bool CNest::SetManualEcoMode(const unsigned char Idx, const bool bIsManualEcoMode)
 {
-	if (m_UserName.size() == 0)
+	if (m_UserName.empty())
 		return false;
-	if (m_Password.size() == 0)
+	if (m_Password.empty())
 		return false;
 
 	if (m_bDoLogin == true)
@@ -783,9 +778,9 @@ bool CNest::SetManualEcoMode(const unsigned char Idx, const bool bIsManualEcoMod
 
 void CNest::SetProgramState(const int /*newState*/)
 {
-	if (m_UserName.size() == 0)
+	if (m_UserName.empty())
 		return;
-	if (m_Password.size() == 0)
+	if (m_Password.empty())
 		return;
 
 	if (m_bDoLogin)

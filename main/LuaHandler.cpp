@@ -54,7 +54,7 @@ int CLuaHandler::l_domoticz_updateDevice(lua_State* lua_state)
 			}
 			_log.Log(LOG_NORM, "CLuaHandler (updateDevice from LUA) : idx=%d nvalue=%s svalue=%s invalue=%d signallevel=%d batterylevel=%d", ideviceId, nvalue.c_str(), svalue.c_str(), invalue, signallevel, batterylevel);
 
-			m_mainworker.UpdateDevice(ideviceId, invalue, svalue, signallevel, batterylevel);
+			m_mainworker.UpdateDevice(ideviceId, invalue, svalue, "EventSystem", signallevel, batterylevel);
 		}
 		else
 		{
@@ -192,10 +192,7 @@ bool CLuaHandler::executeLuaScript(const std::string &script, const std::string 
 		aluaThread.timed_join(boost::posix_time::seconds(10));
 		return true;
 	}
-	else
-	{
-		report_errors(lua_state, status);
-		lua_close(lua_state);
-	}
+	report_errors(lua_state, status);
+	lua_close(lua_state);
 	return false;
 }

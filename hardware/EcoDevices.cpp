@@ -82,7 +82,7 @@ void CEcoDevices::Init()
 
 	// Is the device we poll password protected?
 	m_ssURL.str("");
-	if ((m_username.size() > 0) && (m_password.size() > 0))
+	if ((!m_username.empty()) && (!m_password.empty()))
 		m_ssURL << "http://" << m_username << ":" << m_password << "@";
 	else
 		m_ssURL << "http://";
@@ -190,7 +190,7 @@ void CEcoDevices::DecodeXML2Teleinfo(const std::string &sResult, Teleinfo &telei
 
 void CEcoDevices::GetMeterDetails()
 {
-	if (m_szIPAddress.size() == 0)
+	if (m_szIPAddress.empty())
 		return;
 	// From http://xx.xx.xx.xx/status.xml we get the pulse counters indexes and current flow
 	// From http://xx.xx.xx.xx/protect/settings/teleinfoX.xml we get a complete feed of Teleinfo data
@@ -235,11 +235,11 @@ void CEcoDevices::GetMeterDetails()
 #endif
 
 	m_status.version = m_status.version + "..";
-	major = atoi(m_status.version.substr(0, m_status.version.find(".")).c_str());
-	m_status.version.erase(0, m_status.version.find(".") + 1);
-	minor = atoi(m_status.version.substr(0, m_status.version.find(".")).c_str());
-	m_status.version.erase(0, m_status.version.find(".") + 1);
-	release = atoi(m_status.version.substr(0, m_status.version.find(".")).c_str());
+	major = atoi(m_status.version.substr(0, m_status.version.find('.')).c_str());
+	m_status.version.erase(0, m_status.version.find('.') + 1);
+	minor = atoi(m_status.version.substr(0, m_status.version.find('.')).c_str());
+	m_status.version.erase(0, m_status.version.find('.') + 1);
+	release = atoi(m_status.version.substr(0, m_status.version.find('.')).c_str());
 	m_status.version = S_xpath_string(XMLdoc.RootElement(), "/response/version/text()").c_str();
 
 	if ((major > min_major) || ((major == min_major) && (minor > min_minor)) || ((major == min_major) && (minor == min_minor) && (release >= min_release)))
@@ -346,7 +346,7 @@ void CEcoDevices::GetMeterDetails()
 
 void CEcoDevices::GetMeterRT2Details()
 {
-	if (m_szIPAddress.size() == 0)
+	if (m_szIPAddress.empty())
 		return;
 
 	// From http://xx.xx.xx.xx/admin/status.xml we get the Teleinfo data
@@ -433,11 +433,11 @@ void CEcoDevices::GetMeterRT2Details()
 #endif
 
 	m_status.version = m_status.version + "..";
-	major = atoi(m_status.version.substr(0, m_status.version.find(".")).c_str());
-	m_status.version.erase(0, m_status.version.find(".") + 1);
-	minor = atoi(m_status.version.substr(0, m_status.version.find(".")).c_str());
-	m_status.version.erase(0, m_status.version.find(".") + 1);
-	release = atoi(m_status.version.substr(0, m_status.version.find(".")).c_str());
+	major = atoi(m_status.version.substr(0, m_status.version.find('.')).c_str());
+	m_status.version.erase(0, m_status.version.find('.') + 1);
+	minor = atoi(m_status.version.substr(0, m_status.version.find('.')).c_str());
+	m_status.version.erase(0, m_status.version.find('.') + 1);
+	release = atoi(m_status.version.substr(0, m_status.version.find('.')).c_str());
 	m_status.version = S_xpath_string(XMLdoc.RootElement(), "/response/version/text()").c_str();
 
 	if (!((major > min_major) || ((major == min_major) && (minor > min_minor)) || ((major == min_major) && (minor == min_minor) && (release >= min_release))))
@@ -460,7 +460,8 @@ void CEcoDevices::GetMeterRT2Details()
 		label = S_xpath_string(XMLdoc.RootElement(), XMLLabel).c_str();
 		sprintf(XMLLabel, "/response/etiquetteEC%i/text()", i);
 		value = S_xpath_string(XMLdoc.RootElement(), XMLLabel).c_str();
-		if (label == "") break;
+		if (label.empty())
+			break;
 		XMLmap[label] = value;
 	}
 	m_teleinfo1.OPTARIF = XMLmap["OPTARIF"];
@@ -495,7 +496,7 @@ void CEcoDevices::GetMeterRT2Details()
 	_log.Log(LOG_NORM, "DEBUG: PTEC:    '%s'", m_teleinfo1.PTEC.c_str());
 	_log.Log(LOG_NORM, "DEBUG: DEMAIN:  '%s'", m_teleinfo1.DEMAIN.c_str());
 #endif
-	ProcessTeleinfo(m_status.hostname.c_str(), 1, m_teleinfo1);
+	ProcessTeleinfo(m_status.hostname, 1, m_teleinfo1);
 
 	// 8 internal counters (postes) processing
 	for (i = 0; i < 8; i++)
@@ -505,14 +506,14 @@ void CEcoDevices::GetMeterRT2Details()
 		sprintf(XMLLabel, "/response/info%i/text()", i);
 		value = S_xpath_string(XMLdoc.RootElement(), XMLLabel).c_str();
 		StringSplit(value, ",", splitresults);
-		if (splitresults[0] == "")
+		if (splitresults[0].empty())
 			break;
-		else
-		{
-			fvalue1 = (float)atof(splitresults[0].c_str());
-			if (fvalue1 > 0) SendMeterSensor(m_HwdID, i, 255, fvalue1 / 1000, m_status.hostname + " " + label);
-			fvalue2 = (float)atof(splitresults[1].c_str());
-			if (fvalue2 > 0) SendWaterflowSensor(m_HwdID, (uint8_t)i, 255, fvalue2, m_status.hostname + " " + label);
-		}
+
+		fvalue1 = (float)atof(splitresults[0].c_str());
+		if (fvalue1 > 0)
+			SendMeterSensor(m_HwdID, i, 255, fvalue1 / 1000, m_status.hostname + " " + label);
+		fvalue2 = (float)atof(splitresults[1].c_str());
+		if (fvalue2 > 0)
+			SendWaterflowSensor(m_HwdID, (uint8_t)i, 255, fvalue2, m_status.hostname + " " + label);
 	}
 }

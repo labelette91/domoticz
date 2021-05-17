@@ -174,9 +174,8 @@ namespace Plugins {
 						{
 							PyType_Ready(&CImageType);
 							// Add image objects into the image dictionary with ID as the key
-							for (std::vector<std::vector<std::string> >::const_iterator itt = result.begin(); itt != result.end(); ++itt)
+							for (const auto &sd : result)
 							{
-								std::vector<std::string> sd = *itt;
 								CImage *pImage = (CImage *)CImage_new(&CImageType, (PyObject *)nullptr,
 												      (PyObject *)nullptr);
 
@@ -186,14 +185,11 @@ namespace Plugins {
 									_log.Log(LOG_ERROR, "(%s) failed to add ID '%s' to image dictionary.", self->pPlugin->m_PluginKey.c_str(), sd[0].c_str());
 									break;
 								}
-								else
-								{
-									pImage->ImageID = atoi(sd[0].c_str()) + 100;
-									pImage->Base = PyUnicode_FromString(sd[1].c_str());
-									pImage->Name = PyUnicode_FromString(sd[2].c_str());
-									pImage->Description = PyUnicode_FromString(sd[3].c_str());
-									Py_DECREF(pImage);
-								}
+								pImage->ImageID = atoi(sd[0].c_str()) + 100;
+								pImage->Base = PyUnicode_FromString(sd[1].c_str());
+								pImage->Name = PyUnicode_FromString(sd[2].c_str());
+								pImage->Description = PyUnicode_FromString(sd[3].c_str());
+								Py_DECREF(pImage);
 							}
 						}
 					}
@@ -598,7 +594,7 @@ namespace Plugins {
 					self->DeviceID = PyUnicode_FromString(szID);
 				}
 				if (TypeName) {
-					std::string sValue = "";
+					std::string sValue;
 					maptypename(std::string(TypeName), self->Type, self->SubType, self->SwitchType, sValue, Options, self->Options);
 					Py_DECREF(self->sValue);
 					self->sValue = PyUnicode_FromString(sValue.c_str());
@@ -630,7 +626,10 @@ namespace Plugins {
 						}
 						else
 						{
-							_log.Log(LOG_ERROR, "(%s) Failed to initialize Options dictionary for Hardware/Unit combination (%d:%d): Only \"string\" type dictionary entries supported, but entry has type \"%s\"", self->pPlugin->m_Name.c_str(), self->HwdID, self->Unit, pValue->ob_type->tp_name);
+							_log.Log(
+								LOG_ERROR,
+								R"((%s) Failed to initialize Options dictionary for Hardware/Unit combination (%d:%d): Only "string" type dictionary entries supported, but entry has type "%s")",
+								self->pPlugin->m_Name.c_str(), self->HwdID, self->Unit, pValue->ob_type->tp_name);
 						}
 					}
 				}
@@ -639,7 +638,7 @@ namespace Plugins {
 			{
 				CPlugin *pPlugin = nullptr;
 				if (pModState) pPlugin = pModState->pPlugin;
-				_log.Log(LOG_ERROR, "Expected: myVar = Domoticz.Device(Name=\"myDevice\", Unit=0, TypeName=\"\", Type=0, Subtype=0, Switchtype=0, Image=0, Options={}, Used=1)");
+				_log.Log(LOG_ERROR, R"(Expected: myVar = Domoticz.Device(Name="myDevice", Unit=0, TypeName="", Type=0, Subtype=0, Switchtype=0, Image=0, Options={}, Used=1))");
 				LogPythonException(pPlugin, __func__);
 			}
 		}
@@ -664,9 +663,8 @@ namespace Plugins {
 			result = m_sql.safe_query("SELECT Unit, ID, Name, nValue, sValue, DeviceID, Type, SubType, SwitchType, LastLevel, CustomImage, SignalLevel, BatteryLevel, LastUpdate, Options, Description, Color, Used FROM DeviceStatus WHERE (HardwareID==%d) AND (Unit==%d) ORDER BY Unit ASC", self->HwdID, self->Unit);
 			if (!result.empty())
 			{
-				for (std::vector<std::vector<std::string> >::const_iterator itt = result.begin(); itt != result.end(); ++itt)
+				for (const auto &sd : result)
 				{
-					std::vector<std::string> sd = *itt;
 					self->Unit = atoi(sd[0].c_str());
 					self->ID = atoi(sd[1].c_str());
 					Py_XDECREF(self->Name);
@@ -695,10 +693,10 @@ namespace Plugins {
 						else
 						{
 							std::map<std::string, std::string> mpOptions = m_sql.BuildDeviceOptions(sd[14], true);
-							for (std::map<std::string, std::string>::const_iterator ittOpt = mpOptions.begin(); ittOpt != mpOptions.end(); ++ittOpt)
+							for (const auto &opt : mpOptions)
 							{
-								PyObject *pKeyDict = PyUnicode_FromString(ittOpt->first.c_str());
-								PyObject *pValueDict =  PyUnicode_FromString(ittOpt->second.c_str());
+								PyObject *pKeyDict = PyUnicode_FromString(opt.first.c_str());
+								PyObject *pValueDict = PyUnicode_FromString(opt.second.c_str());
 								if (PyDict_SetItem(self->Options, pKeyDict, pValueDict) == -1)
 								{
 									_log.Log(LOG_ERROR, "(%s) Failed to refresh Options dictionary for Hardware/Unit combination (%d:%d).", self->pPlugin->m_Name.c_str(), self->HwdID, self->Unit);
@@ -778,7 +776,7 @@ namespace Plugins {
 						}
 
 						result = m_sql.safe_query("SELECT ID FROM DeviceStatus WHERE (HardwareID==%d) AND (Unit==%d)", self->HwdID, self->Unit);
-						if (result.size())
+						if (!result.empty())
 						{
 							self->ID = atoi(result[0][0].c_str());
 
@@ -895,7 +893,7 @@ namespace Plugins {
 
 			// TypeName change - actually derives new Type, SubType and SwitchType values
 			if (TypeName) {
-				std::string stdsValue = "";
+				std::string stdsValue;
 				maptypename(std::string(TypeName), iType, iSubType, iSwitchType, stdsValue, pOptionsDict, pOptionsDict);
 
 				// Reset nValue and sValue when changing device types
@@ -960,7 +958,7 @@ namespace Plugins {
 				}
 				else
 				{
-					std::string sOptionValue = "";
+					std::string sOptionValue;
 					PyObject *pValue = PyDict_GetItemString(pOptionsDict, "Custom");
 					if (pValue)
 					{
@@ -1275,7 +1273,8 @@ namespace Plugins {
 			{
 				CPlugin *pPlugin = nullptr;
 				if (pModState) pPlugin = pModState->pPlugin;
-				_log.Log(LOG_ERROR, "Expected: myVar = Domoticz.Connection(Name=\"<Name>\", Transport=\"<Transport>\", Protocol=\"<Protocol>\", Address=\"<IP-Address>\", Port=\"<Port>\", Baud=0)");
+				_log.Log(LOG_ERROR,
+					 R"(Expected: myVar = Domoticz.Connection(Name="<Name>", Transport="<Transport>", Protocol="<Protocol>", Address="<IP-Address>", Port="<Port>", Baud=0))");
 				LogPythonException(pPlugin, __func__);
 			}
 		}
@@ -1476,13 +1475,10 @@ namespace Plugins {
 				(self->pTransport ? (self->pTransport->IsConnected() ? "True" : "False") : "False"), date, sParent.c_str());
 			return pRetVal;
 		}
-		else
-		{
-			PyObject*	pRetVal = PyUnicode_FromFormat("Name: '%U', Transport: '%U', Protocol: '%U', Address: '%U', Port: '%U', Baud: %d, Connected: False, Parent: '%s'",
-				self->Name, self->Transport, self->Protocol, self->Address, self->Port, self->Baud, sParent.c_str());
-			return pRetVal;
-		}
+		PyObject *pRetVal = PyUnicode_FromFormat("Name: '%U', Transport: '%U', Protocol: '%U', Address: '%U', Port: '%U', Baud: %d, Connected: False, Parent: '%s'", self->Name,
+							 self->Transport, self->Protocol, self->Address, self->Port, self->Baud, sParent.c_str());
+		return pRetVal;
 	}
 
-}
+} // namespace Plugins
 #endif

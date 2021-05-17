@@ -128,8 +128,7 @@ P1MeterBase::P1MeterBase()
 
 P1MeterBase::~P1MeterBase()
 {
-	if (m_pDecryptBuffer)
-		delete[] m_pDecryptBuffer;
+	delete[] m_pDecryptBuffer;
 }
 
 void P1MeterBase::Init()
@@ -298,7 +297,7 @@ bool P1MeterBase::MatchLine()
 			if (difftime(atime, m_lastUpdateTime) >= m_ratelimit)
 			{
 				m_lastUpdateTime = atime;
-				sDecodeRXMessage(this, (const unsigned char*)&m_power, "Power", 255);
+				sDecodeRXMessage(this, (const unsigned char *)&m_power, "Power", 255, nullptr);
 				if (m_voltagel1 != -1) {
 					SendVoltageSensor(0, 1, 255, m_voltagel1, "Voltage L1");
 				}
@@ -342,7 +341,7 @@ bool P1MeterBase::MatchLine()
 						// just accept it - we cannot sync to our clock
 						m_lastSharedSendGas = atime;
 						m_lastgasusage = m_gas.gasusage;
-						sDecodeRXMessage(this, (const unsigned char*)&m_gas, "Gas", 255);
+						sDecodeRXMessage(this, (const unsigned char *)&m_gas, "Gas", 255, nullptr);
 					}
 					else if (atime >= m_gasoktime)
 					{
@@ -357,7 +356,7 @@ bool P1MeterBase::MatchLine()
 							m_lastSharedSendGas = atime;
 							m_lastgasusage = m_gas.gasusage;
 							m_gasoktime += 300;
-							sDecodeRXMessage(this, (const unsigned char*)&m_gas, "Gas", 255);
+							sDecodeRXMessage(this, (const unsigned char *)&m_gas, "Gas", 255, nullptr);
 						}
 						else // gas clock is ahead
 						{
@@ -815,11 +814,10 @@ void P1MeterBase::ParseP1Data(const uint8_t* pDataIn, const int LenIn, const boo
 					cipherText.append(m_dataPayload.begin(), m_dataPayload.end());
 					cipherText.append(m_gcmTag.begin(), m_gcmTag.end());
 
-					size_t neededDecryptBufferSize = std::min(1000, static_cast<int>(cipherText.size() + 16));
+					size_t neededDecryptBufferSize = std::min(2048, static_cast<int>(cipherText.size() + 16));
 					if (neededDecryptBufferSize > m_DecryptBufferSize)
 					{
-						if (m_pDecryptBuffer)
-							delete[] m_pDecryptBuffer;
+						delete[] m_pDecryptBuffer;
 
 						m_DecryptBufferSize = neededDecryptBufferSize;
 						m_pDecryptBuffer = new uint8_t[m_DecryptBufferSize];

@@ -58,8 +58,8 @@ const char* CEvohomeBase::GetZoneModeName(uint8_t nZoneMode)
 }
 
 CEvohomeBase::CEvohomeBase()
-	: m_ZoneNames(m_nMaxZones)
-	, m_ZoneOverrideLocal(m_nMaxZones)
+	: m_ZoneOverrideLocal(m_nMaxZones)
+	, m_ZoneNames(m_nMaxZones)
 {
 	m_HwdID=0;
 	m_nDevID=0;
@@ -261,7 +261,7 @@ namespace http {
 
 			std::string idx = request::findValue(&req, "idx");
 			std::string ssensortype = request::findValue(&req, "sensortype");
-			if ((idx == "") || (ssensortype == ""))
+			if ((idx.empty()) || (ssensortype.empty()))
 				return;
 
 			bool bCreated = false;
@@ -332,7 +332,5 @@ namespace http {
 				root["title"] = "CreateEvohomeSensor";
 			}
 		}
-	}
-}
-
-
+	} // namespace server
+} // namespace http

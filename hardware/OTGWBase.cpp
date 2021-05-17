@@ -104,7 +104,7 @@ void OTGWBase::UpdateSwitch(const unsigned char Idx, const bool bOn, const std::
 	lcmd.LIGHTING2.level= (uint8_t)level;
 	lcmd.LIGHTING2.filler=0;
 	lcmd.LIGHTING2.rssi=12;
-	sDecodeRXMessage(this, (const unsigned char *)&lcmd.LIGHTING2, defaultname.c_str(), 255);
+	sDecodeRXMessage(this, (const unsigned char *)&lcmd.LIGHTING2, defaultname.c_str(), 255, m_Name.c_str());
 }
 
 void OTGWBase::UpdateSetPointSensor(const unsigned char Idx, const float Temp, const std::string &defaultname)
@@ -116,10 +116,9 @@ void OTGWBase::UpdateSetPointSensor(const unsigned char Idx, const float Temp, c
 	thermos.id3=0;
 	thermos.id4=Idx;
 	thermos.dunit=0;
-
 	thermos.temp=Temp;
 
-	sDecodeRXMessage(this, (const unsigned char *)&thermos, defaultname.c_str(), 255);
+	sDecodeRXMessage(this, (const unsigned char *)&thermos, defaultname.c_str(), 255, nullptr);
 }
 
 bool OTGWBase::GetOutsideTemperatureFromDomoticz(float &tvalue)
@@ -135,7 +134,6 @@ bool OTGWBase::GetOutsideTemperatureFromDomoticz(float &tvalue)
 	if (tsize < 1)
 		return false;
 
-	Json::Value::const_iterator itt;
 	Json::ArrayIndex rsize = tempjson["result"].size();
 	if (rsize < 1)
 		return false;
@@ -196,7 +194,7 @@ bool OTGWBase::WriteToHardware(const char *pdata, const unsigned char /*length*/
 
 	if (packettype == pTypeLighting2)
 	{
-		std::string LCmd = "";
+		std::string LCmd;
 		int nodeID = 0;
 		int svalue = 0;
 		//light command
@@ -212,17 +210,17 @@ bool OTGWBase::WriteToHardware(const char *pdata, const unsigned char /*length*/
 			svalue = 255;
 		}
 		SwitchLight(nodeID, LCmd, svalue);
-  }
-  else if ((packettype == pTypeThermostat) && (subtype == sTypeThermSetpoint))
-  {
-      const _tThermostat *pMeter=reinterpret_cast<const _tThermostat*>(pdata);
-      float temp = pMeter->temp;
-      unsigned char idx = pMeter->id4;
-      SetSetpoint(idx, temp);
-   }
-  else
-  {
-     _log.Log(LOG_STATUS, "OTGW: Skipping writing to Hardware for type: %02X, subType: %02X", packettype, subtype);
+	}
+	else if ((packettype == pTypeThermostat) && (subtype == sTypeThermSetpoint))
+	{
+		const _tThermostat *pMeter = reinterpret_cast<const _tThermostat *>(pdata);
+		float temp = pMeter->temp;
+		unsigned char idx = pMeter->id4;
+		SetSetpoint(idx, temp);
+	}
+	else
+	{
+		_log.Log(LOG_STATUS, "OTGW: Skipping writing to Hardware for type: %02X, subType: %02X", packettype, subtype);
 	}
 	return true;
 }
@@ -418,77 +416,70 @@ void OTGWBase::ParseLine()
 		_status.DHW_burner_operation_hours=atol(results[idx++].c_str());
 		return;
 	}
-	else
+
+	if (sLine == "SE")
 	{
-		if (sLine=="SE")
+		_log.Log(LOG_ERROR, "OTGW: Error received!");
+	}
+	else if (sLine.find("PR: G") != std::string::npos)
+	{
+		_tOTGWGPIO _GPIO;
+		_GPIO.A = static_cast<int>(sLine[6] - '0');
+		//		if (_GPIO.A==0 || _GPIO.A==1)
+		//		{
+		UpdateSwitch(96, (_GPIO.A == 1), "GPIOAPulledToGround");
+		//		}
+		//		else
+		//		{
+		// Remove device (how?)
+		//		}
+		_GPIO.B = static_cast<int>(sLine[7] - '0');
+		//		if (_GPIO.B==0 || _GPIO.B==1)
+		//		{
+		UpdateSwitch(97, (_GPIO.B == 1), "GPIOBPulledToGround");
+		//		}
+		//		else
+		//		{
+		// Remove device (how?)
+		//		}
+	}
+	else if (sLine.find("PR: I") != std::string::npos)
+	{
+		_tOTGWGPIO _GPIO;
+		_GPIO.A = static_cast<int>(sLine[6] - '0');
+		UpdateSwitch(98, (_GPIO.A == 1), "GPIOAStatusIsHigh");
+		_GPIO.B = static_cast<int>(sLine[7] - '0');
+		UpdateSwitch(99, (_GPIO.B == 1), "GPIOBStatusIsHigh");
+	}
+	else if (sLine.find("PR: O") != std::string::npos)
+	{
+		// Check if setpoint is overriden
+		m_OverrideTemperature = 0.0f;
+		char status = sLine[6];
+		if (status == 'c' || status == 't')
 		{
-			_log.Log(LOG_ERROR,"OTGW: Error received!");
-		}
-		else if (sLine.find("PR: G")!=std::string::npos)
-		{
-			_tOTGWGPIO _GPIO;
-			_GPIO.A=static_cast<int>(sLine[6]- '0');
-//			if (_GPIO.A==0 || _GPIO.A==1)
-//			{
-				UpdateSwitch(96,(_GPIO.A==1),"GPIOAPulledToGround");
-//			}
-//			else
-//			{
-				// Remove device (how?)
-//			}
-			_GPIO.B=static_cast<int>(sLine[7]- '0');
-//			if (_GPIO.B==0 || _GPIO.B==1)
-//			{
-				UpdateSwitch(97,(_GPIO.B==1),"GPIOBPulledToGround");
-//			}
-//			else
-//			{
-				// Remove device (how?)
-//			}
-		}
-		else if (sLine.find("PR: I")!=std::string::npos)
-		{
-			_tOTGWGPIO _GPIO;
-			_GPIO.A=static_cast<int>(sLine[6]- '0');
-			UpdateSwitch(98,(_GPIO.A==1),"GPIOAStatusIsHigh");
-			_GPIO.B=static_cast<int>(sLine[7]- '0');
-			UpdateSwitch(99,(_GPIO.B==1),"GPIOBStatusIsHigh");
-		}
-		else if (sLine.find("PR: O")!=std::string::npos)
-		{
-			// Check if setpoint is overriden
- 			m_OverrideTemperature=0.0f;
-			char status=sLine[6];
-			if (status == 'c' || status == 't')
-			{
-				// Get override setpoint value
-				m_OverrideTemperature=static_cast<float>(atof(sLine.substr(7).c_str()));
-			}
-		}
-		else if (sLine.find("PR: A") != std::string::npos)
-		{
-			//Gateway Version
-			std::string tmpstr = sLine.substr(6);
-			size_t tpos = tmpstr.find(' ');
-			if (tpos != std::string::npos)
-			{
-				m_Version = tmpstr.substr(tpos + 9);
-			}
-		}
-		else
-		{
-			if (
-				(sLine.find("OT") == std::string::npos)&&
-				(sLine.find("PS") == std::string::npos)&&
-				(sLine.find("SC") == std::string::npos)
-				)
-			{
-				//Dont report OT/PS/SC feedback
-				_log.Log(LOG_STATUS,"OTGW: %s",sLine.c_str());
-			}
+			// Get override setpoint value
+			m_OverrideTemperature = static_cast<float>(atof(sLine.substr(7).c_str()));
 		}
 	}
-
+	else if (sLine.find("PR: A") != std::string::npos)
+	{
+		// Gateway Version
+		std::string tmpstr = sLine.substr(6);
+		size_t tpos = tmpstr.find(' ');
+		if (tpos != std::string::npos)
+		{
+			m_Version = tmpstr.substr(tpos + 9);
+		}
+	}
+	else
+	{
+		if ((sLine.find("OT") == std::string::npos) && (sLine.find("PS") == std::string::npos) && (sLine.find("SC") == std::string::npos))
+		{
+			// Dont report OT/PS/SC feedback
+			_log.Log(LOG_STATUS, "OTGW: %s", sLine.c_str());
+		}
+	}
 }
 
 //Webserver helpers
@@ -504,7 +495,8 @@ namespace http {
 			}
 
 			std::string idx = request::findValue(&req, "idx");
-			if (idx == "") {
+			if (idx.empty())
+			{
 				return;
 			}
 			std::vector<std::vector<std::string> > result;
@@ -562,5 +554,5 @@ namespace http {
 			root["status"] = "OK";
 			root["title"] = "SendOpenThermCommand";
 		}
-	}
-}
+	} // namespace server
+} // namespace http

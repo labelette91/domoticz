@@ -188,16 +188,9 @@ void MyNode::addValue(OpenZWave::ValueID id)
  */
 void MyNode::removeValue(OpenZWave::ValueID id)
 {
-	std::vector<MyValue*>::iterator it;
-	bool found = false;
-	for (it = values.begin(); it != values.end(); it++) {
-		if ((*it)->id == id) {
-			delete* it;
-			values.erase(it);
-			found = true;
-			break;
-		}
-	}
+	values.erase(std::remove_if(values.begin(), values.end(), [=](MyValue *value) { return value->id == id; }), values.end());
+
+	bool found = std::any_of(values.begin(), values.end(), [=](MyValue *value) { return value->id == id; });
 	if (!found)
 	{
 #ifdef OZW_WRITE_LOG
@@ -257,13 +250,14 @@ void MyNode::addGroup(uint8 node, uint8 g, uint8 n, uint8* v)
 #ifdef OZW_WRITE_LOG
 	Log::Write(LogLevel_Info, "addGroup: node %d group %d n %d\n", node, g, n);
 #endif
-	if (groups.size() == 0)
+	if (groups.empty())
 		newGroup(node);
-	for (std::vector<MyGroup*>::iterator it = groups.begin(); it != groups.end(); ++it)
-		if ((*it)->groupid == g) {
-			(*it)->grouplist.clear();
+	for (const auto &group : groups)
+		if (group->groupid == g)
+		{
+			group->grouplist.clear();
 			for (int i = 0; i < n; i++)
-				(*it)->grouplist.push_back(v[i]);
+				group->grouplist.push_back(v[i]);
 			setTime(time(nullptr));
 			setChanged(true);
 			return;
@@ -279,9 +273,9 @@ void MyNode::addGroup(uint8 node, uint8 g, uint8 n, uint8* v)
  */
 MyGroup* MyNode::getGroup(uint8 i)
 {
-	for (std::vector<MyGroup*>::iterator it = groups.begin(); it != groups.end(); ++it)
-		if ((*it)->groupid == i)
-			return *it;
+	for (const auto &group : groups)
+		if (group->groupid == i)
+			return group;
 	return nullptr;
 }
 
@@ -292,7 +286,6 @@ MyGroup* MyNode::getGroup(uint8 i)
 void MyNode::updateGroup(uint8 node, uint8 grp, char* glist)
 {
 	char* p = glist;
-	std::vector<MyGroup*>::iterator it;
 	char* np;
 	uint8* v;
 	uint8 n;
@@ -300,15 +293,13 @@ void MyNode::updateGroup(uint8 node, uint8 grp, char* glist)
 #ifdef OZW_WRITE_LOG
 	Log::Write(LogLevel_Info, "updateGroup: node %d group %d\n", node, grp);
 #endif
-	for (it = groups.begin(); it != groups.end(); ++it)
-		if ((*it)->groupid == grp)
-			break;
+	auto it = std::find_if(groups.begin(), groups.end(), [=](MyGroup *group) { return group->groupid == grp; });
 	if (it == groups.end()) {
 #ifdef OZW_WRITE_LOG
 		Log::Write(LogLevel_Error, "updateGroup: node %d group %d not found\n", node, grp);
 #endif
 		return;
-}
+	}
 	v = new uint8[(*it)->max];
 	n = 0;
 	while (p != nullptr && *p && n < (*it)->max)
@@ -418,7 +409,7 @@ void MyNode::updatePoll(char* ilist, char* plist)
  * 2-SWITCH MULTILEVEL-user-byte-1-0
  * node-class-genre-type-instance-index
  */
-MyValue* MyNode::lookup(std::string data)
+MyValue *MyNode::lookup(const std::string &data)
 {
 	uint8 node = 0;
 	uint8 cls;
@@ -467,9 +458,9 @@ MyValue* MyNode::lookup(std::string data)
 	MyNode* n = nodes[node];
 	if (n == nullptr)
 		return nullptr;
-	for (std::vector<MyValue*>::iterator it = n->values.begin(); it != n->values.end(); it++)
-		if ((*it)->id == id)
-			return *it;
+	for (const auto &value : n->values)
+		if (value->id == id)
+			return value;
 	return nullptr;
 }
 
@@ -515,7 +506,8 @@ void MyNode::setAllChanged(bool ch)
 
 uint8 MyNode::getRemoved()
 {
-	if (removed.size() > 0) {
+	if (!removed.empty())
+	{
 		uint8 node = removed.front();
 		removed.pop_front();
 		return node;
@@ -603,8 +595,7 @@ void COpenZWaveControlPanel::OnCPNotification(OpenZWave::Notification const* _no
 			if (nodes[nodeID] == nullptr)
 				return;
 			nodes[_notification->GetNodeId()]->addGroup(_notification->GetNodeId(), _notification->GetGroupIdx(), n, v);
-			if (v != nullptr)
-				delete[] v;
+			delete[] v;
 		}
 		break;
 		case OpenZWave::Notification::Type_NodeNew:
@@ -961,7 +952,7 @@ void COpenZWaveControlPanel::web_get_groups(int n, TiXmlElement* ep)
 		groupElement->SetAttribute("ind", i);
 		groupElement->SetAttribute("max", p->max);
 		groupElement->SetAttribute("label", p->label.c_str());
-		std::string str = "";
+		std::string str;
 		for (unsigned int j = 0; j < p->grouplist.size(); j++) {
 			char s[12];
 			snprintf(s, sizeof(s), "%d", p->grouplist[j]);
@@ -1012,10 +1003,11 @@ void COpenZWaveControlPanel::web_get_values(int i, TiXmlElement* ep)
 				std::string str;
 				OpenZWave::Manager::Get()->GetValueListSelection(id, &str);
 				valueElement->SetAttribute("current", str.c_str());
-				for (std::vector<std::string>::iterator it = strs.begin(); it != strs.end(); it++) {
+				for (const auto &str : strs)
+				{
 					TiXmlElement* itemElement = new TiXmlElement("item");
 					valueElement->LinkEndChild(itemElement);
-					TiXmlText* textElement = new TiXmlText((*it).c_str());
+					TiXmlText *textElement = new TiXmlText(str.c_str());
 					itemElement->LinkEndChild(textElement);
 				}
 			}
@@ -1025,11 +1017,8 @@ void COpenZWaveControlPanel::web_get_values(int i, TiXmlElement* ep)
 				if (OpenZWave::Manager::Get()->GetValueAsString(id, &str))
 				{
 					//make valid string
-					for (size_t ii = 0; ii < str.size(); ii++)
-					{
-						if (str[ii] < 0x20)
-							str[ii] = ' ';
-					}
+					std::replace_if(
+						str.begin(), str.end(), [](char &c) { return c < 0x20; }, ' ');
 					textElement = new TiXmlText(str.c_str());
 				}
 				else
@@ -1226,11 +1215,11 @@ std::string COpenZWaveControlPanel::SendPollResponse()
 		sprintf(fntemp, "%sozwcp.poll.XXXXXX.xml", szUserDataFolder.c_str());
 		doc.SaveFile(fntemp);
 
-		std::string retstring = "";
+		std::string retstring;
 		std::ifstream testFile(fntemp, std::ios::binary);
 		std::vector<char> fileContents((std::istreambuf_iterator<char>(testFile)),
 			std::istreambuf_iterator<char>());
-		if (fileContents.size() > 0)
+		if (!fileContents.empty())
 		{
 			retstring.insert(retstring.begin(), fileContents.begin(), fileContents.end());
 		}
@@ -1422,10 +1411,10 @@ std::string COpenZWaveControlPanel::DoNodeChange(const std::string& fun, const i
 	try
 	{
 		if (fun == "nam") { /* Node naming */
-			OpenZWave::Manager::Get()->SetNodeName(homeId, node_id, svalue.c_str());
+			OpenZWave::Manager::Get()->SetNodeName(homeId, node_id, svalue);
 		}
 		else if (fun == "loc") { /* Node location */
-			OpenZWave::Manager::Get()->SetNodeLocation(homeId, node_id, svalue.c_str());
+			OpenZWave::Manager::Get()->SetNodeLocation(homeId, node_id, svalue);
 		}
 		else if (fun == "pol") { /* Node polling */
 		}
@@ -1471,11 +1460,11 @@ std::string COpenZWaveControlPanel::DoTestNetwork(const int node_id, const int c
 		sprintf(fntemp, "%sozwcp.testheal.XXXXXX", szUserDataFolder.c_str());
 		doc.SaveFile(fntemp);
 
-		std::string retstring = "";
+		std::string retstring;
 		std::ifstream testFile(fntemp, std::ios::binary);
 		std::vector<char> fileContents((std::istreambuf_iterator<char>(testFile)),
 			std::istreambuf_iterator<char>());
-		if (fileContents.size() > 0)
+		if (!fileContents.empty())
 		{
 			retstring.insert(retstring.begin(), fileContents.begin(), fileContents.end());
 		}
@@ -1509,11 +1498,11 @@ std::string COpenZWaveControlPanel::HealNetworkNode(const int node_id, const boo
 		sprintf(fntemp, "%sozwcp.testheal.XXXXXX", szUserDataFolder.c_str());
 		doc.SaveFile(fntemp);
 
-		std::string retstring = "";
+		std::string retstring;
 		std::ifstream testFile(fntemp, std::ios::binary);
 		std::vector<char> fileContents((std::istreambuf_iterator<char>(testFile)),
 			std::istreambuf_iterator<char>());
-		if (fileContents.size() > 0)
+		if (!fileContents.empty())
 		{
 			retstring.insert(retstring.begin(), fileContents.begin(), fileContents.end());
 		}
@@ -1553,7 +1542,7 @@ std::string COpenZWaveControlPanel::GetCPTopo()
 					TiXmlElement* nodeElement = new TiXmlElement("node");
 					snprintf(str, sizeof(str), "%d", i);
 					nodeElement->SetAttribute("id", str);
-					std::string list = "";
+					std::string list;
 					for (k = 0; k < len; k++) {
 						snprintf(str, sizeof(str), "%d", neighbors[k]);
 						list += str;
@@ -1574,11 +1563,11 @@ std::string COpenZWaveControlPanel::GetCPTopo()
 		sprintf(fntemp, "%sozwcp.topo.XXXXXX", szUserDataFolder.c_str());
 		doc.SaveFile(fntemp);
 
-		std::string retstring = "";
+		std::string retstring;
 		std::ifstream testFile(fntemp, std::ios::binary);
 		std::vector<char> fileContents((std::istreambuf_iterator<char>(testFile)),
 			std::istreambuf_iterator<char>());
-		if (fileContents.size() > 0)
+		if (!fileContents.empty())
 		{
 			retstring.insert(retstring.begin(), fileContents.begin(), fileContents.end());
 		}
@@ -1707,11 +1696,11 @@ std::string COpenZWaveControlPanel::GetCPStats()
 		sprintf(fntemp, "%sozwcp.stat.XXXXXX", szUserDataFolder.c_str());
 		doc.SaveFile(fntemp);
 
-		std::string retstring = "";
+		std::string retstring;
 		std::ifstream testFile(fntemp, std::ios::binary);
 		std::vector<char> fileContents((std::istreambuf_iterator<char>(testFile)),
 			std::istreambuf_iterator<char>());
-		if (fileContents.size() > 0)
+		if (!fileContents.empty())
 		{
 			retstring.insert(retstring.begin(), fileContents.begin(), fileContents.end());
 		}

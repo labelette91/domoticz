@@ -130,7 +130,8 @@ namespace http {
 			}
 
 			std::string idx = request::findValue(&req, "idx");
-			if (idx == "") {
+			if (idx.empty())
+			{
 				return;
 			}
 
@@ -150,5 +151,5 @@ namespace http {
 
 			m_mainworker.RestartHardware(idx);
 		}
-	}
-}
+	} // namespace server
+} // namespace http

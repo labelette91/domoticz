@@ -248,7 +248,7 @@ int eHouseTCP::UpdateSQLState(int devh, const uint8_t devl, int devtype, const u
 	sprintf(IDX, "%02X%02X%02X%02X", devh, devl, code, nr);  //index calculated adrh,adrl,signalcode,i/o nr
 	if ((type == pTypeLighting2)) // || (type==pTypeTEMP))
 		sprintf(IDX, "%X%02X%02X%02X", devh, devl, code, nr);    //exception bug in Domoticz??
-	std::string devname = "";
+	std::string devname;
 	std::vector<std::vector<std::string> > result;
 	//if name contains '@' - ignore i/o - do not add to DB (unused)
 	if ((strstr(Name, "@") == nullptr) && (strlen(Name) > 0))
@@ -311,22 +311,21 @@ void eHouseTCP::UpdatePGM(int /*adrh*/, int /*adrl*/, int /*devtype*/, const cha
 	std::string Names = ISO2UTF8
 	(std::string(names));
 	//_log.Log(LOG_ERROR, "PGM: %s", Names.c_str());
-	m_sql.SetDeviceOptions(idx, m_sql.BuildDeviceOptions(Names.c_str(), false));
+	m_sql.SetDeviceOptions(idx, m_sql.BuildDeviceOptions(Names, false));
 }
 ///////////////////////////////////////////////////////////////////////////////////////////
 //Add Controllers To 'Plans' DB
 int eHouseTCP::UpdateSQLPlan(int /*devh*/, int /*devl*/, int /*devtype*/, const char * Name)
 {
 	int i = 0;
-	std::string devname = "";
+	std::string devname;
 	std::vector<std::vector<std::string> > result;
 	devname.append(Name, strlen(Name));
 	devname = ISO2UTF8(devname);
 
 	result = m_sql.safe_query("SELECT ID FROM Plans WHERE (Name=='%q') ", devname.c_str());
 
-
-if (result.empty())
+	if (result.empty())
 	{
 		m_sql.safe_query("INSERT INTO Plans (Name) VALUES ('%q')", devname.c_str());
 	}
@@ -738,7 +737,7 @@ int eHouseTCP::ConnectTCP(unsigned int IP)
 //////////////////////////////////////////////////////////////////////////////////
 bool eHouseTCP::CheckAddress()
 {
-	if (m_IPAddress.size() == 0 || m_IPPort < 1 || m_IPPort > 65535)
+	if (m_IPAddress.empty() || m_IPPort < 1 || m_IPPort > 65535)
 	{
 		LOG(LOG_ERROR, "eHouse: Empty IP Address or bad Port");
 		return false;
@@ -767,17 +766,14 @@ bool eHouseTCP::CheckAddress()
 			LOG(LOG_ERROR, "eHouse: cannot resolve host name");
 			return false;
 		}
-		else
-		{
-			memcpy(&(m_addr.sin_addr), he->h_addr_list[0], 4);
-			m_SrvAddrU = ip & 0xff;
-			m_SrvAddrM = (ip >> 8) & 0xff;
-			m_SrvAddrL = ip >> 24;
-			m_SrvAddrH = (ip >> 16) & 0xff;
-			LOG(LOG_STATUS, "[eHouse PRO] %s =>IP Address: %d.%d.%d.%d\r\n", m_IPAddress.c_str(), m_SrvAddrU, m_SrvAddrM, m_SrvAddrH, m_SrvAddrL);
-			if ((m_SrvAddrU != 192) || (m_SrvAddrM != 168))
-				m_ViaTCP = 1;
-		}
+		memcpy(&(m_addr.sin_addr), he->h_addr_list[0], 4);
+		m_SrvAddrU = ip & 0xff;
+		m_SrvAddrM = (ip >> 8) & 0xff;
+		m_SrvAddrL = ip >> 24;
+		m_SrvAddrH = (ip >> 16) & 0xff;
+		LOG(LOG_STATUS, "[eHouse PRO] %s =>IP Address: %d.%d.%d.%d\r\n", m_IPAddress.c_str(), m_SrvAddrU, m_SrvAddrM, m_SrvAddrH, m_SrvAddrL);
+		if ((m_SrvAddrU != 192) || (m_SrvAddrM != 168))
+			m_ViaTCP = 1;
 	}
 	if (m_ViaTCP)
 		m_TCPSocket = ConnectTCP(m_addr.sin_addr.s_addr);
@@ -826,9 +822,10 @@ int  eHouseTCP::getrealERMpgm(int32_t ID, int level)
 		switch (code)
 		{
 		case VISUAL_PGM:
-			for (i = 0; i < (sizeof(m_eHEn[index]->Programs) / sizeof(m_eHEn[index]->Programs[0])); i++)
+			i = 0;
+			for (const auto &program : m_eHEn[index]->Programs)
 			{
-				if ((strlen(m_eHEn[index]->Programs[i]) > 0) && (strstr(m_eHEn[index]->Programs[i], "@") == nullptr))
+				if ((strlen(program) > 0) && (strstr(program, "@") == nullptr))
 				{
 					Lev++;
 				}
@@ -840,12 +837,14 @@ int  eHouseTCP::getrealERMpgm(int32_t ID, int level)
 					AddToLocalEvent(ev, 0);
 					return i;
 				}
+				++i;
 			}
 			break;
 		case VISUAL_APGM:
-			for (i = 0; i < (sizeof(m_eHEn[index]->ADCPrograms) / sizeof(m_eHEn[index]->ADCPrograms[0])); i++)
+			i = 0;
+			for (const auto &adc : m_eHEn[index]->ADCPrograms)
 			{
-				if ((strlen(m_eHEn[index]->ADCPrograms[i]) > 0) && (strstr(m_eHEn[index]->ADCPrograms[i], "@") == nullptr))
+				if ((strlen(adc) > 0) && (strstr(adc, "@") == nullptr))
 				{
 					Lev++;
 				}
@@ -857,6 +856,7 @@ int  eHouseTCP::getrealERMpgm(int32_t ID, int level)
 					AddToLocalEvent(ev, 0);
 					return i;
 				}
+				++i;
 			}
 
 			break;
@@ -872,7 +872,7 @@ int  eHouseTCP::getrealRMpgm(int32_t ID, int level)
 	uint8_t devh = ID >> 24;
 	uint8_t devl = (ID >> 16) & 0xff;
 	uint8_t code = (ID >> 8) & 0xff;
-	int i;
+	int i = 0;
 	int lv = level / 10;
 	lv += 1;
 	int Lev = 0;
@@ -889,9 +889,9 @@ int  eHouseTCP::getrealRMpgm(int32_t ID, int level)
 		switch (code)
 		{
 		case VISUAL_PGM:
-			for (i = 0; i < (sizeof(m_eHn[index]->Programs) / sizeof(m_eHn[index]->Programs[0])); i++)
+			for (const auto &eHn : m_eHn[index]->Programs)
 			{
-				if ((strlen(m_eHn[index]->Programs[i]) > 0) && (strstr(m_eHn[index]->Programs[i], "@") == nullptr))
+				if ((strlen(eHn) > 0) && (strstr(eHn, "@") == nullptr))
 				{
 					Lev++;
 				}
@@ -905,6 +905,7 @@ int  eHouseTCP::getrealRMpgm(int32_t ID, int level)
 					AddToLocalEvent(ev, 0);
 					return i;
 				}
+				i++;
 			}
 			break;
 			/*case VISUAL_APGM:
@@ -1242,12 +1243,12 @@ std::string eHouseTCP::ISO2UTF8(const std::string &name)
 	char utf8[] = "\xC4\x85\xC4\x87\xC4\x99\xC5\x82\xC5\x84\xC3\xB3\xC5\x9B\xC5\xBA\xC5\xBC\xC4\x84\xC4\x86\xC4\x98\xC5\x81\xC5\x83\xC3\x93\xC5\x9A\xC5\xB9\xC5\xBB";
 
 	std::string UTF8Name;
-	for (size_t i = 0; i < name.length(); ++i)
+	for (char i : name)
 	{
 		bool changed = false;
 		for (int j = 0; j < sizeof(cp1250); ++j)
 		{
-			if (name[i] == cp1250[j])
+			if (i == cp1250[j])
 			{
 				UTF8Name += utf8[j * 2];
 				UTF8Name += utf8[j * 2 + 1];
@@ -1257,7 +1258,7 @@ std::string eHouseTCP::ISO2UTF8(const std::string &name)
 		}
 		if (!changed)
 		{
-			UTF8Name += name[i];
+			UTF8Name += i;
 		}
 	}
 	return UTF8Name;

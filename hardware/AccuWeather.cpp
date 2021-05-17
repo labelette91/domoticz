@@ -48,10 +48,9 @@ std::string ReadFile(std::string filename)
 }
 #endif
 
-CAccuWeather::CAccuWeather(const int ID, const std::string &APIKey, const std::string &Location) :
-m_APIKey(APIKey),
-m_Location(Location),
-m_LocationKey("")
+CAccuWeather::CAccuWeather(const int ID, const std::string &APIKey, const std::string &Location)
+	: m_APIKey(APIKey)
+	, m_Location(Location)
 {
 	m_HwdID=ID;
 	Init();
@@ -172,11 +171,9 @@ std::string CAccuWeather::GetLocationKey()
 			}
 			return root["Key"].asString();
 		}
-		else
-		{
-			Log(LOG_ERROR, "Invalid data received, unknown location or API key!");
-			return "";
-		}
+
+		Log(LOG_ERROR, "Invalid data received, unknown location or API key!");
+		return "";
 	}
 	catch (...)
 	{
@@ -222,7 +219,7 @@ void CAccuWeather::GetMeterDetails()
 			return;
 		}
 
-		if (root.size() < 1)
+		if (root.empty())
 		{
 			Log(LOG_ERROR, "Invalid data received!");
 			return;
@@ -412,7 +409,7 @@ void CAccuWeather::GetMeterDetails()
 					tr10 -= (tsen.RAIN.raintotal2 * 256);
 					tsen.RAIN.raintotal3 = (BYTE)(tr10);
 
-					sDecodeRXMessage(this, (const unsigned char *)&tsen.RAIN, nullptr, 255);
+					sDecodeRXMessage(this, (const unsigned char *)&tsen.RAIN, nullptr, 255, nullptr);
 				}
 			}
 		}
@@ -428,7 +425,7 @@ void CAccuWeather::GetMeterDetails()
 					_tGeneralDevice gdevice;
 					gdevice.subtype = sTypeVisibility;
 					gdevice.floatval1 = visibility;
-					sDecodeRXMessage(this, (const unsigned char *)&gdevice, nullptr, 255);
+					sDecodeRXMessage(this, (const unsigned char *)&gdevice, nullptr, 255, nullptr);
 				}
 			}
 		}

@@ -176,8 +176,8 @@ void stdreplace(
 
 void stdupper(std::string &inoutstring)
 {
-	for (size_t i = 0; i < inoutstring.size(); ++i)
-		inoutstring[i] = toupper(inoutstring[i]);
+	for (char &i : inoutstring)
+		i = toupper(i);
 }
 
 void stdlower(std::string &inoutstring)
@@ -187,8 +187,8 @@ void stdlower(std::string &inoutstring)
 
 void stdupper(std::wstring& inoutstring)
 {
-	for (size_t i = 0; i < inoutstring.size(); ++i)
-		inoutstring[i] = towupper(inoutstring[i]);
+	for (wchar_t &i : inoutstring)
+		i = towupper(i);
 }
 
 void stdlower(std::wstring& inoutstring)
@@ -339,7 +339,7 @@ std::vector<std::string> GetSerialPorts(bool &bUseDirectPath)
 	//also scan /dev/serial/by-id/* on Linux
 
 	bool bHaveTtyAMAfree=false;
-	std::string sLine = "";
+	std::string sLine;
 	std::ifstream infile;
 
 	infile.open("/boot/cmdline.txt");
@@ -627,11 +627,7 @@ uint32_t IPToUInt(const std::string &ip)
 
 bool isInt(const std::string &s)
 {
-	for(size_t i = 0; i < s.length(); i++){
-		if(!isdigit(s[i]))
-			return false;
-	}
-	return true;
+	return std::all_of(s.begin(), s.end(), ::isdigit);
 }
 
 void sleep_seconds(const long seconds)
@@ -711,14 +707,14 @@ int RemoveDir(const std::string &dirnames, std::string &errorPath)
 			}
 		}
 #else
-		for (size_t i = 0; i < splitresults.size(); i++)
+		for (auto &splitresult : splitresults)
 		{
-			if (!file_exist(splitresults[i].c_str()))
+			if (!file_exist(splitresult.c_str()))
 				continue;
-			ExecuteCommandAndReturn("rm -rf \"" + splitresults[i] + "\"", returncode);
+			ExecuteCommandAndReturn("rm -rf \"" + splitresult + "\"", returncode);
 			if (returncode)
 			{
-				errorPath = splitresults[i];
+				errorPath = splitresult;
 				break;
 			}
 		}
@@ -1091,7 +1087,6 @@ void DirectoryListing(std::vector<std::string>& entries, const std::string &dir,
 		}
 		closedir(d);
 	}
-	return;
 }
 
 std::string GenerateUserAgent()
@@ -1275,7 +1270,7 @@ int GetDirFilesRecursive(const std::string &DirPath, std::map<std::string, int> 
 				if ((strcmp(ent->d_name, ".") != 0) && (strcmp(ent->d_name, "..") != 0) && (strcmp(ent->d_name, ".svn") != 0))
 				{
 					std::string nextdir = DirPath + ent->d_name + "/";
-					if (GetDirFilesRecursive(nextdir.c_str(), _Files))
+					if (GetDirFilesRecursive(nextdir, _Files))
 					{
 						closedir(dir);
 						return 1;
@@ -1380,8 +1375,7 @@ bool IsDebuggerPresent()
 	{
 		if (::isspace(*characterPtr))
 			continue;
-		else
-			return ::isdigit(*characterPtr) != 0 && *characterPtr != '0';
+		return ::isdigit(*characterPtr) != 0 && *characterPtr != '0';
 	}
 
 	return false;

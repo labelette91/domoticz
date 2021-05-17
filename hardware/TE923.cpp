@@ -104,8 +104,7 @@ void CTE923::GetSensorDetails()
 			_log.Log(LOG_ERROR, "TE923: Could not read weather data!");
 			return;
 		}
-		else
-			_te923tool2.CloseDevice();
+		_te923tool2.CloseDevice();
 	}
 	else
 		_te923tool.CloseDevice();
@@ -184,7 +183,7 @@ void CTE923::GetSensorDetails()
 		tsen.WIND.packetlength=sizeof(tsen.WIND)-1;
 		tsen.WIND.packettype=pTypeWIND;
 		tsen.WIND.subtype=sTypeWINDNoTemp;
-		dev.batteryWind = 1;
+		dev.batteryWind = true;
 		if (dev.batteryWind)
 			tsen.WIND.battery_level=9;
 		else
@@ -235,7 +234,7 @@ void CTE923::GetSensorDetails()
 			tsen.WIND.chilll=(BYTE)(at10);
 		}
 
-		sDecodeRXMessage(this, (const unsigned char *)&tsen.WIND, nullptr, -1);
+		sDecodeRXMessage(this, (const unsigned char *)&tsen.WIND, nullptr, -1, nullptr);
 	}
 
 	//Rain
@@ -266,7 +265,7 @@ void CTE923::GetSensorDetails()
 				tsen.RAIN.raintotal2=(BYTE)(tr10/256);
 				tr10-=(tsen.RAIN.raintotal2*256);
 				tsen.RAIN.raintotal3=(BYTE)(tr10);
-				sDecodeRXMessage(this, (const unsigned char *)&tsen.RAIN, nullptr, -1);
+				sDecodeRXMessage(this, (const unsigned char *)&tsen.RAIN, nullptr, -1, nullptr);
 		*/
 	}
 	//UV

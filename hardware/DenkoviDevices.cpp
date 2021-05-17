@@ -549,7 +549,7 @@ int CDenkoviDevices::DenkoviCheckForIO(std::string tmpstr, const std::string &tm
 	if (pos1 != std::string::npos)
 	{
 		tmpstr = tmpstr.substr(pos1 + strlen(ioType.c_str()));
-		pos1 = tmpstr.find(">");
+		pos1 = tmpstr.find('>');
 		if (pos1 != std::string::npos)
 			Idx = atoi(tmpstr.substr(0, pos1).c_str());
 	}
@@ -571,7 +571,7 @@ int CDenkoviDevices::DenkoviGetIntParameter(std::string tmpstr, const std::strin
 }
 
 std::string CDenkoviDevices::DenkoviGetStrParameter(std::string tmpstr, const std::string &tmpParameter) {
-	std::string sMeasure = "";
+	std::string sMeasure;
 	std::string parameter = "<" + tmpParameter + ">";
 
 	size_t pos1 = tmpstr.find(parameter);
@@ -600,43 +600,48 @@ float CDenkoviDevices::DenkoviGetFloatParameter(std::string tmpstr, const std::s
 	return value;
 }
 
-std::string CDenkoviDevices::DAEnetIP3GetIo(std::string tmpstr, const std::string &tmpParameter) {
+std::string CDenkoviDevices::DAEnetIP3GetIo(const std::string &tmpstr, const std::string &tmpParameter)
+{
 	std::string parameter = tmpParameter + "=";
 	size_t pos1 = tmpstr.find(parameter);
-	size_t pos2 = tmpstr.find(";", pos1);
-	return tmpstr.substr(pos1 + strlen(parameter.c_str()), pos2 - (pos1 + strlen(parameter.c_str()))).c_str();
+	size_t pos2 = tmpstr.find(';', pos1);
+	return tmpstr.substr(pos1 + strlen(parameter.c_str()), pos2 - (pos1 + strlen(parameter.c_str())));
 }
 
-std::string CDenkoviDevices::DAEnetIP3GetAi(std::string tmpstr, const std::string &tmpParameter, const int &ciType) {
+std::string CDenkoviDevices::DAEnetIP3GetAi(const std::string &tmpstr, const std::string &tmpParameter, const int &ciType)
+{
 	std::string parameter = tmpParameter + "=";
 	size_t pos1 = tmpstr.find(parameter);
 	size_t pos2;
 	if (ciType == DAENETIP3_AI_VALUE) {
-		pos2 = tmpstr.find("[", pos1);
-		return tmpstr.substr(pos1 + strlen(parameter.c_str()), pos2 - (pos1 + strlen(parameter.c_str()))).c_str();
+		pos2 = tmpstr.find('[', pos1);
+		return tmpstr.substr(pos1 + strlen(parameter.c_str()), pos2 - (pos1 + strlen(parameter.c_str())));
 	}
-	else if (ciType == DAENETIP3_AI_DIMENSION) {
-		pos1 = tmpstr.find("[", pos1);
-		pos2 = tmpstr.find("]", pos1);
-		return tmpstr.substr(pos1 + 1, pos2 - (pos1 + 1)).c_str();
+	if (ciType == DAENETIP3_AI_DIMENSION)
+	{
+		pos1 = tmpstr.find('[', pos1);
+		pos2 = tmpstr.find(']', pos1);
+		return tmpstr.substr(pos1 + 1, pos2 - (pos1 + 1));
 	}
 	return "";// tmpstr.substr(pos1 + strlen(parameter.c_str()), pos2 - (pos1 + strlen(parameter.c_str()))).c_str();
 }
 
-uint8_t CDenkoviDevices::DAEnetIP2GetIoPort(std::string tmpstr, const int &port) {
+uint8_t CDenkoviDevices::DAEnetIP2GetIoPort(const std::string &tmpstr, const int &port)
+{
 	std::stringstream ss;
 	size_t pos1, pos2;
 	int b;
 	if (port == DAENETIP2_PORT_3_VAL) {
 		pos1 = tmpstr.find("(0x");
-		pos2 = tmpstr.find(",", pos1);
+		pos2 = tmpstr.find(',', pos1);
 		ss << std::hex << tmpstr.substr(pos1 + 3, pos2 - (pos1 + 3)).c_str();
 		ss >> b;
 		return (uint8_t)b;
 	}
-	else if (port == DAENETIP2_PORT_5_VAL) {
+	if (port == DAENETIP2_PORT_5_VAL)
+	{
 		pos1 = tmpstr.find(",0x");
-		pos2 = tmpstr.find(",", pos1 + 3);
+		pos2 = tmpstr.find(',', pos1 + 3);
 		ss << std::hex << tmpstr.substr(pos1 + 3, pos2 - (pos1 + 3)).c_str();
 		ss >> b;
 		return (uint8_t)b;
@@ -644,23 +649,25 @@ uint8_t CDenkoviDevices::DAEnetIP2GetIoPort(std::string tmpstr, const int &port)
 	return 0;
 }
 
-std::string CDenkoviDevices::DAEnetIP2GetName(std::string tmpstr, const int &nmr) {//nmr should be from 1 to 24
+std::string CDenkoviDevices::DAEnetIP2GetName(const std::string &tmpstr, const int &nmr)
+{ // nmr should be from 1 to 24
 	size_t pos1 = 0, pos2 = 0;
 	for (uint8_t ii = 0; ii < (((nmr - 1) * 2) + 1); ii++) {
-		pos1 = tmpstr.find("\"", pos1 + 1);
+		pos1 = tmpstr.find('"', pos1 + 1);
 	}
-	pos2 = tmpstr.find("\"", pos1 + 1);
-	return tmpstr.substr(pos1 + 1, pos2 - (pos1 + 1)).c_str();
+	pos2 = tmpstr.find('"', pos1 + 1);
+	return tmpstr.substr(pos1 + 1, pos2 - (pos1 + 1));
 }
 
-uint16_t CDenkoviDevices::DAEnetIP2GetAiValue(std::string tmpstr, const int &aiNmr) {
+uint16_t CDenkoviDevices::DAEnetIP2GetAiValue(const std::string &tmpstr, const int &aiNmr)
+{
 	size_t pos1 = 0, pos2 = 0;
 	std::stringstream ss;
 	int b = 0;
 	for (uint8_t ii = 0; ii < aiNmr + 3; ii++) {
 		pos1 = tmpstr.find("0x", pos1 + 2);
 	}
-	pos2 = tmpstr.find(",", pos1 + 2);
+	pos2 = tmpstr.find(',', pos1 + 2);
 	ss << std::hex << tmpstr.substr(pos1 + 2, pos2 - (pos1 + 2)).c_str();
 	ss >> b;
 	return (uint16_t)b;
@@ -670,7 +677,8 @@ float CDenkoviDevices::DAEnetIP2CalculateAi(int adc, const int &valType) {
 	if (valType == DAENETIP2_AI_TEMPERATURE) {
 		return static_cast<float>(10000 * ((1.2*204.8)*adc / (120 * 1024) + 0) / 100);
 	}
-	else if (valType == DAENETIP2_AI_VOLTAGE) {
+	if (valType == DAENETIP2_AI_VOLTAGE)
+	{
 		return static_cast<float>(10000 * ((1.2*0.377)*adc / (4.7 * 1024) + 0) / 100);
 	}
 	return 0.0f;
@@ -680,8 +688,8 @@ void CDenkoviDevices::SendDenkoviTextSensor(const int NodeID, const int ChildID,
 {
 	//check if we have a change, if not do not update it
 	bool bExists;
-	std::string oldvalue = GetTextSensorText(NodeID, ChildID, bExists); 	
-	if (oldvalue.compare(textMessage)!=0)
+	std::string oldvalue = GetTextSensorText(NodeID, ChildID, bExists);
+	if (oldvalue != textMessage)
 		SendTextSensor(NodeID, ChildID, BatteryLevel, textMessage, defaultname);
 }
 
@@ -742,15 +750,18 @@ void CDenkoviDevices::GetMeterDetails()
 		Log(LOG_ERROR, "%s: Error connecting to: %s!",szDenkoviHardwareNames[m_iModel], m_szIPAddress.c_str()); 		 
 		return;
 	}
-	else if (m_iModel == DDEV_DAEnet_IP3 && (strlen(sResult.c_str()) < MIN_DAENETIP3_RESPOND_LENGTH)) {
+	if (m_iModel == DDEV_DAEnet_IP3 && (strlen(sResult.c_str()) < MIN_DAENETIP3_RESPOND_LENGTH))
+	{
 		Log(LOG_ERROR, "%s: Error connecting to: %s!",szDenkoviHardwareNames[m_iModel], m_szIPAddress.c_str()); 
 		return;
 	}
-	else if (m_iModel == DDEV_DAEnet_IP2 && sResult.find("var IO=new Array") == std::string::npos) {
+	if (m_iModel == DDEV_DAEnet_IP2 && sResult.find("var IO=new Array") == std::string::npos)
+	{
 		Log(LOG_ERROR, "%s: Error getting status from: %s!",szDenkoviHardwareNames[m_iModel], m_szIPAddress.c_str()); 
 		return;
 	}
-	else if (m_iModel == DDEV_DAEnet_IP2_8_RELAYS && sResult.find("var IO=new Array") == std::string::npos) {
+	if (m_iModel == DDEV_DAEnet_IP2_8_RELAYS && sResult.find("var IO=new Array") == std::string::npos)
+	{
 		Log(LOG_ERROR, "%s: Error getting status from: %s!",szDenkoviHardwareNames[m_iModel], m_szIPAddress.c_str()); 
 		return;
 	}
@@ -760,7 +771,8 @@ void CDenkoviDevices::GetMeterDetails()
 		Log(LOG_ERROR, "%s: Error getting status from: %s!",szDenkoviHardwareNames[m_iModel], m_szIPAddress.c_str()); 
 		return;
 	}
-	else if (m_iModel == DDEV_DAEnet_IP3 && ((sResult.find(DAENETIP3_PORTA_MDO_DEF) == std::string::npos) || (sResult2.find(DAENETIP3_PORTB_SNAME_DEF) == std::string::npos))) {
+	if (m_iModel == DDEV_DAEnet_IP3 && ((sResult.find(DAENETIP3_PORTA_MDO_DEF) == std::string::npos) || (sResult2.find(DAENETIP3_PORTB_SNAME_DEF) == std::string::npos)))
+	{
 		Log(LOG_ERROR, "%s: Error getting status from: %s!",szDenkoviHardwareNames[m_iModel], m_szIPAddress.c_str()); 
 		return;
 	}
@@ -821,7 +833,8 @@ void CDenkoviDevices::GetMeterDetails()
 				}
 			}
 
-			if ((tmpName = DenkoviGetStrParameter(tmpstr, DAE_NAME_DEF)) != "") {
+			if (!(tmpName = DenkoviGetStrParameter(tmpstr, DAE_NAME_DEF)).empty())
+			{
 				name = tmpName;
 				continue;
 			}
@@ -829,13 +842,13 @@ void CDenkoviDevices::GetMeterDetails()
 			if (bHaveDigitalInput && (Idx != -1) && ((tmpValue = DenkoviGetIntParameter(tmpstr, DAE_STATE_DEF)) != -1))
 			{
 				name = "Digital Input " + std::to_string(Idx) + " (" + name + ")"; 
-				SendSwitch(DIOType_DI, (uint8_t)Idx, 255, (tmpValue == 1) ? true : false, 0, name);
+				SendSwitch(DIOType_DI, (uint8_t)Idx, 255, (tmpValue == 1) ? true : false, 0, name, m_Name);
 				Idx = -1;
 				bHaveDigitalInput = false;
 				continue;
 			}
 
-			if (bHaveAnalogInput && (Idx != -1) && ((tmpMeasure = DenkoviGetStrParameter(tmpstr, DAE_SCAL_VALUE_DEF)) != ""))
+			if (bHaveAnalogInput && (Idx != -1) && (!(tmpMeasure = DenkoviGetStrParameter(tmpstr, DAE_SCAL_VALUE_DEF)).empty()))
 			{
 				std::vector<std::string> vMeasure;
 				StringSplit(tmpMeasure, " ", vMeasure); 
@@ -854,13 +867,13 @@ void CDenkoviDevices::GetMeterDetails()
 				continue;
 			}
 
-			if (bHaveTemperatureInput && (Idx != -1) && ((tmpMeasure = DenkoviGetStrParameter(tmpstr, DAE_VALUE_DEF)) != ""))
+			if (bHaveTemperatureInput && (Idx != -1) && (!(tmpMeasure = DenkoviGetStrParameter(tmpstr, DAE_VALUE_DEF)).empty()))
 			{
 				name = "Temperature Input (" + name + ")";
 				std::vector<std::string> vMeasure;
 				StringSplit(tmpMeasure, " ", vMeasure);
 				tmpTiValue = static_cast<float>(atof(tmpMeasure.c_str()));
-				if (tmpMeasure.find("F") != std::string::npos)
+				if (tmpMeasure.find('F') != std::string::npos)
 					tmpTiValue = (float)ConvertToCelsius((double)tmpTiValue);
 				SendTempSensor(Idx, 255, tmpTiValue, name);
 
@@ -872,7 +885,7 @@ void CDenkoviDevices::GetMeterDetails()
 			if (bHaveRelay && (Idx != -1) && ((tmpValue = DenkoviGetIntParameter(tmpstr, DAE_STATE_DEF)) != -1))
 			{
 				name = "Relay " + std::to_string(Idx) + " (" + name + ")";
-				SendSwitch(DIOType_Relay, (uint8_t)Idx, 255, (tmpValue == 1) ? true : false, 0, name);
+				SendSwitch(DIOType_Relay, (uint8_t)Idx, 255, (tmpValue == 1) ? true : false, 0, name, m_Name);
 				Idx = -1;
 				bHaveRelay = false;
 				continue;
@@ -880,7 +893,7 @@ void CDenkoviDevices::GetMeterDetails()
 
 			if (bHaveMCD && (Idx != -1) && ((tmpValue = DenkoviGetIntParameter(tmpstr, DAE_STATE_DEF)) != -1))
 			{
-				std::string tmpN = "";
+				std::string tmpN;
 				tmpN = "MCD (" + name + ")";
 				if (tmpValue == 1 || tmpValue == 3)
 					tmpValue = blinds_sOpen;
@@ -888,7 +901,7 @@ void CDenkoviDevices::GetMeterDetails()
 					tmpValue = blinds_sClose;
 				else
 					tmpValue = 0x11;
-				SendSwitch(DIOType_MCD, (uint8_t)Idx, 255, tmpValue, 0, tmpN);
+				SendSwitch(DIOType_MCD, (uint8_t)Idx, 255, tmpValue, 0, tmpN, m_Name);
 				ii = ii + 4;
 				tmpstr = stdstring_trim(results[ii]);
 				tmpMeasure = DenkoviGetStrParameter(tmpstr, DAE_LASTO_DEF);
@@ -911,13 +924,13 @@ void CDenkoviDevices::GetMeterDetails()
 		{
 			tmpName = DAEnetIP2GetName(sResult, ii + 1);
 			name = "Digital IO " + std::to_string(ii + 1) + " (" + tmpName + ")";
-			SendSwitch(DIOType_DIO, (uint8_t)(ii + 1), 255, ((port3&(0x01 << ii)) != 0) ? true : false, 0, name);
+			SendSwitch(DIOType_DIO, (uint8_t)(ii + 1), 255, ((port3 & (0x01 << ii)) != 0) ? true : false, 0, name, m_Name);
 		}
 		for (ii = 0; ii < 8; ii++)//8 digital inputs/outputs from port5
 		{
 			tmpName = DAEnetIP2GetName(sResult, ii + 8 + 1);
 			name = "Relay " + std::to_string(ii + 1) + " (" + tmpName + ")";
-			SendSwitch(DIOType_Relay, (uint8_t)(ii + 8 + 1), 255, ((port5&(0x01 << ii)) != 0) ? true : false, 0, name);
+			SendSwitch(DIOType_Relay, (uint8_t)(ii + 8 + 1), 255, ((port5 & (0x01 << ii)) != 0) ? true : false, 0, name, m_Name);
 		}
 		for (ii = 0; ii < 8; ii++)//8 analog inputs
 		{
@@ -941,13 +954,13 @@ void CDenkoviDevices::GetMeterDetails()
 		{
 			tmpName = DAEnetIP2GetName(sResult, ii + 1);
 			name = "Digital IO " + std::to_string(ii + 1) + " (" + tmpName + ")";
-			SendSwitch(DIOType_DIO, (uint8_t)(ii + 1), 255, ((port3&(0x01 << ii)) != 0) ? true : false, 0, name);
+			SendSwitch(DIOType_DIO, (uint8_t)(ii + 1), 255, ((port3 & (0x01 << ii)) != 0) ? true : false, 0, name, m_Name);
 		}
 		for (ii = 0; ii < 8; ii++)//8 digital inputs/outputs from port5
 		{
 			tmpName = DAEnetIP2GetName(sResult, ii + 8 + 1);
 			name = "Digital IO " + std::to_string(ii + 8 + 1) + " (" + tmpName + ")";
-			SendSwitch(DIOType_DIO, (uint8_t)(ii + 8 + 1), 255, ((port5&(0x01 << ii)) != 0) ? true : false, 0, name);
+			SendSwitch(DIOType_DIO, (uint8_t)(ii + 8 + 1), 255, ((port5 & (0x01 << ii)) != 0) ? true : false, 0, name, m_Name);
 		}
 		for (ii = 0; ii < 8; ii++)//8 analog inputs
 		{
@@ -966,7 +979,7 @@ void CDenkoviDevices::GetMeterDetails()
 			io << std::uppercase << std::hex << ii;
 			tmpName = DAEnetIP3GetIo(sResult, DAENETIP3_PORTA_SNAME_DEF + io.str());
 			name = "Digital Output " + std::to_string(ii + 1) + " (" + tmpName + ")";
-			SendSwitch(DIOType_DO, (uint8_t)(ii + 1), 255, ((pins&(0x0001 << ii)) != 0) ? true : false, 0, name);
+			SendSwitch(DIOType_DO, (uint8_t)(ii + 1), 255, ((pins & (0x0001 << ii)) != 0) ? true : false, 0, name, m_Name);
 		}
 
 		pins = std::stoul(DAEnetIP3GetIo(sResult, DAENETIP3_PORTB_MDI_DEF), nullptr, 16);
@@ -976,7 +989,7 @@ void CDenkoviDevices::GetMeterDetails()
 			io << std::uppercase << std::hex << ii;
 			tmpName = DAEnetIP3GetIo(sResult2, DAENETIP3_PORTB_SNAME_DEF + io.str());
 			name = "Digital Input " + std::to_string(ii + 1) + " (" + tmpName + ")";
-			SendSwitch(DIOType_DI, (uint8_t)(ii + 1), 255, ((pins&(0x01 << ii)) != 0) ? true : false, 0, name);
+			SendSwitch(DIOType_DI, (uint8_t)(ii + 1), 255, ((pins & (0x01 << ii)) != 0) ? true : false, 0, name, m_Name);
 		} 
 
 		for (ii = 0; ii < 8; ii++)//8 analog inputs
@@ -1001,7 +1014,8 @@ void CDenkoviDevices::GetMeterDetails()
 				continue;
 			}
 
-			if ((tmpName = DenkoviGetStrParameter(tmpstr, DAE_NAME_DEF)) != "") {
+			if (!(tmpName = DenkoviGetStrParameter(tmpstr, DAE_NAME_DEF)).empty())
+			{
 				name = tmpName;
 				continue;
 			}
@@ -1010,7 +1024,7 @@ void CDenkoviDevices::GetMeterDetails()
 			{
 				std::stringstream sstr;
 				sstr << "Relay " << Idx << " (" << name << ")";
-				SendSwitch(DIOType_Relay, (uint8_t)Idx, 255, (tmpState == 1) ? true : false, 0, sstr.str());
+				SendSwitch(DIOType_Relay, (uint8_t)Idx, 255, (tmpState == 1) ? true : false, 0, sstr.str(), m_Name);
 				Idx = -1;
 				bHaveRelays = false;
 				continue;
@@ -1030,7 +1044,8 @@ void CDenkoviDevices::GetMeterDetails()
 				continue;
 			}
 
-			if ((tmpName = DenkoviGetStrParameter(tmpstr, DAE_NAME_DEF)) != "") {
+			if (!(tmpName = DenkoviGetStrParameter(tmpstr, DAE_NAME_DEF)).empty())
+			{
 				name = tmpName;
 				continue;
 			}
@@ -1038,7 +1053,7 @@ void CDenkoviDevices::GetMeterDetails()
 			if (bHaveRelays && (Idx != -1) && ((tmpState = DenkoviGetIntParameter(tmpstr, DAE_RSTATE_DEF)) != -1))
 			{
 				name = "Relay " + std::to_string(Idx) + "(" + name + ")";
-				SendSwitch(DIOType_Relay, (uint8_t)Idx, 255, (tmpState == 1) ? true : false, 0, name);
+				SendSwitch(DIOType_Relay, (uint8_t)Idx, 255, (tmpState == 1) ? true : false, 0, name, m_Name);
 				Idx = -1;
 				bHaveRelays = false;
 				continue;
@@ -1075,14 +1090,15 @@ void CDenkoviDevices::GetMeterDetails()
 				}
 			}
 
-			if ((tmpName = DenkoviGetStrParameter(tmpstr, DAE_NAME_DEF)) != "") {
+			if (!(tmpName = DenkoviGetStrParameter(tmpstr, DAE_NAME_DEF)).empty())
+			{
 				name = tmpName;
 				continue;
 			}
 
 			if (bHaveDigitalInput && (Idx != -1) && ((tmpValue = DenkoviGetIntParameter(tmpstr, DAE_VALUE_DEF)) != -1))
 			{ 
-				SendSwitch(DIOType_DI, (uint8_t)Idx, 255, (tmpValue == 1) ? true : false, 0, "Digital Input " + std::to_string(Idx) + " (" + name + ")");
+				SendSwitch(DIOType_DI, (uint8_t)Idx, 255, (tmpValue == 1) ? true : false, 0, "Digital Input " + std::to_string(Idx) + " (" + name + ")", m_Name);
 
 				//Check if there is counter
 				tmpstr = stdstring_trim(results[ii + 1]);
@@ -1101,7 +1117,7 @@ void CDenkoviDevices::GetMeterDetails()
 
 				//Check if there is sclaed value
 				tmpstr = stdstring_trim(results[ii + 1]);
-				if ((tmpMeasure = DenkoviGetStrParameter(tmpstr, DAE_MEASURE_DEF)) != "")
+				if (!(tmpMeasure = DenkoviGetStrParameter(tmpstr, DAE_MEASURE_DEF)).empty())
 				{
 					std::vector<std::string> vMeasure;
 					StringSplit(tmpMeasure, " ", vMeasure);
@@ -1115,7 +1131,7 @@ void CDenkoviDevices::GetMeterDetails()
 				continue;
 			}
 
-			if (bHaveTemperatureInput && (Idx != -1) && ((tmpMeasure = DenkoviGetStrParameter(tmpstr, DAE_VALUE_DEF)) != ""))
+			if (bHaveTemperatureInput && (Idx != -1) && (!(tmpMeasure = DenkoviGetStrParameter(tmpstr, DAE_VALUE_DEF)).empty()))
 			{ 
 				name = "Temperature Input " + std::to_string(Idx) + " (" + name + ")";				 
 				std::vector<std::string> vMeasure;
@@ -1167,14 +1183,15 @@ void CDenkoviDevices::GetMeterDetails()
 				}
 			}
 
-			if ((tmpName = DenkoviGetStrParameter(tmpstr, DAE_NAME_DEF)) != "") {
+			if (!(tmpName = DenkoviGetStrParameter(tmpstr, DAE_NAME_DEF)).empty())
+			{
 				name = tmpName;
 				continue;
 			}
 
 			if (bHaveDigitalInput && (Idx != -1) && ((tmpValue = DenkoviGetIntParameter(tmpstr, DAE_VALUE_DEF)) != -1))
 			{
-				SendSwitch(DIOType_DI, (uint8_t)Idx, 255, (tmpValue == 1) ? true : false, 0, "Digital Input " + std::to_string(Idx) + " (" + name + ")");
+				SendSwitch(DIOType_DI, (uint8_t)Idx, 255, (tmpValue == 1) ? true : false, 0, "Digital Input " + std::to_string(Idx) + " (" + name + ")", m_Name);
 
 				//Check if there is counter
 				tmpstr = stdstring_trim(results[ii + 1]);
@@ -1193,7 +1210,7 @@ void CDenkoviDevices::GetMeterDetails()
 
 				//Check if there is sclaed value
 				tmpstr = stdstring_trim(results[ii + 1]);
-				if ((tmpMeasure = DenkoviGetStrParameter(tmpstr, DAE_MEASURE_DEF)) != "")
+				if (!(tmpMeasure = DenkoviGetStrParameter(tmpstr, DAE_MEASURE_DEF)).empty())
 				{
 					std::vector<std::string> vMeasure;
 					StringSplit(tmpMeasure, " ", vMeasure);
@@ -1206,7 +1223,7 @@ void CDenkoviDevices::GetMeterDetails()
 				bHaveAnalogInput = false;
 				continue;
 			}
-			if (bHaveTemperatureInput && (Idx != -1) && ((tmpMeasure = DenkoviGetStrParameter(tmpstr, DAE_VALUE_DEF)) != ""))
+			if (bHaveTemperatureInput && (Idx != -1) && (!(tmpMeasure = DenkoviGetStrParameter(tmpstr, DAE_VALUE_DEF)).empty()))
 			{
 				name = "Temperature Input " + std::to_string(Idx) + " (" + name + ")";
 				std::vector<std::string> vMeasure;
@@ -1266,7 +1283,8 @@ void CDenkoviDevices::GetMeterDetails()
 				}
 			}
 
-			if ((tmpName = DenkoviGetStrParameter(tmpstr, DAE_NAME_DEF)) != "") {
+			if (!(tmpName = DenkoviGetStrParameter(tmpstr, DAE_NAME_DEF)).empty())
+			{
 				name = tmpName;
 				continue;
 			}
@@ -1274,7 +1292,7 @@ void CDenkoviDevices::GetMeterDetails()
 			if (bHaveDigitalInput && (Idx != -1) && ((tmpValue = DenkoviGetIntParameter(tmpstr, DAE_VALUE_DEF)) != -1))
 			{	//Value
 				name = "Digital Input " + std::to_string(Idx) + " (" + name + ")";
-				SendSwitch(DIOType_DI, (uint8_t)Idx, 255, (tmpValue == 1) ? true : false, 0, name);
+				SendSwitch(DIOType_DI, (uint8_t)Idx, 255, (tmpValue == 1) ? true : false, 0, name, m_Name);
 				//Counter
 				tmp_counter = stdstring_trim(results[ii+1]);
 				SendDenkoviTextSensor(DIOType_TXT, Idx + 8, 255, DenkoviGetStrParameter(tmp_counter, DAE_COUNT_DEF), name + " Counter");
@@ -1282,9 +1300,8 @@ void CDenkoviDevices::GetMeterDetails()
 				bHaveDigitalInput = false;
 				continue;
 			}
- 
-			
-			if (bHaveAnalogInput && (Idx != -1) && ((tmpMeasure = DenkoviGetStrParameter(tmpstr, DAE_MEASURE_DEF)) != ""))
+
+			if (bHaveAnalogInput && (Idx != -1) && (!(tmpMeasure = DenkoviGetStrParameter(tmpstr, DAE_MEASURE_DEF)).empty()))
 			{
 				std::vector<std::string> vMeasure;
 				StringSplit(tmpMeasure, " ", vMeasure);
@@ -1316,7 +1333,7 @@ void CDenkoviDevices::GetMeterDetails()
 			if (bHaveRelay && (Idx != -1) && ((tmpValue = DenkoviGetIntParameter(tmpstr, DAE_VALUE_DEF)) != -1))
 			{
 				name = "Relay " + std::to_string(Idx) + " (" + name + ")";
-				SendSwitch(DIOType_Relay, (uint8_t)Idx, 255, (tmpValue == 1) ? true : false, 0, name);
+				SendSwitch(DIOType_Relay, (uint8_t)Idx, 255, (tmpValue == 1) ? true : false, 0, name, m_Name);
 				Idx = -1;
 				bHaveRelay = false;
 				continue;
@@ -1326,7 +1343,7 @@ void CDenkoviDevices::GetMeterDetails()
 			{
 				name = "Analog Output " + std::to_string(Idx) + " (" + name + ")";
 				double val = (100 * tmpValue) / 1023;
-				SendGeneralSwitch(DIOType_AO, Idx, 255, (tmpValue > 0) ? true : false, (uint8_t)val, name);
+				SendGeneralSwitch(DIOType_AO, Idx, 255, (tmpValue > 0) ? true : false, (uint8_t)val, name, m_Name.c_str());
 				Idx = -1;
 				bHaveAnalogOutput = false;
 				continue;
@@ -1369,15 +1386,15 @@ void CDenkoviDevices::GetMeterDetails()
 				}
 			}
 
-			if ((tmpName = DenkoviGetStrParameter(tmpstr, DAE_NAME_DEF)) != "") {
+			if (!(tmpName = DenkoviGetStrParameter(tmpstr, DAE_NAME_DEF)).empty())
+			{
 				name = tmpName;
 				continue;
 			}
 
-			 
 			if (bHaveDigitalInput && (Idx != -1) && ((tmpValue = DenkoviGetIntParameter(tmpstr, DAE_VALUE_DEF)) != -1))
 			{
-				SendSwitch(DIOType_DI, (uint8_t)Idx, 255, (tmpValue == 1) ? true : false, 0, "Digital Input " + std::to_string(Idx) + " (" + name + ")");
+				SendSwitch(DIOType_DI, (uint8_t)Idx, 255, (tmpValue == 1) ? true : false, 0, "Digital Input " + std::to_string(Idx) + " (" + name + ")", m_Name);
 
 				//Check if there is counter
 				tmpstr = stdstring_trim(results[ii + 1]);
@@ -1396,7 +1413,7 @@ void CDenkoviDevices::GetMeterDetails()
 
 				//Check if there is sclaed value
 				tmpstr = stdstring_trim(results[ii + 1]);
-				if ((tmpMeasure = DenkoviGetStrParameter(tmpstr, DAE_MEASURE_DEF)) != "")
+				if (!(tmpMeasure = DenkoviGetStrParameter(tmpstr, DAE_MEASURE_DEF)).empty())
 				{
 					std::vector<std::string> vMeasure;
 					StringSplit(tmpMeasure, " ", vMeasure);
@@ -1413,7 +1430,7 @@ void CDenkoviDevices::GetMeterDetails()
 			if (bHaveDigitalOutput && (Idx != -1) && ((tmpValue = DenkoviGetIntParameter(tmpstr, DAE_VALUE_DEF)) != -1))
 			{
 				name = "Digital Output " + std::to_string(Idx) + " (" + name + ")";
-				SendSwitch(DIOType_DO, (uint8_t)Idx, 255, (tmpValue == 1) ? true : false, 0, name);
+				SendSwitch(DIOType_DO, (uint8_t)Idx, 255, (tmpValue == 1) ? true : false, 0, name, m_Name);
 				Idx = -1;
 				bHaveDigitalOutput = false;
 				continue;
@@ -1422,7 +1439,7 @@ void CDenkoviDevices::GetMeterDetails()
 			if (bHavePWM && (Idx != -1) && ((tmpValue = DenkoviGetIntParameter(tmpstr, DAE_VALUE_DEF)) != -1))
 			{
 				name = "PWM " + std::to_string(Idx) + " (" + name + ")";
-				SendGeneralSwitch(DIOType_PWM, Idx, 255, (tmpValue > 0) ? true : false, (uint8_t)tmpValue, name);
+				SendGeneralSwitch(DIOType_PWM, Idx, 255, (tmpValue > 0) ? true : false, (uint8_t)tmpValue, name, m_Name.c_str());
 				Idx = -1;
 				bHavePWM = false;
 				continue;

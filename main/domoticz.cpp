@@ -216,10 +216,8 @@ void daemonize(const char *rundir, const char *pidfile)
 	sigaction(SIGABRT, &newSigAction, nullptr); // catch abnormal termination signal
 	sigaction(SIGILL, &newSigAction, nullptr);  // catch invalid program image
 	sigaction(SIGUSR1, &newSigAction, nullptr); // catch SIGUSR1 (used by watchdog)
-#ifndef WIN32
 	sigaction(SIGHUP, &newSigAction, nullptr); // catch HUP, for log rotation
-#endif
-	
+
 	/* Fork*/
 	pid = fork();
 
@@ -696,7 +694,8 @@ int main(int argc, char**argv)
 				return 1;
 			}
 			std::string szroot = cmdLine.GetSafeArgument("-approot", 0, "");
-			if (szroot.size() != 0) {
+			if (!szroot.empty())
+			{
 				szStartupFolder = szroot;
 				FixFolderEnding(szStartupFolder);
 			}
@@ -771,7 +770,7 @@ int main(int argc, char**argv)
 				return 1;
 			}
 			std::string szroot = cmdLine.GetSafeArgument("-userdata", 0, "");
-			if (szroot.size() != 0)
+			if (!szroot.empty())
 			{
 				szUserDataFolder = szroot;
 				FixFolderEnding(szUserDataFolder);
@@ -830,7 +829,7 @@ int main(int argc, char**argv)
 				return 1;
 			}
 			std::string szroot = cmdLine.GetSafeArgument("-wwwroot", 0, "");
-			if (szroot.size() != 0)
+			if (!szroot.empty())
 				szWWWFolder = szroot;
 		}
 	}
@@ -1000,7 +999,7 @@ int main(int argc, char**argv)
 				return 1;
 			}
 			std::string szroot = cmdLine.GetSafeArgument("-webroot", 0, "");
-			if (szroot.size() != 0)
+			if (!szroot.empty())
 				szWebRoot = szroot;
 		}
 		if (cmdLine.HasSwitch("-noupdates"))
@@ -1066,14 +1065,14 @@ int main(int argc, char**argv)
 	{
 		int logfacility = 0;
 
-		for ( size_t idx = 0; idx < sizeof(facilities)/sizeof(facilities[0]); idx++ ) 
+		for (auto facilitie : facilities)
 		{
-			if (strcmp(facilities[idx].facname, logfacname.c_str()) == 0) 
+			if (strcmp(facilitie.facname, logfacname.c_str()) == 0)
 			{
-				logfacility = facilities[idx].facvalue;
+				logfacility = facilitie.facvalue;
 				break;
 			}
-		} 
+		}
 		if ( logfacility == 0 ) 
 		{
 			_log.Log(LOG_ERROR, "%s is an unknown syslog facility", logfacname.c_str());

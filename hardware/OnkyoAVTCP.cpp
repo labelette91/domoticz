@@ -248,7 +248,7 @@ bool OnkyoAVTCP::WriteToHardware(const char *pdata, const unsigned char /*length
 	}
 	const tRBUF *pCmd = reinterpret_cast<const tRBUF *>(pdata);
 	unsigned char packettype = pCmd->ICMND.packettype;
-	std::string message = "";
+	std::string message;
 
 	if (packettype == pTypeGeneralSwitch) {
 		const _tGeneralSwitch *xcmd = reinterpret_cast<const _tGeneralSwitch*>(pdata);
@@ -420,7 +420,7 @@ void OnkyoAVTCP::ReceiveSwitchMsg(const char *pData, int Len, bool muting, int I
 	gswitch.rssi = 12;
 	gswitch.seqnbr = 0;
 
-	sDecodeRXMessage(this, (const unsigned char *)&gswitch, switch_types[ID].name, 255);
+	sDecodeRXMessage(this, (const unsigned char *)&gswitch, switch_types[ID].name, 255, m_Name.c_str());
 }
 
 void OnkyoAVTCP::EnsureSwitchDevice(int ID, const char *options)
@@ -585,7 +585,9 @@ void OnkyoAVTCP::ReceiveMessage(const char *pData, int Len)
 	  if (!memcmp(pData, switch_types[i].iscpCmd, 3)) {
 		  ReceiveSwitchMsg(pData, Len, false, i);
 		  return;
-	  } else if (switch_types[i].iscpMute && !memcmp(pData, switch_types[i].iscpMute, 3)) {
+	  }
+	  if (switch_types[i].iscpMute && !memcmp(pData, switch_types[i].iscpMute, 3))
+	  {
 		  ReceiveSwitchMsg(pData, Len, true, i);
 		  return;
 	  }
@@ -674,7 +676,7 @@ namespace http {
 				// We allow raw EISCP commands to be sent on *any* of the logical devices
 				// associated with the hardware.
 				case HTYPE_OnkyoAVTCP:
-					CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByIDType(result[0][3].c_str(), HTYPE_OnkyoAVTCP);
+					CDomoticzHardwareBase *pBaseHardware = m_mainworker.GetHardwareByIDType(result[0][3], HTYPE_OnkyoAVTCP);
 					if (pBaseHardware == nullptr)
 						return;
 					OnkyoAVTCP *pOnkyoAVTCP = reinterpret_cast<OnkyoAVTCP*>(pBaseHardware);
@@ -687,5 +689,5 @@ namespace http {
 			}
 		}
 
-	}
-}
+	} // namespace server
+} // namespace http

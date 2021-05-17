@@ -17,7 +17,7 @@ CTCPClientBase::CTCPClientBase(CTCPServerIntBase *pManager)
 
 CTCPClientBase::~CTCPClientBase()
 {
-	if (socket_) delete socket_;
+	delete socket_;
 }
 
 CTCPClient::CTCPClient(boost::asio::io_service& ios, CTCPServerIntBase *pManager)
@@ -25,8 +25,6 @@ CTCPClient::CTCPClient(boost::asio::io_service& ios, CTCPServerIntBase *pManager
 {
 	socket_ = new boost::asio::ip::tcp::socket(ios);
 }
-
-CTCPClient::~CTCPClient() = default;
 
 void CTCPClient::start()
 {
@@ -116,8 +114,6 @@ CSharedClient::CSharedClient(CTCPServerIntBase *pManager, http::server::CProxyCl
 	m_username = username;
 	m_pProxyClient = proxy;
 }
-
-CSharedClient::~CSharedClient() = default;
 
 void CSharedClient::start()
 {

@@ -138,7 +138,8 @@ void C1Wire::SensorThread()
 	BuildSensorList();
 	m_bSensorFirstTime = true;
 
-	if (m_sensors.size() == 0) return;  // quit if no sensors
+	if (m_sensors.empty())
+		return; // quit if no sensors
 
 	pollPeriod = m_sensorThreadPeriod / m_sensors.size();
 
@@ -160,10 +161,10 @@ void C1Wire::SensorThread()
 		}
 
 		// Parse our devices
-		std::set<_t1WireDevice>::const_iterator itt;
-		for (itt = m_sensors.begin(); itt != m_sensors.end() && !IsStopRequested(0); ++itt)
+		for (const auto &device : m_sensors)
 		{
-			const _t1WireDevice& device = *itt;
+			if (IsStopRequested(0))
+				break;
 
 			// Manage families specificities
 			switch (device.family)
@@ -308,7 +309,7 @@ void C1Wire::BuildSensorList() {
 	m_sensors.clear();
 	m_system->GetDevices(devices);
 
-	for (const auto & device : devices)
+	for (const auto &device : devices)
 	{
 		switch (device.family)
 		{
@@ -327,7 +328,6 @@ void C1Wire::BuildSensorList() {
 		default:
 			break;
 		}
-
 	}
 	devices.clear();
 }
@@ -343,7 +343,7 @@ void C1Wire::BuildSwitchList() {
 	m_switches.clear();
 	m_system->GetDevices(devices);
 
-	for (const auto & device : devices)
+	for (const auto &device : devices)
 	{
 		switch (device.family)
 		{
@@ -360,7 +360,6 @@ void C1Wire::BuildSwitchList() {
 		default:
 			break;
 		}
-
 	}
 	devices.clear();
 }
@@ -372,10 +371,8 @@ void C1Wire::PollSwitches()
 		return;
 
 	// Parse our devices (have to test if m_TaskSwitches.IsStopRequested because it can take some time in case of big networks)
-	for (const auto & itt : m_switches)
+	for (const auto &device : m_switches)
 	{
-		const _t1WireDevice& device = itt;
-
 		// Manage families specificities
 		switch (device.family)
 		{
@@ -444,7 +441,7 @@ void C1Wire::ReportWiper(const std::string& deviceId, const int wiper)
 
 	int NodeID = (deviceIdByteArray[0] << 24) | (deviceIdByteArray[1] << 16) | (deviceIdByteArray[2] << 8) | (deviceIdByteArray[3]);
 	unsigned int value = static_cast<int>(wiper * (100.0 / 255.0));
-	SendSwitch(NodeID, 0, 255, wiper > 0, value, "Wiper");
+	SendSwitch(NodeID, 0, 255, wiper > 0, value, "Wiper", m_Name);
 }
 
 void C1Wire::ReportTemperature(const std::string& deviceId, const float temperature)
@@ -501,7 +498,7 @@ void C1Wire::ReportLightState(const std::string& deviceId, const uint8_t unit, c
 	DeviceIdToByteArray(deviceId, deviceIdByteArray);
 	int lID = (deviceIdByteArray[0] << 24) + (deviceIdByteArray[1] << 16) + (deviceIdByteArray[2] << 8) + deviceIdByteArray[3];
 
-	SendSwitch(lID, unit, 255, state, 0, "Switch");
+	SendSwitch(lID, unit, 255, state, 0, "Switch", m_Name);
 }
 
 void C1Wire::ReportCounter(const std::string& deviceId, const int unit, const unsigned long counter)
@@ -528,7 +525,7 @@ void C1Wire::ReportVoltage(const std::string& /*deviceId*/, const int unit, cons
 
 	tsen.RFXSENSOR.msg1 = (BYTE)(voltage / 256);
 	tsen.RFXSENSOR.msg2 = (BYTE)(voltage - (tsen.RFXSENSOR.msg1 * 256));
-	sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXSENSOR, nullptr, 255);
+	sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXSENSOR, nullptr, 255, nullptr);
 }
 
 void C1Wire::ReportIlluminance(const std::string& deviceId, const float illuminescence)

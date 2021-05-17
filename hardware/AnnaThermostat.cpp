@@ -79,7 +79,7 @@ CAnnaThermostat::CAnnaThermostat(const int ID, const std::string& IPAddress, con
 	Init();
 }
 
-void CAnnaThermostat::OnError(const std::exception e)
+void CAnnaThermostat::OnError(const std::exception &e)
 {
 	_log.Log(LOG_ERROR, "AnnaTherm: Error: %s", e.what());
 }
@@ -158,7 +158,7 @@ void CAnnaThermostat::SendSetPointSensor(const unsigned char Idx, const float Te
 	thermos.id4 = Idx;
 	thermos.dunit = 1;
 	thermos.temp = Temp;
-	sDecodeRXMessage(this, (const unsigned char*)&thermos, defaultname.c_str(), 255);
+	sDecodeRXMessage(this, (const unsigned char *)&thermos, defaultname.c_str(), 255, nullptr);
 }
 
 bool CAnnaThermostat::WriteToHardware(const char* pdata, const unsigned char /*length*/)
@@ -173,7 +173,7 @@ bool CAnnaThermostat::WriteToHardware(const char* pdata, const unsigned char /*l
 		{
 			return false; // just return Error as these are not supposed to be switches
 		}
-		else if (node_id == sAnnaProximity)
+		if (node_id == sAnnaProximity)
 		{
 			return AnnaToggleProximity(bIsOn);
 		}
@@ -232,7 +232,7 @@ bool CAnnaThermostat::AnnaSetPreset(uint8_t level)
 	if (!CheckLoginData())
 		return false;
 
-	if (m_AnnaLocation.m_ALocationID.size() == 0)
+	if (m_AnnaLocation.m_ALocationID.empty())
 		AnnaGetLocation();
 
 	if (m_Password.empty())
@@ -314,7 +314,7 @@ bool CAnnaThermostat::AnnaToggleProximity(bool bToggle)
 	if (!CheckLoginData())
 		return false;
 
-	if (m_ProximityID.size() == 0)
+	if (m_ProximityID.empty())
 		GetMeterDetails();
 
 	if (m_Password.empty())
@@ -572,11 +572,11 @@ void CAnnaThermostat::GetMeterDetails()
 				{
 					if (strcmp(tmpstr.c_str(), "on") == 0)
 					{
-						SendSwitch(sAnneBoilerState, 1, 255, true, 0, sname);
+						SendSwitch(sAnneBoilerState, 1, 255, true, 0, sname, m_Name);
 					}
 					else
 					{
-						SendSwitch(sAnneBoilerState, 1, 255, false, 0, sname);
+						SendSwitch(sAnneBoilerState, 1, 255, false, 0, sname, m_Name);
 					}
 				}
 			}
@@ -588,11 +588,11 @@ void CAnnaThermostat::GetMeterDetails()
 					if (strcmp(tmpstr.c_str(), "on") == 0)
 					{
 
-						SendSwitch(sAnnaFlameState, 1, 255, true, 0, sname);
+						SendSwitch(sAnnaFlameState, 1, 255, true, 0, sname, m_Name);
 					}
 					else
 					{
-						SendSwitch(sAnnaFlameState, 1, 255, false, 0, sname);
+						SendSwitch(sAnnaFlameState, 1, 255, false, 0, sname, m_Name);
 					}
 				}
 			}
@@ -627,7 +627,7 @@ void CAnnaThermostat::GetMeterDetails()
 					{
 						bSwitch = false;
 					}
-					SendSwitch(sAnnaProximity, 1, 255, bSwitch, 0, sname);
+					SendSwitch(sAnnaProximity, 1, 255, bSwitch, 0, sname, m_Name);
 				}
 			}
 			else if (sname == "preset_state")
@@ -668,20 +668,19 @@ void CAnnaThermostat::GetMeterDetails()
 				else strncpy(sPreset, "50", sizeof(sPreset));
 
 				std::string PresetName = "Anna Preset";
-				SendSelectorSwitch(sAnnaPresets,  1, sPreset , PresetName.c_str(), 16, false, ANNA_LEVEL_NAMES, ANNA_LEVEL_ACTIONS, true);
+				SendSelectorSwitch(sAnnaPresets, 1, sPreset, PresetName, 16, false, ANNA_LEVEL_NAMES, ANNA_LEVEL_ACTIONS, true, m_Name.c_str());
 			}
 		}
 		pAppliance = pAppliance->NextSiblingElement("appliance");
 	}
-	return;
 }
 
 // Checks if the Username and password are filled in
 bool CAnnaThermostat::CheckLoginData()
 {
-	if (m_UserName.size() == 0)
+	if (m_UserName.empty())
 		return false;
-	if (m_Password.size() == 0)
+	if (m_Password.empty())
 		return false;
 	return true;
 }

@@ -48,11 +48,11 @@ std::string ReadFile(std::string filename)
 }
 #endif
 
-CWunderground::CWunderground(const int ID, const std::string &APIKey, const std::string &Location) :
-m_APIKey(APIKey),
-m_Location(Location),
-m_bForceSingleStation(false),
-m_bFirstTime(true)
+CWunderground::CWunderground(const int ID, const std::string &APIKey, const std::string &Location)
+	: m_bForceSingleStation(false)
+	, m_bFirstTime(true)
+	, m_APIKey(APIKey)
+	, m_Location(Location)
 {
 	m_HwdID = ID;
 	Init();
@@ -182,13 +182,12 @@ std::string CWunderground::GetWeatherStationFromGeo()
 				_log.Log(LOG_ERROR, "WUnderground: Problem getting location/near result.Invalid data received, or no data returned!");
 				return "";
 			}
-			if (root["location"]["stationId"].size() > 0)
+			if (!root["location"]["stationId"].empty())
 			{
 				std::string szFirstStation = root["location"]["stationId"][0].asString();
 				return szFirstStation;
 			}
-			else
-				_log.Log(LOG_ERROR, "WUnderground: Problem getting location/near result. No stations returned!");
+			_log.Log(LOG_ERROR, "WUnderground: Problem getting location/near result. No stations returned!");
 		}
 	}
 	return "";
@@ -196,7 +195,7 @@ std::string CWunderground::GetWeatherStationFromGeo()
 
 void CWunderground::GetMeterDetails()
 {
-	if (m_Location.find(",") != std::string::npos)
+	if (m_Location.find(',') != std::string::npos)
 	{
 		std::string newLocation = GetWeatherStationFromGeo();
 		if (newLocation.empty())
@@ -390,7 +389,7 @@ void CWunderground::GetMeterDetails()
 		at10-=(tsen.WIND.chillh*256);
 		tsen.WIND.chilll=(BYTE)(at10);
 
-		sDecodeRXMessage(this, (const unsigned char *)&tsen.WIND, nullptr, 255);
+		sDecodeRXMessage(this, (const unsigned char *)&tsen.WIND, nullptr, 255, nullptr);
 	}
 
 	//UV
@@ -448,7 +447,7 @@ void CWunderground::GetMeterDetails()
 				tr10 -= (tsen.RAIN.raintotal2 * 256);
 				tsen.RAIN.raintotal3 = (BYTE)(tr10);
 
-				sDecodeRXMessage(this, (const unsigned char *)&tsen.RAIN, nullptr, 255);
+				sDecodeRXMessage(this, (const unsigned char *)&tsen.RAIN, nullptr, 255, nullptr);
 			}
 		}
 	}
@@ -464,7 +463,7 @@ void CWunderground::GetMeterDetails()
 				_tGeneralDevice gdevice;
 				gdevice.subtype = sTypeVisibility;
 				gdevice.floatval1 = visibility;
-				sDecodeRXMessage(this, (const unsigned char *)&gdevice, nullptr, 255);
+				sDecodeRXMessage(this, (const unsigned char *)&gdevice, nullptr, 255, nullptr);
 			}
 		}
 	}
@@ -478,7 +477,7 @@ void CWunderground::GetMeterDetails()
 			_tGeneralDevice gdevice;
 			gdevice.subtype = sTypeSolarRadiation;
 			gdevice.floatval1 = radiation;
-			sDecodeRXMessage(this, (const unsigned char *)&gdevice, nullptr, 255);
+			sDecodeRXMessage(this, (const unsigned char *)&gdevice, nullptr, 255, nullptr);
 		}
 	}
 }

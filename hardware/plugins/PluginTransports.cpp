@@ -397,7 +397,7 @@ namespace Plugins {
 			SSL_set_tlsext_host_name(m_TLSSock->native_handle(), m_IP.c_str());			// Enable SNI
 
 			m_TLSSock->set_verify_mode(boost::asio::ssl::verify_none);
-			m_TLSSock->set_verify_callback(boost::asio::ssl::rfc2818_verification(m_IP.c_str()));
+			m_TLSSock->set_verify_callback(boost::asio::ssl::rfc2818_verification(m_IP));
 			//m_TLSSock->set_verify_callback(boost::bind(&CPluginTransportTCPSecure::VerifyCertificate, this, _1, _2));
 			try
 			{
@@ -527,7 +527,7 @@ namespace Plugins {
 
 				m_Socket = new boost::asio::ip::udp::socket(ios, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), iPort));
 				m_Socket->set_option(boost::asio::ip::udp::socket::reuse_address(true));
-				if ((m_IP.substr(0, 4) >= "224.") && (m_IP.substr(0, 4) <= "239.") || (m_IP.substr(0, 4) == "255."))
+				if (((m_IP.substr(0, 4) >= "224.") && (m_IP.substr(0, 4) <= "239.")) || (m_IP.substr(0, 4) == "255."))
 				{
 					m_Socket->set_option(boost::asio::ip::multicast::join_group(boost::asio::ip::address::from_string(m_IP.c_str())), ec);
 					m_Socket->set_option(boost::asio::ip::multicast::hops(2), ec);
@@ -632,7 +632,7 @@ namespace Plugins {
 			}
 
 			// Different handling for multi casting
-			if ((m_IP.substr(0, 4) >= "224.") && (m_IP.substr(0, 4) <= "239.") || (m_IP.substr(0, 4) == "255."))
+			if (((m_IP.substr(0, 4) >= "224.") && (m_IP.substr(0, 4) <= "239.")) || (m_IP.substr(0, 4) == "255."))
 			{
 				m_Socket->set_option(boost::asio::socket_base::broadcast(true));
 				boost::asio::ip::udp::endpoint destination(boost::asio::ip::address_v4::broadcast(), atoi(m_Port.c_str()));
@@ -699,7 +699,7 @@ namespace Plugins {
 		}
 	};
 
-	void CPluginTransportICMP::handleAsyncResolve(const boost::system::error_code &ec, boost::asio::ip::icmp::resolver::iterator endpoint_iterator)
+	void CPluginTransportICMP::handleAsyncResolve(const boost::system::error_code &ec, const boost::asio::ip::icmp::resolver::iterator &endpoint_iterator)
 	{
 		if (!ec)
 		{
@@ -1009,7 +1009,7 @@ namespace Plugins {
 
 	void CPluginTransportSerial::handleWrite(const std::vector<byte>& data)
 	{
-		if (data.size())
+		if (!data.empty())
 		{
 			write((const char *)&data[0], data.size());
 		}
@@ -1028,5 +1028,5 @@ namespace Plugins {
 		}
 		return true;
 	}
-}
+} // namespace Plugins
 #endif

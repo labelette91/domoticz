@@ -1359,6 +1359,7 @@ define(['app'], function (app) {
 				}
 
 				var username = $("#hardwarecontent #divlogin #username").val();
+				var password = encodeURIComponent($("#hardwarecontent #divlogin #password").val());
 				
                 $.ajax({
 					url: "json.htm?type=command&param=updatehardware&htype=" + hardwaretype +
