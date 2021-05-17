@@ -189,7 +189,16 @@ void CeVehicle::SendTemperature(int tempType, float value)
 void CeVehicle::SendPercentage(int percType, float value)
 {
 	if ((percType == VEHICLE_LEVEL_BATTERY) && m_api->m_capabilities.has_battery_level)
-		SendPercentageSensor(VEHICLE_LEVEL_BATTERY, 1, static_cast<int>(value), value, m_Name + " Battery Level");
+	{
+		int iBattLevel = static_cast<int>(value);
+		float fBattLevel = value;
+		if (fBattLevel < 0.0f || fBattLevel > 100.0f)	// Filter out wrong readings
+		{
+			fBattLevel = 0.0f;
+			iBattLevel = 255;	// Means no batterylevel available (and hides batterylevel indicator in UI)
+		}
+		SendPercentageSensor(VEHICLE_LEVEL_BATTERY, 1, iBattLevel, fBattLevel, m_Name + " Battery Level");
+	}
 }
 
 void CeVehicle::SendCounter(int countType, float value)
@@ -198,15 +207,23 @@ void CeVehicle::SendCounter(int countType, float value)
 		SendCustomSensor(VEHICLE_COUNTER_ODO, 1, 255, value, m_Name + " Odometer", m_api->m_config.distance_unit);
 }
 
-void CeVehicle::SendCustom(int countType, int ChildId, float value, const std::string &label)
+void CeVehicle::SendCustom(int customType, int ChildId, float value, const std::string &label)
 {
-	if ((countType == VEHICLE_CUSTOM) && m_api->m_capabilities.has_custom_data)
+	if ((customType == VEHICLE_CUSTOM) && m_api->m_capabilities.has_custom_data)
 		SendCustomSensor(VEHICLE_CUSTOM, ChildId, 255, value, m_Name + " " + label, "");
 }
 
-void CeVehicle::SendText(int countType, int ChildId, const std::string &value, const std::string &label)
+void CeVehicle::SendCustomSwitch(int customType, int ChildId, bool value, const std::string &label)
 {
-	if ((countType == VEHICLE_CUSTOM) && m_api->m_capabilities.has_custom_data)
+	if ((customType == VEHICLE_CUSTOM) && m_api->m_capabilities.has_custom_data)
+		{
+			CDomoticzHardwareBase::SendGeneralSwitch(((VEHICLE_CUSTOM << 8) | ChildId), 1, 255, value, 0, m_Name + " " + label, m_Name);
+		}
+}
+
+void CeVehicle::SendCustomText(int customType, int ChildId, const std::string &value, const std::string &label)
+{
+	if ((customType == VEHICLE_CUSTOM) && m_api->m_capabilities.has_custom_data)
 		SendTextSensor(VEHICLE_CUSTOM, ChildId, 255, value, m_Name + " " + label);
 }
 
@@ -845,17 +862,39 @@ void CeVehicle::UpdateCustomVehicleData(CVehicleApi::tCustomData& data)
 						Json::Value jValue = iter["value"];
 						std::string sLabel = iter["label"].asString();
 						std::string sValue = jValue.asString();
+						bool isBool = jValue.isBool();
+						bool bValue = false;
 
-						_log.Debug(DEBUG_NORM, "Processing custom data %d - %s - %s", iChildID, sValue.c_str(), sLabel.c_str());
+						// Determine if Value might a boolean value
+						if(isBool)
+						{
+							bValue = jValue.asBool();
+						}
+						else	// Not a native JSON boolean anyway
+						{
+							std::string sBoolValue = sValue;
+							stdlower(sBoolValue);
+							if(sBoolValue.compare("true") == 0 || sBoolValue.compare("false") == 0)
+							{
+								isBool = true;
+								bValue = (sBoolValue.compare("true") == 0 ? true : false);
+							}
+						}
+
+						_log.Debug(DEBUG_NORM, "Processing custom data %d - %s - %s (%s)", iChildID, sValue.c_str(), sLabel.c_str(), (isBool ? "Boolean" : (is_number(sValue) ? "Number": "Text" )));
 
 						if (is_number(sValue))
 						{
 							float fValue = static_cast<float>(std::atof(sValue.c_str()));
 							SendCustom(VEHICLE_CUSTOM, iChildID, fValue, sLabel);
 						}
+						else if (isBool)
+						{
+							SendCustomSwitch(VEHICLE_CUSTOM, iChildID, bValue, sLabel);
+						}
 						else
 						{
-							SendText(VEHICLE_CUSTOM, iChildID, sValue, sLabel);
+							SendCustomText(VEHICLE_CUSTOM, iChildID, sValue, sLabel);
 						}
 				}
 				cnt++;

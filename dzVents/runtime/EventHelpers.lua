@@ -3,6 +3,7 @@ local GLOBAL_DATA_MODULE = 'global_data'
 local utils = require('Utils')
 local persistence = require('persistence')
 local HTTPResponse = require('HTTPResponse')
+local ShellCommandResponse = require('ShellCommandResponse')
 local Timer = require('Timer')
 local Security = require('Security')
 local SystemEvent = require('SystemEvent')
@@ -10,10 +11,10 @@ local CustomEvent = require('CustomEvent')
 local HistoricalStorage = require('HistoricalStorage')
 
 local function EventHelpers(domoticz, mainMethod)
-
+	local _gv = globalvariables
 	local globalsDefinition
 
-	local currentPath = globalvariables['script_path']
+	local currentPath = _gv['script_path']
 
 	if (_G.TESTMODE) then
 		-- make sure you run the tests from the tests folder !!!!
@@ -26,29 +27,42 @@ local function EventHelpers(domoticz, mainMethod)
 			package.path
 	end
 
-	local validEventTypes = 'devices,timer,security,customEvents,system,httpResponses,scenes,groups,variables'
+	local validEventTypes = 'devices,timer,security,customEvents,system,httpResponses,shellCommandResponses,scenes,groups,variables'
 	local inValidEventTypes = 'on,logging,active,data,execute'
 
-	local webRoot = globalvariables['domoticz_webroot']
-	local _url = 'http://127.0.0.1:' .. (tostring(globalvariables['domoticz_listening_port']) or "8080")
+	local hyperTextTransferProtocol = 'http'
+	local serverPort = '8080'
+
+	if  _gv.domoticz_listening_port ~= nil and tostring(_gv.domoticz_listening_port) ~= '' and
+		tonumber(_gv.domoticz_listening_port) ~= 0 then
+			serverPort = _gv.domoticz_listening_port
+	elseif  _gv.domoticz_is_secure and _gv.domoticz_secure_listening_port ~= nil and
+			tostring(_gv.domoticz_secure_listening_port) ~= '' and tonumber(_gv.domoticz_secure_listening_port) ~= 0 then
+			hyperTextTransferProtocol = 'https'
+			serverPort = _gv.domoticz_secure_listening_port
+	end
+
+	local API_url = hyperTextTransferProtocol .. '://127.0.0.1:' .. serverPort
 
 	local settings = {
-		['Log level'] = tonumber(globalvariables['dzVents_log_level']) or 1,
-		['Domoticz url'] = _url,
-		url = _url,
-		webRoot = tostring(webRoot),
-		serverPort = globalvariables['domoticz_listening_port'] or '8080',
-		dzVentsVersion = globalvariables.dzVents_version,
-		domoticzVersion = globalvariables.domoticz_version,
+		['Log level'] = _gv.dzVents_log_level or 1,
+		['Domoticz url'] = API_url,
+		url = API_url,
+		webRoot = _gv.domoticz_webroot,
+		serverPort = port,
+		secureServer = _gv.domoticz_is_secure,
+		dzVentsVersion = _gv.dzVents_version,
+		domoticzVersion = _gv.domoticz_version,
 		location = {
-			name = utils.urlDecode(globalvariables['domoticz_title'] or "Domoticz"),
-			latitude = globalvariables.latitude or 0,
-			longitude = globalvariables.longitude or 0,
+			name = _gv.domoticz_title or 'Domoticz',
+			latitude = _gv.latitude or 0,
+			longitude = _gv.longitude or 0,
 		}
 	}
 
-	if (webRoot ~= '' and webRoot ~= nil) then
-		settings['Domoticz url'] = settings['Domoticz url'] .. '/' .. tostring(webRoot)
+	if settings.webRoot ~= nil and settings.webRoot ~= '' then
+		settings['Domoticz url'] = settings['Domoticz url'] .. '/' .. settings.webRoot
+		settings.url = settings['Domoticz url']
 	end
 
 	_G.logLevel = settings['Log level']
@@ -252,6 +266,12 @@ local function EventHelpers(domoticz, mainMethod)
 				end
 				ok, res = pcall(eventHandler['execute'], self.domoticz, subject, info)
 
+			elseif (baseType == domoticz.BASETYPE_SHELLCOMMAND_RESPONSE) then
+				info = getEventInfo(eventHandler, self.domoticz.EVENT_TYPE_SHELLCOMMANDRESPONSE)
+				info.trigger = subject.callback
+				local response = ShellCommandResponse(self.domoticz, subject)
+				ok, res = pcall(eventHandler['execute'], self.domoticz, response, info)
+
 			elseif (baseType == domoticz.BASETYPE_HTTP_RESPONSE) then
 				info = getEventInfo(eventHandler, self.domoticz.EVENT_TYPE_HTTPRESPONSE)
 				info.trigger = subject.callback
@@ -424,6 +444,8 @@ local function EventHelpers(domoticz, mainMethod)
 				moduleLabelInfo = (subject.baseType == 'scene' and ' Scene' or ' Group') .. ': "' .. subject.name .. '", Index: ' .. tostring(subject.id)
 			elseif (baseType == domoticz.BASETYPE_HTTP_RESPONSE) then
 				moduleLabelInfo = ' HTTPResponse: "' .. subject.callback .. '"'
+			elseif (baseType == domoticz.BASETYPE_SHELLCOMMAND_RESPONSE) then
+				moduleLabelInfo = ' ShellCommandResponse: "' .. subject.callback .. '"'
 			elseif (baseType == domoticz.BASETYPE_SYSTEM_EVENT) then
 				moduleLabelInfo = ' Domoticz event: "' .. subject.name .. '"'
 			elseif (baseType == domoticz.BASETYPE_CUSTOM_EVENT) then
@@ -449,8 +471,8 @@ local function EventHelpers(domoticz, mainMethod)
 				utils.log('------ Finished ' .. moduleLabel , utils.LOG_MODULE_EXEC_INFO)
 			end
 
-			if (tonumber(globalvariables['dzVents_log_level']) == utils.LOG_DEBUG or TESTMODE ) then
-				local moduleSummary = globalvariables.script_path  .. 'module.log'
+			if (tonumber(_gv['dzVents_log_level']) == utils.LOG_DEBUG or TESTMODE ) then
+				local moduleSummary = _gv.script_path  .. 'module.log'
 				utils.log('Debug: Writing module summary to ' .. moduleSummary ,utils.LOG_FORCE)
 
 				local f = io.open(moduleSummary, 'a' )
@@ -740,6 +762,11 @@ local function EventHelpers(domoticz, mainMethod)
 						for i, callbackName in pairs(event) do
 							addBindingEvent(bindings, callbackName, module)
 						end
+					elseif (mode == 'shellcommandResponse' and j == 'shellCommandResponses') then
+						-- { ['shellCommandResponses'] = { 'callbackA', 'callbackB' }
+						for i, callbackName in pairs(event) do
+							addBindingEvent(bindings, callbackName, module)
+						end
 					elseif (mode == 'system' and j == 'system') then
 						-- { ['system'] = { 'start', 'end' }
 						for evtIdx, systemEvent in pairs(event) do
@@ -784,7 +811,7 @@ local function EventHelpers(domoticz, mainMethod)
 			fromIndex = 1
 		end
 
-		if (force == true and force ~= nil or globalvariables['testmode'] == true) then
+		if (force == true and force ~= nil or _gv['testmode'] == true) then
 			level = utils.LOG_INFO
 		end
 
@@ -1026,6 +1053,37 @@ local function EventHelpers(domoticz, mainMethod)
 		end)
 
 		return self.domoticz.commandArray
+	end
+
+	function self.dispatchShellCommandResponseEventsToScripts(domoticz)
+		if (domoticz == nil) then -- you can pass a domoticz object for testing purposes
+			domoticz = self.domoticz
+		end
+
+		local shellcommandResponseScripts = self.getEventBindings('shellcommandResponse')
+
+		local responses =_G.shellcommandresponse
+
+		if (responses ~= nil) then
+			for i, response in pairs(responses) do
+				response.baseType = domoticz.BASETYPE_SHELLCOMMAND_RESPONSE
+				local callback = response.callback
+				local caSize = _.size(self.domoticz.commandArray)
+
+				local scriptsToExecute = self.findScriptForTarget(callback, shellcommandResponseScripts)
+
+				if (scriptsToExecute ~= nil) then
+					utils.log('Handling shellcommandResponse-events for: "' .. callback .. '"', utils.LOG_MODULE_EXEC_INFO)
+					self.handleEvents(scriptsToExecute, response)
+					self.dumpCommandArray(self.domoticz.commandArray, caSize + 1)
+				end
+
+			end
+
+		end
+
+		return self.domoticz.commandArray
+
 	end
 
 	function self.dispatchHTTPResponseEventsToScripts(domoticz)

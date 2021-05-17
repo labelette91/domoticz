@@ -32,7 +32,6 @@ License: Public domain
 // so use the following 5 scope's: mb:vehicle:mbdata:vehiclestatus mb:vehicle:mbdata:fuelstatus mb:vehicle:mbdata:payasyoudrive mb:vehicle:mbdata:vehiclelock mb:vehicle:mbdata:evstatus
 // and we need the additional scope to get a refresh token: offline_access
 #define MERC_URL_AUTH "https://id.mercedes-benz.com"
-#define MERC_API_AUTH "as/authorization.oauth2"
 #define MERC_API_TOKEN "/as/token.oauth2"
 #define MERC_URL "https://api.mercedes-benz.com"
 #define MERC_API "/vehicledata/v2/vehicles"
@@ -63,7 +62,7 @@ CMercApi::CMercApi(const std::string &username, const std::string &password, con
 	m_fields = "";
 	m_fieldcnt = -1;
 
-	m_capabilities.has_battery_level = false;
+	m_capabilities.has_battery_level = true;
 	m_capabilities.has_charge_command = false;
 	m_capabilities.has_climate_command = false;
 	m_capabilities.has_defrost_command = false;
@@ -181,12 +180,14 @@ bool CMercApi::GetLocationData(tLocationData& data)
 
 void CMercApi::GetLocationData(Json::Value& jsondata, tLocationData& data)
 {
+	/*
 	std::string CarLatitude = jsondata["latitude"].asString();
 	std::string CarLongitude = jsondata["longitude"].asString();
 	data.speed = jsondata["speed"].asInt();
 	data.is_driving = data.speed > 0;
 	data.latitude = std::stod(CarLatitude);
 	data.longitude = std::stod(CarLongitude);
+	*/
 }
 
 bool CMercApi::GetChargeData(CVehicleApi::tChargeData& data)
@@ -196,6 +197,7 @@ bool CMercApi::GetChargeData(CVehicleApi::tChargeData& data)
 
 	if (GetData("electricvehicle", reply))
 	{
+		data.battery_level = 255.0f;	// Initialize at 'no reading'
 		if (reply.empty())
 		{
 			bData = true;	// This occurs when the API call return a 204 (No Content). So everything is valid/ok, just no data
@@ -274,10 +276,12 @@ bool CMercApi::GetClimateData(tClimateData& data)
 
 void CMercApi::GetClimateData(Json::Value& jsondata, tClimateData& data)
 {
+	/*
 	data.inside_temp = jsondata["inside_temp"].asFloat();
 	data.outside_temp = jsondata["outside_temp"].asFloat();
 	data.is_climate_on = jsondata["is_climate_on"].asBool();
 	data.is_defrost_on = (jsondata["defrost_mode"].asInt() != 0);
+	*/
 }
 
 bool CMercApi::GetVehicleData(tVehicleData& data)
@@ -799,7 +803,7 @@ bool CMercApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, cons
 		case Post:
 			if (!HTTPClient::POST(sUrl, sPostData, _vExtraHeaders, sResponse, _vResponseHeaders))
 			{
-				_iHttpCode = (!_vResponseHeaders[0].empty() ? (uint16_t)std::stoi(_vResponseHeaders[0].substr(9, 3)) : 9999);
+				_iHttpCode = ExtractHTTPResultCode(_vResponseHeaders[0]);
 				_log.Log(LOG_ERROR, "Failed to perform POST request (%d)!", _iHttpCode);
 			}
 			break;
@@ -807,7 +811,7 @@ bool CMercApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, cons
 		case Get:
 			if (!HTTPClient::GET(sUrl, _vExtraHeaders, sResponse, _vResponseHeaders, true))
 			{
-				_iHttpCode = (!_vResponseHeaders[0].empty() ? (uint16_t)std::stoi(_vResponseHeaders[0].substr(9, 3)) : 9999);
+				_iHttpCode = ExtractHTTPResultCode(_vResponseHeaders[0]);
 				_log.Log(LOG_ERROR, "Failed to perform GET request (%d)!", _iHttpCode);
 			}
 			break;
@@ -819,7 +823,7 @@ bool CMercApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, cons
 			}
 		}
 
-		_iHttpCode = (!_vResponseHeaders[0].empty() ? (uint16_t)std::stoi(_vResponseHeaders[0].substr(9, 3)) : 0);
+		_iHttpCode = ExtractHTTPResultCode(_vResponseHeaders[0]);
 
 		// Debug response
 		for (auto &_vResponseHeader : _vResponseHeaders)
@@ -880,4 +884,30 @@ bool CMercApi::SendToApi(const eApiMethod eMethod, const std::string& sUrl, cons
 		return false;
 	}
 	return true;
+}
+
+// Interpret the return message headers to extract the HTTP resultcode
+uint16_t CMercApi::ExtractHTTPResultCode(const std::string& sResponseHeaderLine0)
+{
+	uint16_t iHttpCode = 9999;
+	uint8_t iHttpCodeStartPos = 0;
+
+	if(!sResponseHeaderLine0.empty())
+	{
+		if (sResponseHeaderLine0.find("HTTP") == 0)		// Ok, so this header indeeds starts with HTTP
+		{
+			if (sResponseHeaderLine0.find_first_of(' ') != std::string::npos)
+			{
+				iHttpCodeStartPos = (uint8_t)sResponseHeaderLine0.find_first_of(' ') + 1;	// So look for a SPACE as the seperator (RFC2616)
+
+				iHttpCode = (uint16_t)std::stoi(sResponseHeaderLine0.substr(iHttpCodeStartPos, 3));
+				if (iHttpCode < 100 || iHttpCode > 599)		// Check valid resultcode range
+				{
+					_log.Log(LOG_STATUS, "Found non-standard resultcode (%d) in HTTP response statusline: %s", iHttpCode, sResponseHeaderLine0.c_str());
+				}
+			}
+		}
+	}
+
+	return iHttpCode;
 }
