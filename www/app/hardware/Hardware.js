@@ -201,7 +201,7 @@ define(['app'], function (app) {
 					}
 				});
 			}
-			else if (text.indexOf("USB") >= 0 || text.indexOf("Teleinfo EDF") >= 0) {
+			else if (text.indexOf("USB") >= 0 || text == "Teleinfo EDF") {
 				var Mode1 = "0";
 				var password = "";
 				var serialport = $("#hardwarecontent #divserial #comboserialport option:selected").text();
@@ -855,7 +855,11 @@ define(['app'], function (app) {
 				});
 			}
 			else if(text.indexOf("Meteorologisk") >= 0){
-				var location = $("#hardwarecontent #divlocation #location").val();
+				var location = $("#hardwarecontent #divmeteorologisk #location").val();
+				if (location == "") {
+					ShowNotify($.t('Please enter an Location specifying Latitude, Longitude (or 0 to use Domoticz home location)!'), 2500, true);
+					return;
+				}
 				$.ajax({
 					url: "json.htm?type=command&param=updatehardware&htype=" + hardwaretype +
 					"&loglevel=" + logLevel +
@@ -1604,6 +1608,14 @@ define(['app'], function (app) {
 					}
 					password = decryptionkey;
 				}
+				else if (text.indexOf("Teleinfo EDF") >= 0) {
+					Mode2 = $("#hardwarecontent #divcrcp1 #disablecrcp1").prop("checked") ? 0 : 1;
+					var ratelimitp1 = $("#hardwarecontent #hardwareparamsratelimitp1 #ratelimitp1").val();
+					if (ratelimitp1 == "") {
+						ratelimitp1 = "60";
+					}
+					Mode3 = ratelimitp1;
+				}
 				$.ajax({
 					url: "json.htm?type=command&param=addhardware&htype=" + hardwaretype +
 					"&loglevel=" + logLevel +
@@ -1748,7 +1760,7 @@ define(['app'], function (app) {
 					}
 				});
 			}
-			else if (text.indexOf("USB") >= 0 || text.indexOf("Teleinfo EDF") >= 0) {
+			else if (text.indexOf("USB") >= 0 || text == "Teleinfo EDF") {
 				var Mode1 = "0";
 				var extra = "";
 				var password = "";
@@ -2242,7 +2254,11 @@ define(['app'], function (app) {
 				});
 			}
 			else if(text.indexOf("Meteorologisk") >= 0){
-				var location = $("#hardwarecontent #divlocation #location").val();
+				var location = $("#hardwarecontent #divmeteorologisk #location").val();
+				if (location == "") {
+					ShowNotify($.t('Please enter an Location specifying Latitude, Longitude (or 0 to use Domoticz home location)!'), 2500, true);
+					return;
+				}
 				$.ajax({
 					url: "json.htm?type=command&param=addhardware&htype=" + hardwaretype +
 					"&loglevel=" + logLevel +
@@ -2259,38 +2275,38 @@ define(['app'], function (app) {
 				});
 			}
 			else if (text.indexOf("Open Weather Map") >= 0) {
-			var apikey = $("#hardwarecontent #divopenweathermap #apikey").val();
-			if (apikey == "") {
-				ShowNotify($.t('Please enter an API Key!'), 2500, true);
-				return;
-			}
-			var location = $("#hardwarecontent #divopenweathermap #location").val();
-			if (location == "") {
-				ShowNotify($.t('Please enter an Location (or 0 to use Domoticz own location)!'), 2500, true);
-				return;
-			}
-			var adddayforecast = $("#hardwarecontent #divopenweathermap #adddayforecast").prop("checked") ? 1 : 0;
-			var addhourforecast = $("#hardwarecontent #divopenweathermap #addhourforecast").prop("checked") ? 1 : 0;
-			var adddescdev = $("#hardwarecontent #divopenweathermap #adddescdev").prop("checked") ? 1 : 0;
-			var useowmforecast = $("#hardwarecontent #divopenweathermap #useowmforecast").prop("checked") ? 1 : 0;
-			$.ajax({
-				url: "json.htm?type=command&param=addhardware&htype=" + hardwaretype + 
-				"&loglevel=" + logLevel +
-				"&username=" + encodeURIComponent(apikey) + "&password=" + encodeURIComponent(location) + 
-				"&name=" + encodeURIComponent(name) + "&enabled=" + bEnabled + "&datatimeout=" + datatimeout +
-				"&Mode1=" + adddayforecast + "&Mode2=" + addhourforecast +
-				"&Mode3=" + adddescdev + "&Mode4=" + useowmforecast,
-				async: false,
-				dataType: 'json',
-				success: function (data) {
-					RefreshHardwareTable();
-				},
-				error: function () {
-					ShowNotify($.t('Problem adding hardware!'), 2500, true);
+				var apikey = $("#hardwarecontent #divopenweathermap #apikey").val();
+				if (apikey == "") {
+					ShowNotify($.t('Please enter an API Key!'), 2500, true);
+					return;
 				}
-			});
-		}
-		else if (text.indexOf("Buienradar") >= 0) {
+				var location = $("#hardwarecontent #divopenweathermap #location").val();
+				if (location == "") {
+					ShowNotify($.t('Please enter an Location (or 0 to use Domoticz own location)!'), 2500, true);
+					return;
+				}
+				var adddayforecast = $("#hardwarecontent #divopenweathermap #adddayforecast").prop("checked") ? 1 : 0;
+				var addhourforecast = $("#hardwarecontent #divopenweathermap #addhourforecast").prop("checked") ? 1 : 0;
+				var adddescdev = $("#hardwarecontent #divopenweathermap #adddescdev").prop("checked") ? 1 : 0;
+				var useowmforecast = $("#hardwarecontent #divopenweathermap #useowmforecast").prop("checked") ? 1 : 0;
+				$.ajax({
+					url: "json.htm?type=command&param=addhardware&htype=" + hardwaretype + 
+					"&loglevel=" + logLevel +
+					"&username=" + encodeURIComponent(apikey) + "&password=" + encodeURIComponent(location) + 
+					"&name=" + encodeURIComponent(name) + "&enabled=" + bEnabled + "&datatimeout=" + datatimeout +
+					"&Mode1=" + adddayforecast + "&Mode2=" + addhourforecast +
+					"&Mode3=" + adddescdev + "&Mode4=" + useowmforecast,
+					async: false,
+					dataType: 'json',
+					success: function (data) {
+						RefreshHardwareTable();
+					},
+					error: function () {
+						ShowNotify($.t('Problem adding hardware!'), 2500, true);
+					}
+				});
+			}
+			else if (text.indexOf("Buienradar") >= 0) {
 				var timeframe = $("#hardwarecontent #divbuienradar #timeframe").val();
 				if (timeframe == 0) {
 					timeframe = 30;
@@ -3967,7 +3983,7 @@ define(['app'], function (app) {
 							$("#hardwarecontent #hardwareparamssysfsgpio #sysfsautoconfigure").prop("checked", data["Mode1"] == 1);
 							$("#hardwarecontent #hardwareparamssysfsgpio #sysfsdebounce").val(data["Mode2"]);
 						}
-						else if (data["Type"].indexOf("USB") >= 0 || data["Type"].indexOf("Teleinfo EDF") >= 0) {
+						else if (data["Type"].indexOf("USB") >= 0 || data["Type"] == "Teleinfo EDF") {
 							$("#hardwarecontent #hardwareparamsserial #comboserialport").val(data["IntPort"]);
 							if (data["Type"].indexOf("Evohome") >= 0) {
 								$("#hardwarecontent #divevohome #combobaudrateevohome").val(data["Mode1"]);
@@ -4016,6 +4032,10 @@ define(['app'], function (app) {
 								$("#hardwarecontent #divcrcp1 #disablecrcp1").prop("checked", data["Mode2"] == 0);
 								$("#hardwarecontent #hardwareparamsratelimitp1 #ratelimitp1").val(data["Mode3"]);
 								$("#hardwarecontent #divkeyp1p1 #decryptionkey").val(data["Password"]);
+							}
+							if (data["Type"].indexOf("Teleinfo EDF") >= 0 ) {
+								$("#hardwarecontent #divcrcp1 #disablecrcp1").prop("checked", data["Mode2"] == 0);
+								$("#hardwarecontent #hardwareparamsratelimitp1 #ratelimitp1").val(data["Mode3"]);
 							}
 							if (data["Type"].indexOf("Eco Devices") >= 0) {
 								$("#hardwarecontent #divmodelecodevices #combomodelecodevices").val(data["Mode1"]);
@@ -4094,7 +4114,7 @@ define(['app'], function (app) {
 							$("#hardwarecontent #hardwareparamsunderground #location").val(data["Password"]);
 						}
 						else if ((data["Type"].indexOf("Meteorologisk") >= 0)) {
-							$("#hardwarecontent #hardwareparamslocation #location").val(data["Password"]);
+							$("#hardwarecontent #hardwareparamsmeteorologisk #location").val(data["Password"]);
 						}
 						else if (data["Type"].indexOf("Open Weather Map") >= 0) {
 							$("#hardwarecontent #hardwareparamsopenweathermap #apikey").val(data["Username"]);
@@ -4477,6 +4497,7 @@ define(['app'], function (app) {
 			$("#hardwarecontent #divunderground").hide();
 			$("#hardwarecontent #divopenweathermap").hide();
 			$("#hardwarecontent #divbuienradar").hide();
+			$("#hardwarecontent #divmeteorologisk").hide();
 			$("#hardwarecontent #divserial").hide();
 			$("#hardwarecontent #divremote").hide();
 			$("#hardwarecontent #divlogin").hide();
@@ -4515,7 +4536,7 @@ define(['app'], function (app) {
 			else if (text.indexOf("sysfs GPIO") >= 0) {
 				$("#hardwarecontent #divsysfsgpio").show();
 			}
-			else if (text.indexOf("USB") >= 0 || text.indexOf("Teleinfo EDF") >= 0) {
+			else if (text.indexOf("USB") >= 0 || text == "Teleinfo EDF") {
 				if (text.indexOf("Evohome") >= 0) {
 					$("#hardwarecontent #divevohome").show();
 				}
@@ -4562,6 +4583,10 @@ define(['app'], function (app) {
 						$("#hardwarecontent #divratelimitp1").show();
 						$("#hardwarecontent #divcrcp1").show();
 						$("#hardwarecontent #divkeyp1p1").show();
+					}
+					if (text.indexOf("Teleinfo EDF") >= 0) {
+						$("#hardwarecontent #divratelimitp1").show();
+						$("#hardwarecontent #divcrcp1").show();
 					}
 					if (text.indexOf("Evohome") >= 0) {
 						$("#hardwarecontent #divevohometcp").show();
@@ -4684,7 +4709,7 @@ define(['app'], function (app) {
 				$("#hardwarecontent #divunderground").show();
 			}
 			else if(text.indexOf("Meteorologisk") >= 0){
-				$("#hardwarecontent #divlocation").show();
+				$("#hardwarecontent #divmeteorologisk").show();
 			}
 			else if(text.indexOf("Open Weather Map") >= 0){
 				$("#hardwarecontent #divopenweathermap").show();

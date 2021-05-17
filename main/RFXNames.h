@@ -218,9 +218,8 @@ enum _eHardwareTypes {
 	HTYPE_Meteorologisk,        //121
 	HTYPE_Mercedes,				//122
 	HTYPE_AirconWithMe,         //123
-
+	HTYPE_TeleinfoMeterTCP,		//124
 	HTYPE_VirtualThermostat,	//
-
 	HTYPE_END
 };
 

@@ -1119,9 +1119,9 @@ namespace http {
 					}
 				}
 
-				if (htype == HTYPE_ECODEVICES) {
-					// EcoDevices always have decimals. Chances to have a P1 and a EcoDevice/Teleinfo device on the same
-					// Domoticz instance are very low as both are national standards (NL and FR)
+				if (htype == HTYPE_ECODEVICES || htype == HTYPE_TeleinfoMeterTCP) {
+					// EcoDevices and Teleinfo always have decimals. Chances to have a P1 and a EcoDevice/Teleinfo
+					//  device on the same Domoticz instance are very low as both are national standards (NL and FR)
 					m_sql.UpdatePreferencesVar("SmartMeterType", 0);
 				}
 			}
@@ -1526,7 +1526,7 @@ namespace http {
 				|| (htype == HTYPE_KMTronicTCP) || (htype == HTYPE_KMTronicUDP) || (htype == HTYPE_SOLARMAXTCP) || (htype == HTYPE_RelayNet) || (htype == HTYPE_SatelIntegra) || (htype == HTYPE_eHouseTCP) || (htype == HTYPE_RFLINKTCP)
 				|| (htype == HTYPE_Comm5TCP || (htype == HTYPE_Comm5SMTCP) || (htype == HTYPE_CurrentCostMeterLAN))
 				|| (htype == HTYPE_NefitEastLAN) || (htype == HTYPE_DenkoviHTTPDevices) || (htype == HTYPE_DenkoviTCPDevices) || (htype == HTYPE_Ec3kMeterTCP) || (htype == HTYPE_MultiFun) || (htype == HTYPE_ZIBLUETCP) || (htype == HTYPE_OnkyoAVTCP)
-				|| (htype == HTYPE_OctoPrint)
+				|| (htype == HTYPE_OctoPrint) || (htype == HTYPE_TeleinfoMeterTCP)
 				) {
 				//Lan
 				if (address.empty())
@@ -10284,7 +10284,7 @@ namespace http {
 
 								sprintf(szTmp, "%.1f", total_real);
 								root["result"][ii]["Rain"] = szTmp;
-								sprintf(szTmp, "%g", rate);
+								sprintf(szTmp, "%.1f", rate);
 								root["result"][ii]["RainRate"] = szTmp;
 								root["result"][ii]["Data"] = sValue;
 								root["result"][ii]["HaveTimeout"] = bHaveTimeout;
