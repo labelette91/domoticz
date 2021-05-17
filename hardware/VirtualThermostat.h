@@ -109,6 +109,6 @@ public:
 
 };
 
-std::string VirtualThermostatGetOption (const std::string optionName , const std::string &options );
+std::string VirtualThermostatGetOption (const std::string optionName , const std::string &options ,  const bool decode=true );
 
 extern VirtualThermostat * m_VirtualThermostat;

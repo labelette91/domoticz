@@ -10987,7 +10987,7 @@ namespace http {
 							if (_hardwareNames[hardwareID].HardwareTypeVal == HTYPE_VirtualThermostat)
 							{
 
-								TOptionMap optionsMap = m_sql.BuildDeviceOptions(sOptions, false);
+								TOptionMap optionsMap = m_sql.BuildDeviceOptions(sOptions);
 
 								//build option values
 								for (const auto & itt : optionsMap)

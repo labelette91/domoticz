@@ -347,7 +347,7 @@ try
 		HwdID = (*row)[7] ;
 		DeviceID = std::stol((*row)[9], 0, 16);
 		sDeviceID = (*row)[9] ;
-		TOptionMap Option   = m_sql.BuildDeviceOptions(Options, false ) ;
+		TOptionMap Option   = m_sql.BuildDeviceOptions(Options ) ;
 
 		getOption(Option,"Power"     , lastPowerModulation  );
 		getOption(Option,"RoomTemp"  , lastTemp             );
@@ -418,9 +418,7 @@ try
 						setOption(Option, "RoomTemp", RoomTemperature);
 						setOption(Option, "Switch"  , SwitchValue);     //switch command value
 
-
-						std::string options = m_sql.FormatDeviceOptions(Option, false);
-						m_sql.UpdateDeviceValue("Options", options , (idxThermostat)) ;
+						m_sql.SetDeviceOptions(ThermostatId, Option );
 
 					//		m_mainworker.m_eventsystem.ProcessDevice(atoi(HwdID.c_str()), ThermostatId, 1, pTypeThermostat, sTypeThermSetpoint, 0, 0, 0, SetPoint, ThermostatSwitchName);
 						SendSetPointSensor(DeviceID>>16 , (DeviceID>>8)&0xFF  , (DeviceID)&0xFF , ThermostatTemperatureSet, "");
@@ -452,6 +450,15 @@ catch (...)
 }
 }
 
+//return the option value from devive id 
+std::string GetOptionFromDeviceId(std::string &devIdx, const char* option )
+{
+	TOptionMap Option  = m_sql.GetDeviceOptions(devIdx);
+	return (Option[option] );
+} 
+
+
+
 //return previous  thermostat target temperature before Time
 int VirtualThermostat::getPrevThermostatProg ( const char * devID , char * CurrentTime , std::string &Time )
 {
@@ -478,8 +485,8 @@ return TargetTemp;
 
 float VirtualThermostat::GetEcoTemp (const char * devID )
 {
-	std::string Options = m_sql.GetDeviceValue("Options" , devID  );
-	std::string temp = VirtualThermostatGetOption("EcoTemp", Options);
+	std::string sid = devID ;
+	std::string temp = GetOptionFromDeviceId(sid,"EcoTemp" );
 
 	return ((float)atof(temp.c_str()));
 }
@@ -496,8 +503,8 @@ int VirtualThermostat::GetEcoTempFromTimers (const char * devID )
 
 float VirtualThermostat::GetConfortTemp (const char * devID )
 {
-	std::string Options = m_sql.GetDeviceValue("Options", devID);
-	std::string temp = VirtualThermostatGetOption("ConforTemp", Options);
+	std::string sid = devID ;
+	std::string temp = GetOptionFromDeviceId(sid,"ConforTemp" );
 	return atof(temp.c_str());
 }
 
@@ -582,23 +589,14 @@ bool VirtualThermostat::SetThermostatState(const std::string &idx, const int new
 //return the thermostat room temperature 
 std::string VirtualThermostat::GetRoomTemperature(std::string &devIdx)
 {
-
-	std::string Options = m_sql.GetDeviceValue("Options", devIdx.c_str());
-	std::string temp = VirtualThermostatGetOption("RoomTemp", Options);
-	return (temp.c_str());
-
+	std::string temp = GetOptionFromDeviceId(devIdx,"RoomTemp" );
+	return (temp );
 } ;
 
-std::string VirtualThermostatGetOption (const std::string optionName , const std::string &options )
+//option is not in base64
+std::string VirtualThermostatGetOption (const std::string optionName , const std::string &options , const bool decode)
 {
   //if option present
-    if (strstr(options.c_str(),optionName.c_str() ) != 0)
-    {
-      TOptionMap Option   = m_sql.BuildDeviceOptions( options, false ) ;
+      TOptionMap Option   = m_sql.BuildDeviceOptions( options , decode ) ;
       return (Option[optionName] );
-    }
-    else
-    {
-      return "";
-    }
 }

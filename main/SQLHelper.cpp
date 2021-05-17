@@ -3978,9 +3978,7 @@ uint64_t CSQLHelper::CreateDevice(const int HardwareID, const int SensorType, co
 
 		if (!soptions.empty() )
 		{
-			std::string uidstr = boost::to_string(DeviceRowIdx);
-
-			m_sql.safe_query("UPDATE DeviceStatus SET Options='%q' WHERE (ID==%" PRIu64 ")", soptions.c_str(), DeviceRowIdx);
+			m_sql.SetDeviceOptions(DeviceRowIdx, m_sql.BuildDeviceOptions(soptions, false));
 		}
 		break;
 	}
@@ -9058,26 +9056,6 @@ TOptionMap  BuildDeviceOptions(int NbOptions ,... )
 	return optionsMap;
 }
 
-bool CSQLHelper::UpdateDeviceOptions(const uint64_t idx, std::string options , const bool decode ) {
-
-    //get current option values
-    TOptionMap dbOptionMap = GetDeviceOptions( std::to_string(idx), decode ) ;
-
-		TOptionMap optionsMap  = BuildDeviceOptions(options);
-
-    //update all  option values
-    for (const auto & itt : optionsMap)
-    {
-      std::string optionName  = itt.first.c_str();
-      std::string optionValue = itt.second;  
-      dbOptionMap[optionName.c_str()]  = optionValue.c_str() ;
-    }
-
-    SetDeviceOptions( idx,dbOptionMap, decode ) ;
-
-
-    return true;
-}
 //convert an options string "option1:value;option2:value;"  in a map structure [option]=value.
 //if decode = true the value is decoding from format base64
 std::map<std::string, std::string> CSQLHelper::BuildDeviceOptions(const std::string& options, const bool decode)
@@ -9110,7 +9088,7 @@ std::map<std::string, std::string> CSQLHelper::BuildDeviceOptions(const std::str
 
 //get database  options string "option1:value;option2:value;"  in a map structur [option]=value.
 //if decode = true the value is decoding from format base64
-std::map<std::string, std::string> CSQLHelper::GetDeviceOptions(const std::string& idx, const bool decode )
+std::map<std::string, std::string> CSQLHelper::GetDeviceOptions(const std::string& idx)
 {
 	std::map<std::string, std::string> optionsMap;
 
@@ -9124,14 +9102,14 @@ std::map<std::string, std::string> CSQLHelper::GetDeviceOptions(const std::strin
 	result = safe_query("SELECT Options FROM DeviceStatus WHERE (ID==%" PRIu64 ")", ulID);
 	if (!result.empty()) {
 		std::vector<std::string> sd = result[0];
-		optionsMap = BuildDeviceOptions(sd[0].c_str(),decode);
+		optionsMap = BuildDeviceOptions(sd[0].c_str());
 	}
 	return optionsMap;
 }
 
 //convert a map structure [option]=value. to a  string "option1:value;option2:value;" 
 //if encode = true the value is encoded to format base64
-std::string CSQLHelper::FormatDeviceOptions(const std::map<std::string, std::string>& optionsMap, const bool encode )
+std::string CSQLHelper::FormatDeviceOptions(const std::map<std::string, std::string>& optionsMap)
 {
 	std::string options;
 	int count = optionsMap.size();
@@ -9143,7 +9121,7 @@ std::string CSQLHelper::FormatDeviceOptions(const std::map<std::string, std::str
 			i++;
 			//_log.Log(LOG_STATUS, "DEBUG : Reading device option ['%s', '%s']", itt.first.c_str(), itt.second.c_str());
 			std::string optionName = itt.first.c_str();
-			std::string optionValue = encode ? base64_encode(itt.second) : itt.second;
+			std::string optionValue = base64_encode(itt.second);
 			ssoptions << optionName << ":" << optionValue;
 			if (i < count) {
 				ssoptions << ";";
@@ -9157,7 +9135,7 @@ std::string CSQLHelper::FormatDeviceOptions(const std::map<std::string, std::str
 
 //write in t database  the options string "option1:value;option2:value;"  from  optionsMap a map structur [option]=value.
 //if encode = true the value is encoded to format base64
-bool CSQLHelper::SetDeviceOptions(const uint64_t idx, const std::map<std::string, std::string>& optionsMap, const bool encode)
+bool CSQLHelper::SetDeviceOptions(const uint64_t idx, const std::map<std::string, std::string>& optionsMap)
 {
 	if (idx < 1) {
 		_log.Log(LOG_ERROR, "Cannot set options on device %" PRIu64 "", idx);
@@ -9169,7 +9147,7 @@ bool CSQLHelper::SetDeviceOptions(const uint64_t idx, const std::map<std::string
 		safe_query("UPDATE DeviceStatus SET Options = null WHERE (ID==%" PRIu64 ")", idx);
 	}
 	else {
-		std::string options = FormatDeviceOptions(optionsMap, encode);
+		std::string options = FormatDeviceOptions(optionsMap);
 		if (options.empty()) {
 			_log.Log(LOG_ERROR, "Cannot parse options for device %" PRIu64 "", idx);
 			return false;
