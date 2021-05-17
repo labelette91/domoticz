@@ -51,6 +51,7 @@ return {
 	['HUM_NORMAL'] = 0,
 	['HUM_WET'] = 3,
 	['INTEGER'] = 'integer',
+	['NSS_CLICKATELL'] = 'clickatell',
 	['NSS_FIREBASE'] = 'fcm',
 	['NSS_FIREBASE_CLOUD_MESSAGING'] = 'fcm',
 	['NSS_GOOGLE_CLOUD_MESSAGING'] = 'gcm',  -- Only for backward compatibility. Will be deprecated soon

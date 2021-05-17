@@ -39,7 +39,7 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#define DB_VERSION 147
+#define DB_VERSION 148
 
 extern http::server::CWebServerHelper m_webservers;
 extern std::string szWWWFolder;
@@ -234,6 +234,7 @@ const char* sqlCreateHardware =
 "[Name] VARCHAR(200) NOT NULL, "
 "[Enabled] INTEGER DEFAULT 1, "
 "[Type] INTEGER NOT NULL, "
+"[LogLevel] INTEGER default 7, " //LOG_NORM + LOG_STATUS + LOG_ERROR
 "[Address] VARCHAR(200), "
 "[Port] INTEGER, "
 "[SerialPort] TEXT DEFAULT (''), "
@@ -2275,7 +2276,8 @@ bool CSQLHelper::OpenDatabase()
 						{
 							szQuery2.clear();
 							szQuery2.str("");
-							szQuery2 << "INSERT INTO Percentage (DeviceRowID, Percentage, Date) VALUES (" << sd[0] << ", " << (float)atof(sd3[0].c_str()) / 10.0f << ", '" << sd3[1] << "')";
+							szQuery2 << "INSERT INTO Percentage (DeviceRowID, Percentage, Date) VALUES (" << sd[0] << ", " << (float)atof(sd3[0].c_str()) / 10.0F << ", '"
+								 << sd3[1] << "')";
 							query(szQuery2.str());
 						}
 						szQuery2.clear();
@@ -2292,9 +2294,9 @@ bool CSQLHelper::OpenDatabase()
 						{
 							szQuery2.clear();
 							szQuery2.str("");
-							float percentage_min = (float)atof(sd3[0].c_str()) / 10.0f;
-							float percentage_max = (float)atof(sd3[1].c_str()) / 10.0f;
-							float percentage_avg = (float)atof(sd3[2].c_str()) / 10.0f;
+							float percentage_min = (float)atof(sd3[0].c_str()) / 10.0F;
+							float percentage_max = (float)atof(sd3[1].c_str()) / 10.0F;
+							float percentage_avg = (float)atof(sd3[2].c_str()) / 10.0F;
 							szQuery2 << "INSERT INTO Percentage_Calendar (DeviceRowID, Percentage_Min, Percentage_Max, Percentage_Avg, Date) VALUES (" << sd[0] << ", " << percentage_min << ", " << percentage_max << ", " << percentage_avg << ", '" << sd3[3] << "')";
 							query(szQuery2.str());
 						}
@@ -2326,7 +2328,7 @@ bool CSQLHelper::OpenDatabase()
 
 					//convert hue to RGB
 					float iHue = float(atof(sd[1].c_str()));
-					hsb2rgb(iHue, 1.0f, 1.0f, r, g, b, 255);
+					hsb2rgb(iHue, 1.0F, 1.0F, r, g, b, 255);
 
 					_tColor color = _tColor(r, g, b, 0, 0, ColorModeRGB);
 					szQuery2.clear();
@@ -2346,7 +2348,7 @@ bool CSQLHelper::OpenDatabase()
 
 					//convert hue to RGB
 					float iHue = float(atof(sd[1].c_str()));
-					hsb2rgb(iHue, 1.0f, 1.0f, r, g, b, 255);
+					hsb2rgb(iHue, 1.0F, 1.0F, r, g, b, 255);
 
 					_tColor color = _tColor(r, g, b, 0, 0, ColorModeRGB);
 					szQuery2.clear();
@@ -2786,6 +2788,10 @@ bool CSQLHelper::OpenDatabase()
 		{
 			//Pushlink is not zero based anymore
 			safe_exec_no_return("UPDATE PushLink SET DelimitedValue=1 WHERE (DelimitedValue == 0)");
+		}
+		if (dbversion < 148)
+		{
+			query("ALTER TABLE Hardware ADD COLUMN [LogLevel] INTEGER DEFAULT 7"); // LOG_NORM + LOG_STATUS + LOG_ERROR
 		}
 	}
 	else if (bNewInstall)
@@ -3301,7 +3307,7 @@ void CSQLHelper::StopThread()
 bool CSQLHelper::StartThread()
 {
 	RequestStart();
-	m_thread = std::make_shared<std::thread>(&CSQLHelper::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadName(m_thread->native_handle(), "SQLHelper");
 	return (m_thread != nullptr);
 }
@@ -3345,259 +3351,364 @@ void CSQLHelper::ManageExecuteScriptTimeout(int pid, int timeout, bool *stillRun
 }
 #endif
 
-void CSQLHelper::ExecuteScriptThreaded(std::string command, std::string callback, int timeout, std::string path)
+void CSQLHelper::PerformThreadedAction(const _tTaskItem itt)
 {
-	std::ifstream infile;
-	std::string sLine;
-	std::string filename;
-	std::string filenamestderr;
-	std::string scriptoutput;
-	std::string scriptstderr;
-	bool commmandExecutedSuccesfully = false;
-	int exitcode = 0;
+	if (itt._ItemType == TITEM_EXECUTESHELLCOMMAND)
+	{
+		std::string command = itt._sValue;
+		std::string callback = itt._ID;
+		std::string path = itt._sUser;
+		int timeout = itt._nValue;
+
+		std::ifstream infile;
+		std::string sLine;
+		std::string filename;
+		std::string filenamestderr;
+		std::string scriptoutput;
+		std::string scriptstderr;
+		bool commmandExecutedSuccesfully = false;
+		int exitcode = 0;
 #ifndef WIN32
-	int pid;
-	bool stillRunning = true;
-	std::shared_ptr<std::thread> T;
+		int pid;
+		bool stillRunning = true;
+		std::shared_ptr<std::thread> T;
 #endif
-	bool timeoutOccurred = false;
+		bool timeoutOccurred = false;
 
-	// make sure we have unique filenames
-	scriptoutputindex++;
-	if (scriptoutputindex > 10000) // should be a big number, to prevent parallel scripts having the same output files. 250 concurrent will probably never be reached
-	{
-		scriptoutputindex = 1;
-	}
-	std::string scriptoutputindextext = std::to_string(scriptoutputindex);
+		// make sure we have unique filenames
+		scriptoutputindex++;
+		if (scriptoutputindex > 10000) // should be a big number, to prevent parallel scripts having the same output files. 250 concurrent will probably never be reached
+		{
+			scriptoutputindex = 1;
+		}
+		std::string scriptoutputindextext = std::to_string(scriptoutputindex);
 
-	// create filenames for stderr and stdout  ("path+domscript+index+<.out|.err>")
-	filename = path;
-	filename.append("domscript");
-	filename.append(scriptoutputindextext);
-	filenamestderr = filename;
-	filename.append(".out");       // stdout
-	filenamestderr.append(".err"); // stderr
+		// create filenames for stderr and stdout  ("path+domscript+index+<.out|.err>")
+		filename = path;
+		filename.append("domscript");
+		filename.append(scriptoutputindextext);
+		filenamestderr = filename;
+		filename.append(".out");       // stdout
+		filenamestderr.append(".err"); // stderr
 
-	// Remove temp file if they exist
-	if (!remove(filename.c_str()))
-		_log.Log(LOG_ERROR, "old temp file (%s) was still there, removing...", filename.c_str());
-	if (!remove(filenamestderr.c_str()))
-		_log.Log(LOG_ERROR, "old temp file (%s) was still there, removing...", filenamestderr.c_str());
+		// Remove temp file if they exist
+		if (!remove(filename.c_str()))
+			_log.Log(LOG_ERROR, "old temp file (%s) was still there, removing...", filename.c_str());
+		if (!remove(filenamestderr.c_str()))
+			_log.Log(LOG_ERROR, "old temp file (%s) was still there, removing...", filenamestderr.c_str());
 
-	if (timeout > 0)
-	{
-		_log.Debug(DEBUG_NORM, "dzVents: Executing shellcommmand %s for max %d seconds", command.c_str(), timeout);
-	}
-	else
-	{
-		_log.Debug(DEBUG_NORM, "dzVents: Executing shellcommmand %s", command.c_str());
-	}
-
-#ifdef WIN32
-	SECURITY_ATTRIBUTES sa;
-	sa.nLength = sizeof(sa);
-	sa.lpSecurityDescriptor = NULL;
-	sa.bInheritHandle = TRUE;
-
-	HANDLE hstdout = CreateFile(_T(filename.c_str()), FILE_APPEND_DATA, FILE_SHARE_WRITE | FILE_SHARE_READ, &sa, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	HANDLE hstderr = CreateFile(_T(filenamestderr.c_str()), FILE_APPEND_DATA, FILE_SHARE_WRITE | FILE_SHARE_READ, &sa, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-
-	PROCESS_INFORMATION pi;
-	STARTUPINFO si;
-	BOOL ret = FALSE;
-	DWORD flags = CREATE_NO_WINDOW;
-
-	ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
-	ZeroMemory(&si, sizeof(STARTUPINFO));
-	si.cb = sizeof(STARTUPINFO);
-	si.dwFlags |= STARTF_USESTDHANDLES;
-	si.hStdInput = NULL;
-	si.hStdError = hstderr;
-	si.hStdOutput = hstdout;
-
-	ret = CreateProcess(NULL, const_cast<char *>(command.c_str()), NULL, NULL, TRUE, flags, NULL, NULL, &si, &pi);
-	if (!ret)  // the above command will fail if the executable cannot be found (e.g. a "dir" command). So try again using the command shell
-	{
-		std::string cmd = "cmd /c ";
-		cmd.append(command.c_str());
-		_log.Debug(DEBUG_NORM, "Could not execute command, trying again using %s", cmd.c_str());
-		ret = CreateProcess(NULL, const_cast<char *>(cmd.c_str()), NULL, NULL, TRUE, flags, NULL, NULL, &si, &pi);
-	}
-
-	if (ret)
-	{
-		// Successfully created the process.  Wait for it to finish.
-		DWORD waitstatus;
 		if (timeout > 0)
 		{
-			waitstatus = WaitForSingleObject(pi.hProcess, timeout * 1000);
+			_log.Debug(DEBUG_NORM, "dzVents: Executing shellcommmand %s for max %d seconds", command.c_str(), timeout);
 		}
 		else
 		{
-			waitstatus = WaitForSingleObject(pi.hProcess, INFINITE);
+			_log.Debug(DEBUG_NORM, "dzVents: Executing shellcommmand %s", command.c_str());
 		}
 
-		if (waitstatus == WAIT_TIMEOUT)
-		{
-			_log.Log(LOG_ERROR, "dzVents: %s has been running longer than specified timeout (%d seconds), cancelling command",command.c_str(),timeout);
-			timeoutOccurred = true;
-			exitcode = 9;   // Analog to error on unix
-			commmandExecutedSuccesfully = true;
+#ifdef WIN32
+		SECURITY_ATTRIBUTES sa;
+		sa.nLength = sizeof(sa);
+		sa.lpSecurityDescriptor = NULL;
+		sa.bInheritHandle = TRUE;
 
-			if (!TerminateProcess(pi.hProcess, 1))
+		HANDLE hstdout = CreateFile(_T(filename.c_str()), FILE_APPEND_DATA, FILE_SHARE_WRITE | FILE_SHARE_READ, &sa, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		HANDLE hstderr = CreateFile(_T(filenamestderr.c_str()), FILE_APPEND_DATA, FILE_SHARE_WRITE | FILE_SHARE_READ, &sa, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+		PROCESS_INFORMATION pi;
+		STARTUPINFO si;
+		BOOL ret = FALSE;
+		DWORD flags = CREATE_NO_WINDOW;
+
+		ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
+		ZeroMemory(&si, sizeof(STARTUPINFO));
+		si.cb = sizeof(STARTUPINFO);
+		si.dwFlags |= STARTF_USESTDHANDLES;
+		si.hStdInput = NULL;
+		si.hStdError = hstderr;
+		si.hStdOutput = hstdout;
+
+		ret = CreateProcess(NULL, const_cast<char *>(command.c_str()), NULL, NULL, TRUE, flags, NULL, NULL, &si, &pi);
+		if (!ret) // the above command will fail if the executable cannot be found (e.g. a "dir" command). So try again using the command shell
+		{
+			std::string cmd = "cmd /c ";
+			cmd.append(command.c_str());
+			_log.Debug(DEBUG_NORM, "Could not execute command, trying again using %s", cmd.c_str());
+			ret = CreateProcess(NULL, const_cast<char *>(cmd.c_str()), NULL, NULL, TRUE, flags, NULL, NULL, &si, &pi);
+		}
+
+		if (ret)
+		{
+			// Successfully created the process.  Wait for it to finish.
+			DWORD waitstatus;
+			if (timeout > 0)
 			{
-				_log.Log(LOG_ERROR, "terminate failed");
+				waitstatus = WaitForSingleObject(pi.hProcess, timeout * 1000);
+			}
+			else
+			{
+				waitstatus = WaitForSingleObject(pi.hProcess, INFINITE);
+			}
+
+			if (waitstatus == WAIT_TIMEOUT)
+			{
+				_log.Log(LOG_ERROR, "dzVents: %s has been running longer than specified timeout (%d seconds), cancelling command", command.c_str(), timeout);
+				timeoutOccurred = true;
+				exitcode = 9; // Analog to error on unix
+				commmandExecutedSuccesfully = true;
+
+				if (!TerminateProcess(pi.hProcess, 1))
+				{
+					_log.Log(LOG_ERROR, "terminate failed");
+				}
+			}
+			else if (waitstatus == WAIT_FAILED)
+			{
+				_log.Log(LOG_ERROR, "something went wrong while executing %s waiting", command.c_str());
+			}
+			else
+			{
+
+				// all went fine
+				// Get the exit code.
+
+				DWORD exitCode;
+				GetExitCodeProcess(pi.hProcess, &exitCode);
+				_log.Debug(DEBUG_NORM, "Exit code %ld", exitCode);
+				exitcode = exitCode;
+				commmandExecutedSuccesfully = true;
 			}
 		}
-		else if (waitstatus == WAIT_FAILED)
-		{
-			_log.Log(LOG_ERROR, "something went wrong while executing %s waiting",command.c_str());
-		}
 		else
 		{
-
-			// all went fine
-			// Get the exit code.
-
-			DWORD exitCode;
-			GetExitCodeProcess(pi.hProcess, &exitCode);
-			_log.Debug(DEBUG_NORM, "Exit code %ld", exitCode);
-			exitcode = exitCode;
-			commmandExecutedSuccesfully = true;
+			_log.Log(LOG_ERROR, "Unable to execute %s", command.c_str());
 		}
 
-	}
-	else
-	{
-		_log.Log(LOG_ERROR, "Unable to execute %s", command.c_str());
-	}
-
-	// Clear up everything
-	CloseHandle(pi.hProcess);
-	CloseHandle(pi.hThread);
-	CloseHandle(hstdout);
-	CloseHandle(hstderr);
-	
+		// Clear up everything
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+		CloseHandle(hstdout);
+		CloseHandle(hstderr);
 
 #else
-	// Start process,  using command on stdin
-	pid = fork();
-	if (pid == 0)
-	{
-		// child process
-		int fdout = open(filename.c_str(), O_RDWR|O_CREAT, S_IRUSR|S_IWUSR);
-		int fderr = open(filenamestderr.c_str(), O_RDWR|O_CREAT, S_IRUSR|S_IWUSR);
-		dup2(fdout, 1); // reroute stdout
-		dup2(fderr, 2); // reroute srderr
-		close(fdout);
-		close(fderr);
-		exitcode = execl("/bin/sh", "/bin/sh", "-c", command.c_str(), NULL);
-		exit(exitcode);
-	}
-
-	if (pid == -1)
-	{
-		_log.Log(LOG_ERROR, "Unable to spawn process");
-	}
-	else
-	{
-		if (timeout>0) {
-			T = std::make_shared<std::thread>(&CSQLHelper::ManageExecuteScriptTimeout,this,pid,timeout,&stillRunning,&timeoutOccurred);
+		// Start process,  using command on stdin
+		pid = fork();
+		if (pid == 0)
+		{
+			// child process
+			int fdout = open(filename.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+			int fderr = open(filenamestderr.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+			dup2(fdout, 1); // reroute stdout
+			dup2(fderr, 2); // reroute srderr
+			close(fdout);
+			close(fderr);
+			exitcode = execl("/bin/sh", "/bin/sh", "-c", command.c_str(), NULL);
+			exit(exitcode);
 		}
-		waitpid(pid, &exitcode, 0);
-		stillRunning = false;
-		commmandExecutedSuccesfully = true;
-	}
+
+		if (pid == -1)
+		{
+			_log.Log(LOG_ERROR, "Unable to spawn process");
+		}
+		else
+		{
+			if (timeout > 0)
+			{
+				T = std::make_shared<std::thread>(&CSQLHelper::ManageExecuteScriptTimeout, this, pid, timeout, &stillRunning, &timeoutOccurred);
+			}
+			waitpid(pid, &exitcode, 0);
+			stillRunning = false;
+			commmandExecutedSuccesfully = true;
+		}
 #endif
 
-	if (commmandExecutedSuccesfully)
-	{ 
-
-		// get stdout
-		infile.open(filename.c_str());
-		if (infile.is_open())
+		if (commmandExecutedSuccesfully)
 		{
-			getline(infile, sLine);
-			do
+
+			// get stdout
+			infile.open(filename.c_str());
+			if (infile.is_open())
 			{
-				scriptoutput.append(sLine);
 				getline(infile, sLine);
-				if (!infile.eof())
+				do
 				{
-					scriptoutput.append("\n");
-				}
-			} while (!infile.eof());
+					scriptoutput.append(sLine);
+					getline(infile, sLine);
+					if (!infile.eof())
+					{
+						scriptoutput.append("\n");
+					}
+				} while (!infile.eof());
 
-			infile.close();
+				infile.close();
+			}
+			else
+			{
+				_log.Log(LOG_ERROR, "Unable to read file %s", filename.c_str());
+			}
 
+			// get stderr
+			infile.open(filenamestderr.c_str());
+			if (infile.is_open())
+			{
+				getline(infile, sLine);
+				do
+				{
+					if (!sLine.empty())
+						_log.Debug(DEBUG_NORM, "ExecuteScriptError: %s", sLine.c_str());
+					scriptstderr.append(sLine);
+					getline(infile, sLine);
+					if (!infile.eof())
+					{
+						scriptstderr.append("\n");
+					}
+				} while (!infile.eof());
+				infile.close();
+			}
+			else
+			{
+				_log.Log(LOG_ERROR, "Unable to read file %s", filenamestderr.c_str());
+			}
+
+			// start callback if applicable
+			if (m_bEnableEventSystem && !callback.empty())
+			{
+				m_mainworker.m_eventsystem.TriggerShellCommand(scriptoutput, scriptstderr, callback, exitcode, timeoutOccurred);
+			}
+#ifndef WIN32
+			if (timeout > 0)
+			{
+				T->join();
+				T.reset();
+			}
+#endif
+			// delete temporary file
+			std::this_thread::sleep_for(std::chrono::milliseconds(3000)); // give the time to finish all io from the child processes
+			if (remove(filename.c_str()))
+			{
+				_log.Log(LOG_ERROR, "unable to remove file %s", filename.c_str());
+			}
+			if (remove(filenamestderr.c_str()))
+			{
+				_log.Log(LOG_ERROR, " unable to remove file %s", filenamestderr.c_str());
+			}
+		}
+	}
+	else if (itt._ItemType == TITEM_GETURL)
+	{
+		std::vector<std::string> extraHeaders;
+		std::string postData = itt._command;
+		std::string callback = itt._ID;
+		std::string url = itt._sValue;
+		int method = itt._switchtype;
+
+		if (!itt._relatedEvent.empty())
+			StringSplit(itt._relatedEvent, "!#", extraHeaders);
+		std::string response;
+		std::vector<std::string> headerData;
+
+		HTTPClient::_eHTTPmethod tmethod = static_cast<HTTPClient::_eHTTPmethod>(method);
+
+		bool ret = false;
+		if (tmethod == HTTPClient::HTTP_METHOD_GET)
+		{
+			ret = HTTPClient::GET(url, extraHeaders, response, headerData);
+		}
+		else if (tmethod == HTTPClient::HTTP_METHOD_POST)
+		{
+			ret = HTTPClient::POST(url, postData, extraHeaders, response, headerData, true, true);
+		}
+		else if (tmethod == HTTPClient::HTTP_METHOD_PUT)
+		{
+			ret = HTTPClient::PUT(url, postData, extraHeaders, response, headerData, true);
+		}
+		else if (tmethod == HTTPClient::HTTP_METHOD_DELETE)
+		{
+			ret = HTTPClient::Delete(url, postData, extraHeaders, response, headerData, true);
 		}
 		else
-		{
-			_log.Log(LOG_ERROR, "Unable to read file %s", filename.c_str());
-		}
+			return; // unsupported method
 
-		// get stderr
-		infile.open(filenamestderr.c_str());
-		if (infile.is_open())
-		{
-			getline(infile, sLine);
-			do
-			{
-				if (!sLine.empty())
-					_log.Debug(DEBUG_NORM, "ExecuteScriptError: %s", sLine.c_str());
-				scriptstderr.append(sLine);
-				getline(infile, sLine);
-				if (!infile.eof())
-				{
-					scriptstderr.append("\n");
-				}
-			} while (!infile.eof());
-			infile.close();
-
-		}
-		else
-		{
-			_log.Log(LOG_ERROR, "Unable to read file %s", filenamestderr.c_str());
-		}
-
-		// start callback if applicable
 		if (m_bEnableEventSystem && !callback.empty())
 		{
-			m_mainworker.m_eventsystem.TriggerShellCommand(scriptoutput, scriptstderr, callback, exitcode, timeoutOccurred);
-		}
-#ifndef WIN32
-		if (timeout>0) 
-		{
-			T->join();
-			T.reset();
-		}
-#endif
-		// delete temporary file
-		std::this_thread::sleep_for(std::chrono::milliseconds(3000)); // give the time to finish all io from the child processes
-		if (remove(filename.c_str()))
-		{
-			_log.Log(LOG_ERROR, "unable to remove file %s", filename.c_str());
-		}
-		if (remove(filenamestderr.c_str()))
-		{
-			_log.Log(LOG_ERROR, " unable to remove file %s", filenamestderr.c_str());
+			m_mainworker.m_eventsystem.TriggerURL(response, headerData, callback);
 		}
 
+		if (!ret)
+		{
+			_log.Log(LOG_ERROR, "Error opening url: %s", url.c_str());
+		}
+	}
+	else if ((itt._ItemType == TITEM_SEND_EMAIL) || (itt._ItemType == TITEM_SEND_EMAIL_TO))
+	{
+		int nValue;
+		if (GetPreferencesVar("EmailEnabled", nValue))
+		{
+			if (nValue)
+			{
+				std::string sValue;
+				if (GetPreferencesVar("EmailServer", sValue))
+				{
+					if (!sValue.empty())
+					{
+						std::string EmailFrom;
+						std::string EmailTo;
+						const std::string &EmailServer = sValue;
+						int EmailPort = 25;
+						std::string EmailUsername;
+						std::string EmailPassword;
+						GetPreferencesVar("EmailFrom", EmailFrom);
+						if (itt._ItemType != TITEM_SEND_EMAIL_TO)
+						{
+							GetPreferencesVar("EmailTo", EmailTo);
+						}
+						else
+						{
+							EmailTo = itt._command;
+						}
+						GetPreferencesVar("EmailUsername", EmailUsername);
+						GetPreferencesVar("EmailPassword", EmailPassword);
+
+						GetPreferencesVar("EmailPort", EmailPort);
+
+						SMTPClient sclient;
+						sclient.SetFrom(CURLEncode::URLDecode(EmailFrom));
+						sclient.SetTo(CURLEncode::URLDecode(EmailTo));
+						sclient.SetCredentials(base64_decode(EmailUsername), base64_decode(EmailPassword));
+						sclient.SetServer(CURLEncode::URLDecode(EmailServer), EmailPort);
+						sclient.SetSubject(CURLEncode::URLDecode(itt._ID));
+						sclient.SetHTMLBody(itt._sValue);
+						bool bRet = sclient.SendEmail();
+
+						if (bRet)
+							_log.Log(LOG_STATUS, "Notification sent (Email)");
+						else
+							_log.Log(LOG_ERROR, "Notification failed (Email)");
+					}
+				}
+			}
+		}
+	}
+	else if (itt._ItemType == TITEM_SEND_SMS)
+	{
+		m_notifications.SendMessage(0, std::string(""), "clickatell", itt._ID, itt._ID, std::string(""), 1, std::string(""), false);
+	}
+	else if (itt._ItemType == TITEM_EMAIL_CAMERA_SNAPSHOT)
+	{
+		m_mainworker.m_cameras.EmailCameraSnapshot(itt._ID, itt._sValue);
 	}
 }
-
-
 
 void CSQLHelper::Do_Work()
 {
 	std::vector<_tTaskItem> _items2do;
 
-	while (!IsStopRequested(static_cast<const long>(1000.0f / timer_resolution_hz)))
+	while (!IsStopRequested(static_cast<const long>(1000.0F / timer_resolution_hz)))
 	{
 		if (m_bAcceptHardwareTimerActive)
 		{
 			m_iAcceptHardwareTimerCounter -= static_cast<float>(1. / timer_resolution_hz);
-			if (m_iAcceptHardwareTimerCounter <= (1.0f / timer_resolution_hz / 2))
+			if (m_iAcceptHardwareTimerCounter <= (1.0F / timer_resolution_hz / 2))
 			{
 				m_bAcceptHardwareTimerActive = false;
 				m_bAcceptNewHardware = m_bPreviousAcceptNewHardware;
@@ -3626,7 +3737,7 @@ void CSQLHelper::Do_Work()
 							tvDiff.tv_sec = 0;
 							tvDiff.tv_usec = 0;
 						}
-						float diff = ((tvDiff.tv_usec / 1000000.0f) + tvDiff.tv_sec);
+						float diff = ((tvDiff.tv_usec / 1000000.0F) + tvDiff.tv_sec);
 						if ((itt->_DelayTime) <= diff)
 						{
 							_items2do.push_back(*itt);
@@ -3729,116 +3840,6 @@ void CSQLHelper::Do_Work()
 				}
 #endif
 			}
-			else if (itt->_ItemType == TITEM_EMAIL_CAMERA_SNAPSHOT)
-			{
-				m_mainworker.m_cameras.EmailCameraSnapshot(itt->_ID, itt->_sValue);
-			}
-			else if (itt->_ItemType == TITEM_EXECUTESHELLCOMMAND)
-			{
-				// int returncode=0;
-				std::string command = itt->_sValue;
-				std::string callback = itt->_ID;
-				std::string path = itt->_sUser;
-				int timeout = itt->_nValue;
-				std::thread shellcommandthread(&CSQLHelper::ExecuteScriptThreaded,this, command,callback,timeout,path);
-				shellcommandthread.detach();
-			}
-			else if (itt->_ItemType == TITEM_GETURL)
-			{
-				std::string response;
-				std::vector<std::string> headerData, extraHeaders;
-				std::string postData = itt->_command;
-				std::string callback = itt->_ID;
-
-				if (!itt->_relatedEvent.empty())
-					StringSplit(itt->_relatedEvent, "!#", extraHeaders);
-
-				HTTPClient::_eHTTPmethod method = static_cast<HTTPClient::_eHTTPmethod>(itt->_switchtype);
-
-				bool ret = false;
-				if (method == HTTPClient::HTTP_METHOD_GET)
-				{
-					ret = HTTPClient::GET(itt->_sValue, extraHeaders, response, headerData);
-				}
-				else if (method == HTTPClient::HTTP_METHOD_POST)
-				{
-					ret = HTTPClient::POST(itt->_sValue, postData, extraHeaders, response, headerData, true, true);
-				}
-				else if (method == HTTPClient::HTTP_METHOD_PUT)
-				{
-					ret = HTTPClient::PUT(itt->_sValue, postData, extraHeaders, response, headerData, true);
-				}
-				else if (method == HTTPClient::HTTP_METHOD_DELETE)
-				{
-					ret = HTTPClient::Delete(itt->_sValue, postData, extraHeaders, response, headerData, true);
-				}
-				else
-					return; //unsupported method
-
-				if (m_bEnableEventSystem && !callback.empty())
-				{
-					m_mainworker.m_eventsystem.TriggerURL(response, headerData, callback);
-				}
-
-				if (!ret)
-				{
-					_log.Log(LOG_ERROR, "Error opening url: %s", itt->_sValue.c_str());
-				}
-			}
-			else if ((itt->_ItemType == TITEM_SEND_EMAIL) || (itt->_ItemType == TITEM_SEND_EMAIL_TO))
-			{
-				int nValue;
-				if (GetPreferencesVar("EmailEnabled", nValue))
-				{
-					if (nValue)
-					{
-						std::string sValue;
-						if (GetPreferencesVar("EmailServer", sValue))
-						{
-							if (!sValue.empty())
-							{
-								std::string EmailFrom;
-								std::string EmailTo;
-								const std::string &EmailServer = sValue;
-								int EmailPort = 25;
-								std::string EmailUsername;
-								std::string EmailPassword;
-								GetPreferencesVar("EmailFrom", EmailFrom);
-								if (itt->_ItemType != TITEM_SEND_EMAIL_TO)
-								{
-									GetPreferencesVar("EmailTo", EmailTo);
-								}
-								else
-								{
-									EmailTo = itt->_command;
-								}
-								GetPreferencesVar("EmailUsername", EmailUsername);
-								GetPreferencesVar("EmailPassword", EmailPassword);
-
-								GetPreferencesVar("EmailPort", EmailPort);
-
-								SMTPClient sclient;
-								sclient.SetFrom(CURLEncode::URLDecode(EmailFrom));
-								sclient.SetTo(CURLEncode::URLDecode(EmailTo));
-								sclient.SetCredentials(base64_decode(EmailUsername), base64_decode(EmailPassword));
-								sclient.SetServer(CURLEncode::URLDecode(EmailServer), EmailPort);
-								sclient.SetSubject(CURLEncode::URLDecode(itt->_ID));
-								sclient.SetHTMLBody(itt->_sValue);
-								bool bRet = sclient.SendEmail();
-
-								if (bRet)
-									_log.Log(LOG_STATUS, "Notification sent (Email)");
-								else
-									_log.Log(LOG_ERROR, "Notification failed (Email)");
-							}
-						}
-					}
-				}
-			}
-			else if (itt->_ItemType == TITEM_SEND_SMS)
-			{
-				m_notifications.SendMessage(0, std::string(""), "clickatell", itt->_ID, itt->_ID, std::string(""), 1, std::string(""), false);
-			}
 			else if (itt->_ItemType == TITEM_SWITCHCMD_EVENT)
 			{
 				SwitchLightFromTasker(itt->_idx, itt->_command, itt->_level, itt->_Color, itt->_sUser);
@@ -3930,6 +3931,13 @@ void CSQLHelper::Do_Work()
 				eventInfo["name"] = itt->_ID;
 				eventInfo["data"] = itt->_sValue;
 				m_mainworker.m_notificationsystem.Notify(Notification::DZ_CUSTOM, Notification::STATUS_INFO, JSonToRawString(eventInfo));
+			}
+			else if (itt->_ItemType == TITEM_EXECUTESHELLCOMMAND || itt->_ItemType == TITEM_GETURL || itt->_ItemType == TITEM_SEND_EMAIL || itt->_ItemType == TITEM_SEND_EMAIL_TO ||
+				 itt->_ItemType == TITEM_SEND_SMS || itt->_ItemType == TITEM_EMAIL_CAMERA_SNAPSHOT)
+			{
+				// All actions which should not be on the main SQL Helper thread will get their own thread
+				std::thread ActionThread(&CSQLHelper::PerformThreadedAction, this, *itt);
+				ActionThread.detach();
 			}
 
 			++itt;
@@ -4488,7 +4496,7 @@ uint64_t CSQLHelper::UpdateValue(const int HardwareID, const char* ID, const uns
 			unsigned char ParentType = (unsigned char)atoi(sd[3].c_str());
 			unsigned char ParentSubType = (unsigned char)atoi(sd[4].c_str());
 			unsigned char ParentUnit = (unsigned char)atoi(sd[5].c_str());
-			m_mainworker.m_eventsystem.ProcessDevice(ParentHardwareID, ParentID, ParentUnit, ParentType, ParentSubType, signallevel, batterylevel, nValue, sValue, ParentName);
+			m_mainworker.m_eventsystem.ProcessDevice(ParentHardwareID, ParentID, ParentUnit, ParentType, ParentSubType, signallevel, batterylevel, nValue, sValue);
 
 			m_mainworker.sOnDeviceUpdate(std::stoi(sd[2]), std::stoll(sd[0]));
 
@@ -5223,7 +5231,7 @@ uint64_t CSQLHelper::UpdateValueInt(const int HardwareID, const char* ID, const 
 	_log.Debug(DEBUG_NORM, "SQLH UpdateValueInt %s HwID:%d  DevID:%s Type:%d  sType:%d nValue:%d sValue:%s ", devname.c_str(), HardwareID, ID, devType, subType, nValue, sValue);
 
 	if (bDeviceUsed)
-		m_mainworker.m_eventsystem.ProcessDevice(HardwareID, ulID, unit, devType, subType, signallevel, batterylevel, nValue, sValue, devname);
+		m_mainworker.m_eventsystem.ProcessDevice(HardwareID, ulID, unit, devType, subType, signallevel, batterylevel, nValue, sValue);
 	return ulID;
 }
 
@@ -5255,8 +5263,8 @@ bool CSQLHelper::GetLastValue(const int HardwareID, const char* DeviceID, const 
 
 void CSQLHelper::GetAddjustment(const int HardwareID, const char* ID, const unsigned char unit, const unsigned char devType, const unsigned char subType, float& AddjValue, float& AddjMulti)
 {
-	AddjValue = 0.0f;
-	AddjMulti = 1.0f;
+	AddjValue = 0.0F;
+	AddjMulti = 1.0F;
 	std::vector<std::vector<std::string> > result;
 	result = safe_query(
 		"SELECT AddjValue,AddjMulti FROM DeviceStatus WHERE (HardwareID=%d AND DeviceID='%q' AND Unit=%d AND Type=%d AND SubType=%d)",
@@ -5283,8 +5291,8 @@ void CSQLHelper::GetMeterType(const int HardwareID, const char* ID, const unsign
 
 void CSQLHelper::GetAddjustment2(const int HardwareID, const char* ID, const unsigned char unit, const unsigned char devType, const unsigned char subType, float& AddjValue, float& AddjMulti)
 {
-	AddjValue = 0.0f;
-	AddjMulti = 1.0f;
+	AddjValue = 0.0F;
+	AddjMulti = 1.0F;
 	std::vector<std::vector<std::string> > result;
 	result = safe_query(
 		"SELECT AddjValue2,AddjMulti2 FROM DeviceStatus WHERE (HardwareID=%d AND DeviceID='%q' AND Unit=%d AND Type=%d AND SubType=%d)",
@@ -5698,7 +5706,7 @@ void CSQLHelper::UpdateTemperatureLog()
 					temp = static_cast<float>(atof(splitresults[0].c_str()));
 					humidity = atoi(splitresults[1].c_str());
 					if (dSubType == sTypeTHBFloat)
-						barometer = int(atof(splitresults[3].c_str()) * 10.0f);
+						barometer = int(atof(splitresults[3].c_str()) * 10.0F);
 					else
 						barometer = atoi(splitresults[3].c_str());
 					dewpoint = (float)CalculateDewPoint(temp, humidity);
@@ -5708,7 +5716,7 @@ void CSQLHelper::UpdateTemperatureLog()
 				if (splitresults.size() >= 2)
 				{
 					temp = static_cast<float>(atof(splitresults[0].c_str()));
-					barometer = int(atof(splitresults[1].c_str()) * 10.0f);
+					barometer = int(atof(splitresults[1].c_str()) * 10.0F);
 				}
 				break;
 			case pTypeUV:
@@ -5745,7 +5753,7 @@ void CSQLHelper::UpdateTemperatureLog()
 				{
 					if (splitresults.size() != 2)
 						continue;
-					barometer = int(atof(splitresults[0].c_str()) * 10.0f);
+					barometer = int(atof(splitresults[0].c_str()) * 10.0F);
 				}
 				break;
 			}
@@ -6276,25 +6284,25 @@ void CSQLHelper::UpdateMeter()
 			}
 			else if ((dType == pTypeGeneral) && (dSubType == sTypeVisibility))
 			{
-				double fValue = atof(sValue.c_str()) * 10.0f;
+				double fValue = atof(sValue.c_str()) * 10.0F;
 				sprintf(szTmp, "%.0f", fValue);
 				sValue = szTmp;
 			}
 			else if ((dType == pTypeGeneral) && (dSubType == sTypeDistance))
 			{
-				double fValue = atof(sValue.c_str()) * 10.0f;
+				double fValue = atof(sValue.c_str()) * 10.0F;
 				sprintf(szTmp, "%.0f", fValue);
 				sValue = szTmp;
 			}
 			else if ((dType == pTypeGeneral) && (dSubType == sTypeSolarRadiation))
 			{
-				double fValue = atof(sValue.c_str()) * 10.0f;
+				double fValue = atof(sValue.c_str()) * 10.0F;
 				sprintf(szTmp, "%.0f", fValue);
 				sValue = szTmp;
 			}
 			else if ((dType == pTypeGeneral) && (dSubType == sTypeSoundLevel))
 			{
-				double fValue = atof(sValue.c_str()) * 10.0f;
+				double fValue = atof(sValue.c_str()) * 10.0F;
 				sprintf(szTmp, "%.0f", fValue);
 				sValue = szTmp;
 			}
@@ -6305,7 +6313,7 @@ void CSQLHelper::UpdateMeter()
 				if (splitresults.size() < 2)
 					continue;
 
-				double fValue = atof(splitresults[0].c_str()) * 10.0f;
+				double fValue = atof(splitresults[0].c_str()) * 10.0F;
 				sprintf(szTmp, "%.0f", fValue);
 				sUsage = szTmp;
 
@@ -6321,7 +6329,7 @@ void CSQLHelper::UpdateMeter()
 			}
 			else if (dType == pTypeWEIGHT)
 			{
-				double fValue = atof(sValue.c_str()) * 10.0f;
+				double fValue = atof(sValue.c_str()) * 10.0F;
 				sprintf(szTmp, "%.0f", fValue);
 				sValue = szTmp;
 			}
@@ -6339,25 +6347,25 @@ void CSQLHelper::UpdateMeter()
 			}
 			else if ((dType == pTypeGeneral) && (dSubType == sTypeVoltage))
 			{
-				double fValue = atof(sValue.c_str()) * 1000.0f;
+				double fValue = atof(sValue.c_str()) * 1000.0F;
 				sprintf(szTmp, "%.0f", fValue);
 				sValue = szTmp;
 			}
 			else if ((dType == pTypeGeneral) && (dSubType == sTypeCurrent))
 			{
-				double fValue = atof(sValue.c_str()) * 1000.0f;
+				double fValue = atof(sValue.c_str()) * 1000.0F;
 				sprintf(szTmp, "%.0f", fValue);
 				sValue = szTmp;
 			}
 			else if ((dType == pTypeGeneral) && (dSubType == sTypePressure))
 			{
-				double fValue = atof(sValue.c_str()) * 10.0f;
+				double fValue = atof(sValue.c_str()) * 10.0F;
 				sprintf(szTmp, "%.0f", fValue);
 				sValue = szTmp;
 			}
 			else if (dType == pTypeUsage)
 			{
-				double fValue = atof(sValue.c_str()) * 10.0f;
+				double fValue = atof(sValue.c_str()) * 10.0F;
 				sprintf(szTmp, "%.0f", fValue);
 				sValue = szTmp;
 			}
@@ -6478,19 +6486,19 @@ void CSQLHelper::UpdateMultiMeter()
 				if (splitresults.size() != 3)
 					continue; //impossible
 
-				value1 = (unsigned long)(atof(splitresults[0].c_str()) * 10.0f);
-				value2 = (unsigned long)(atof(splitresults[1].c_str()) * 10.0f);
-				value3 = (unsigned long)(atof(splitresults[2].c_str()) * 10.0f);
+				value1 = (unsigned long)(atof(splitresults[0].c_str()) * 10.0F);
+				value2 = (unsigned long)(atof(splitresults[1].c_str()) * 10.0F);
+				value3 = (unsigned long)(atof(splitresults[2].c_str()) * 10.0F);
 			}
 			else if ((dType == pTypeCURRENTENERGY) && (dSubType == sTypeELEC4))
 			{
 				if (splitresults.size() != 4)
 					continue; //impossible
 
-				value1 = (unsigned long)(atof(splitresults[0].c_str()) * 10.0f);
-				value2 = (unsigned long)(atof(splitresults[1].c_str()) * 10.0f);
-				value3 = (unsigned long)(atof(splitresults[2].c_str()) * 10.0f);
-				value4 = (unsigned long long)(atof(splitresults[3].c_str()) * 1000.0f);
+				value1 = (unsigned long)(atof(splitresults[0].c_str()) * 10.0F);
+				value2 = (unsigned long)(atof(splitresults[1].c_str()) * 10.0F);
+				value3 = (unsigned long)(atof(splitresults[2].c_str()) * 10.0F);
+				value4 = (unsigned long long)(atof(splitresults[3].c_str()) * 1000.0F);
 			}
 			else
 				continue;//don't know you (yet)
@@ -6774,9 +6782,9 @@ void CSQLHelper::AddCalendarUpdateRain()
 
 void CSQLHelper::AddCalendarUpdateMeter()
 {
-	float EnergyDivider = 1000.0f;
-	float GasDivider = 100.0f;
-	float WaterDivider = 100.0f;
+	float EnergyDivider = 1000.0F;
+	float GasDivider = 100.0F;
+	float WaterDivider = 100.0F;
 	float musage = 0;
 	int tValue;
 	if (GetPreferencesVar("MeterDividerEnergy", tValue))
@@ -6848,7 +6856,7 @@ void CSQLHelper::AddCalendarUpdateMeter()
 		else if (devType == pTypeP1Gas)
 		{
 			metertype = MTYPE_GAS;
-			tGasDivider = 1000.0f;
+			tGasDivider = 1000.0F;
 		}
 		else if ((devType == pTypeRego6XXValue) && (subType == sTypeRego6XXCounter))
 		{
@@ -6952,13 +6960,9 @@ void CSQLHelper::AddCalendarUpdateMeter()
 			else
 			{
 				//AirQuality/Usage Meter/Moisture/RFXSensor/Voltage/Lux/SoundLevel insert into MultiMeter_Calendar table
-				result = safe_query(
-					"INSERT INTO MultiMeter_Calendar (DeviceRowID, Value1,Value2,Value3,Value4,Value5,Value6, Date) "
-					"VALUES ('%" PRIu64 "', '%.2f','%.2f','%.2f','%.2f','%.2f','%.2f', '%q')",
-					ID,
-					total_min, total_max, avg_value, 0.0f, 0.0f, 0.0f,
-					szDateStart
-				);
+				result = safe_query("INSERT INTO MultiMeter_Calendar (DeviceRowID, Value1,Value2,Value3,Value4,Value5,Value6, Date) "
+						    "VALUES ('%" PRIu64 "', '%.2f','%.2f','%.2f','%.2f','%.2f','%.2f', '%q')",
+						    ID, total_min, total_max, avg_value, 0.0F, 0.0F, 0.0F, szDateStart);
 			}
 			if (
 				(devType != pTypeAirQuality) &&
@@ -6994,20 +6998,16 @@ void CSQLHelper::AddCalendarUpdateMeter()
 		else
 		{
 			//no new meter result received in last day
-			result = safe_query(
-				"INSERT INTO Meter_Calendar (DeviceRowID, Value, Date) "
-				"VALUES ('%" PRIu64 "', '%.2f', '%q')",
-				ID,
-				0.0f,
-				szDateStart
-			);
+			result = safe_query("INSERT INTO Meter_Calendar (DeviceRowID, Value, Date) "
+					    "VALUES ('%" PRIu64 "', '%.2f', '%q')",
+					    ID, 0.0F, szDateStart);
 		}
 	}
 }
 
 void CSQLHelper::AddCalendarUpdateMultiMeter()
 {
-	float EnergyDivider = 1000.0f;
+	float EnergyDivider = 1000.0F;
 	int tValue;
 	if (GetPreferencesVar("MeterDividerEnergy", tValue))
 	{
@@ -8202,22 +8202,22 @@ void CSQLHelper::SetUnitsAndScale()
 	if (m_windunit == WINDUNIT_MS)
 	{
 		m_windsign = "m/s";
-		m_windscale = 0.1f;
+		m_windscale = 0.1F;
 	}
 	else if (m_windunit == WINDUNIT_KMH)
 	{
 		m_windsign = "km/h";
-		m_windscale = 0.36f;
+		m_windscale = 0.36F;
 	}
 	else if (m_windunit == WINDUNIT_MPH)
 	{
 		m_windsign = "mph";
-		m_windscale = 0.223693629205f;
+		m_windscale = 0.223693629205F;
 	}
 	else if (m_windunit == WINDUNIT_Knots)
 	{
 		m_windsign = "kn";
-		m_windscale = 0.1943844492457398f;
+		m_windscale = 0.1943844492457398F;
 	}
 	else if (m_windunit == WINDUNIT_Beaufort)
 	{
@@ -8229,23 +8229,23 @@ void CSQLHelper::SetUnitsAndScale()
 	if (m_tempunit == TEMPUNIT_C)
 	{
 		m_tempsign = "C";
-		m_tempscale = 1.0f;
+		m_tempscale = 1.0F;
 	}
 	else if (m_tempunit == TEMPUNIT_F)
 	{
 		m_tempsign = "F";
-		m_tempscale = 1.0f; // *1.8 + 32
+		m_tempscale = 1.0F; // *1.8 + 32
 	}
 
 	if (m_weightunit == WEIGHTUNIT_KG)
 	{
 		m_weightsign = "kg";
-		m_weightscale = 1.0f;
+		m_weightscale = 1.0F;
 	}
 	else if (m_weightunit == WEIGHTUNIT_LB)
 	{
 		m_weightsign = "lb";
-		m_weightscale = 2.20462f;
+		m_weightscale = 2.20462F;
 	}
 }
 
@@ -8263,7 +8263,7 @@ bool CSQLHelper::HandleOnOffAction(const bool bIsOn, const std::string& OnAction
 
 		if ((OnAction.find("http://") == 0) || (OnAction.find("https://") == 0))
 		{
-			AddTaskItem(_tTaskItem::GetHTTPPage(0.2f, OnAction, "SwitchActionOn"));
+			AddTaskItem(_tTaskItem::GetHTTPPage(0.2F, OnAction, "SwitchActionOn"));
 		}
 		else if (OnAction.find("script://") == 0)
 		{
@@ -8289,7 +8289,7 @@ bool CSQLHelper::HandleOnOffAction(const bool bIsOn, const std::string& OnAction
 			}
 			if (file_exist(scriptname.c_str()))
 			{
-				AddTaskItem(_tTaskItem::ExecuteScript(0.2f, scriptname, scriptparams));
+				AddTaskItem(_tTaskItem::ExecuteScript(0.2F, scriptname, scriptparams));
 			}
 			else
 				_log.Log(LOG_ERROR, "SQLHelper: Error script not found '%s'", scriptname.c_str());
@@ -8303,7 +8303,7 @@ bool CSQLHelper::HandleOnOffAction(const bool bIsOn, const std::string& OnAction
 
 	if ((OffAction.find("http://") == 0) || (OffAction.find("https://") == 0))
 	{
-		AddTaskItem(_tTaskItem::GetHTTPPage(0.2f, OffAction, "SwitchActionOff"));
+		AddTaskItem(_tTaskItem::GetHTTPPage(0.2F, OffAction, "SwitchActionOff"));
 	}
 	else if (OffAction.find("script://") == 0)
 	{
@@ -8328,7 +8328,7 @@ bool CSQLHelper::HandleOnOffAction(const bool bIsOn, const std::string& OnAction
 		}
 		if (file_exist(scriptname.c_str()))
 		{
-			AddTaskItem(_tTaskItem::ExecuteScript(0.2f, scriptname, scriptparams));
+			AddTaskItem(_tTaskItem::ExecuteScript(0.2F, scriptname, scriptparams));
 		}
 	}
 	return true;
@@ -8937,7 +8937,7 @@ bool CSQLHelper::CheckTime(const std::string& sTime)
 
 void CSQLHelper::AllowNewHardwareTimer(const int iTotMinutes)
 {
-	m_iAcceptHardwareTimerCounter = iTotMinutes * 60.0f;
+	m_iAcceptHardwareTimerCounter = iTotMinutes * 60.0F;
 	if (m_bAcceptHardwareTimerActive == false)
 	{
 		m_bPreviousAcceptNewHardware = m_bAcceptNewHardware;
@@ -9428,10 +9428,10 @@ float CSQLHelper::GetCounterDivider(const int metertype, const int dType, const 
 		if (dType == pTypeP1Gas)
 			divider = 1000;
 		else if ((dType == pTypeENERGY) || (dType == pTypePOWER))
-			divider *= 100.0f;
+			divider *= 100.0F;
 
 		if (divider == 0)
-			divider = 1.0f;
+			divider = 1.0F;
 	}
 	return divider;
 }

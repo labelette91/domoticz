@@ -16,12 +16,15 @@
 #define READ_COILS_CMD_LENGTH				11
 #define WRITE_SINGLE_COIL_CMD_LENGTH		12
 
-const char *szDenkoviHardwareNamesTCP[3] = {
-		"WiFi 16 Relays-VCP", 
-		"WiFi 16 Relays-TCP Modbus", 
-		"smartDEN IP-16R-MT"
-		};
-		
+namespace
+{
+	constexpr std::array<const char *, 3> szDenkoviHardwareNamesTCP{
+		"WiFi 16 Relays-VCP",	     //
+		"WiFi 16 Relays-TCP Modbus", //
+		"smartDEN IP-16R-MT",	     //
+	};
+} // namespace
+
 CDenkoviTCPDevices::CDenkoviTCPDevices(const int ID, const std::string &IPAddress, const unsigned short usIPPort, const int pollInterval, const int model, const int slaveId) :
 	m_szIPAddress(IPAddress),
 	m_pollInterval(pollInterval)
@@ -54,7 +57,7 @@ bool CDenkoviTCPDevices::StartHardware()
 	m_uiReceivedDataLength = 0;
 
 	//Start worker thread
-	m_thread = std::make_shared<std::thread>(&CDenkoviTCPDevices::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	m_bIsStarted = true;
 	Log(LOG_STATUS, "%s: Started.",szDenkoviHardwareNamesTCP[m_iModel]);
 	return (m_thread != nullptr);

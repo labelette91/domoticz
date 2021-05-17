@@ -11,7 +11,7 @@ struct lua_Debug;
 namespace Json
 {
 	class Value;
-};
+} // namespace Json
 
 namespace http {
 	namespace server {
@@ -232,7 +232,7 @@ private:
 	void Cmd_DeleteCustomIcon(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_UpdateCustomIcon(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_RenameDevice(WebEmSession & session, const request& req, Json::Value &root);
-	void Cmd_SetUnused(WebEmSession & session, const request& req, Json::Value &root);
+	void Cmd_SetDeviceUsed(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_SaveHttpLinkConfig(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_GetHttpLinkConfig(WebEmSession & session, const request& req, Json::Value &root);
 	void Cmd_GetHttpLinks(WebEmSession & session, const request& req, Json::Value &root);
@@ -384,5 +384,5 @@ private:
 	std::string m_server_alias;
 };
 
-} //server
-}//http
+	} // namespace server
+} // namespace http

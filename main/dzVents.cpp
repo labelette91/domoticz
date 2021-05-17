@@ -30,7 +30,7 @@ extern http::server::ssl_server_settings secure_webserver_settings;
 CdzVents CdzVents::m_dzvents;
 
 CdzVents::CdzVents()
-	: m_version("3.1.1")
+	: m_version("3.1.4")
 {
 	m_bdzVentsExist = false;
 }
@@ -759,10 +759,10 @@ void CdzVents::SetGlobalVariables(lua_State *lua_state, const bool reasonTime, c
 	luaTable.AddBool("isTimeEvent", reasonTime);
 
 	char szTmp[10];
-	sprintf(szTmp, "%.02f", 1.23f);
+	sprintf(szTmp, "%.02f", 1.23F);
 	luaTable.AddString("radix_separator", std::string(1,szTmp[1]));
 
-	sprintf(szTmp, "%.02f", 1234.56f);
+	sprintf(szTmp, "%.02f", 1234.56F);
 	if (szTmp[1] == '2')
 		luaTable.AddString("group_separator", "");
 	else
@@ -805,6 +805,7 @@ void CdzVents::SetGlobalVariables(lua_State *lua_state, const bool reasonTime, c
 	luaTable.AddString("domoticz_secure_listening_port", secure_webserver_settings.listening_port);
 	luaTable.AddBool("domoticz_is_secure", secure_webserver_settings.is_secure());
 	luaTable.AddString("domoticz_webroot", szWebRoot);
+	luaTable.AddString("domoticz_wwwbind", m_mainworker.GetWebserverAddress());
 	luaTable.AddString("domoticz_start_time", m_mainworker.m_eventsystem.m_szStartTime);
 	luaTable.AddString("currentTime", TimeToString(nullptr, TF_DateTimeMs));
 	luaTable.AddInteger("systemUptime", SystemUptime());
@@ -869,11 +870,13 @@ void CdzVents::ExportDomoticzDataToLua(lua_State *lua_state, const std::vector<C
 		bool timed_out = (now - checktime >= SensorTimeOut * 60);
 		if (sitem.ID > 0)
 		{
-			luaTable.OpenSubTableEntry(index, 1, 12);
+			luaTable.OpenSubTableEntry(index, 1, 14);
 
 			luaTable.AddString("name", sitem.deviceName);
 			luaTable.AddBool("protected", (sitem.protection == 1) );
 			luaTable.AddInteger("id", sitem.ID);
+			luaTable.AddInteger("iconNumber", sitem.customImage);
+			luaTable.AddString("image", sitem.image);
 			luaTable.AddString("baseType","device");
 			luaTable.AddString("deviceType", dev_type);
 			luaTable.AddString("subType", sub_type);
@@ -905,11 +908,11 @@ void CdzVents::ExportDomoticzDataToLua(lua_State *lua_state, const std::vector<C
 			luaTable.AddInteger("hardwareID", sitem.hardwareID);
 			if (sitem.devType == pTypeGeneral && sitem.subType == sTypeKwh)
 			{
-				long double value = 0.0f;
+				long double value = 0.0F;
 				if (strarray.size() > 1)
 					value = atof(strarray[1].c_str());
 				luaTable.AddNumber("whTotal", value);
-				value = 0.0f;
+				value = 0.0F;
 				if (!strarray.empty())
 					value = atof(strarray[0].c_str());
 				luaTable.AddNumber("whActual", value);

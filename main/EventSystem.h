@@ -75,6 +75,8 @@ public:
 		float AddjMulti;
 		float AddjValue2;
 		float AddjMulti2;
+		uint8_t customImage;
+		std::string image;
 		std::map<uint8_t, int> JsonMapInt;
 		std::map<uint8_t, float> JsonMapFloat;
 		std::map<uint8_t, bool> JsonMapBool;
@@ -116,7 +118,7 @@ public:
 
 	void LoadEvents();
 	void ProcessDevice(int HardwareID, uint64_t ulDevID, unsigned char unit, unsigned char devType, unsigned char subType, unsigned char signallevel, unsigned char batterylevel, int nValue,
-			   const char *sValue, const std::string &devname);
+			   const char *sValue);
 	void UpdateBatteryLevel(uint64_t ulDevID, unsigned char batteryLevel);
 
 	void RemoveSingleState(uint64_t ulDevID, _eReason reason);

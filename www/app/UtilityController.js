@@ -21,7 +21,7 @@ define(['app', 'livesocket'], function (app) {
 	        }
 
 	    getThermostatImage = function (item) {
-	            var image = '"images/override.png"';
+				var image = (item.CustomImage == 0)  ? '"images/override.png"' : item.Image + '"images/48_On.png"' ;
 	            if (isVirtualThermostat(item)) {
 	                if (item.Switch == 1)
 	                    image = '"images/override.png"';
@@ -847,7 +847,8 @@ define(['app', 'livesocket'], function (app) {
 							}
 							else if (((item.Type == "Thermostat") && (item.SubType == "SetPoint")) || (item.Type == "Radiator 1")) {
 							    xhtm+=getThermostatImage(item);
-								//xhtm += '<img src="images/override.png" class="lcursor" onclick="ShowSetpointPopup(event, ' + item.idx + ', ' + item.Protected + ', ' + item.Data + ');" height="48" width="48" ></td>\n';
+								//item.Image = (item.CustomImage == 0)  ? 'override.png' : item.Image + '48_On.png';
+								//xhtm += '<img src="images/' + item.Image + '" class="lcursor" onclick="ShowSetpointPopup(event, ' + item.idx + ', ' + item.Protected + ', ' + item.Data + ');" height="48" width="48" ></td>\n';
 								status = "";
 							}
 							else if (item.SubType == "Thermostat Clock") {
@@ -982,7 +983,7 @@ define(['app', 'livesocket'], function (app) {
 									if (isVirtualThermostat(item))
 									    xhtm += '<a class="btnsmall" onclick="Editvirtualthermostatdevice(' + item.idx + ','  + item.Protected + ',' + 'ShowUtilities,\'' + $scope.config.TempSign + '\',0);" data-i18n="Edit">Edit</a> ';
 									else
-										xhtm += '<a class="btnsmall" onclick="EditSetPoint(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', ' + item.SetPoint + ',' + item.Protected + '\', ' + item.CustomImage + ');" data-i18n="Edit">Edit</a> ';
+									xhtm += '<a class="btnsmall" onclick="EditSetPoint(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', ' + item.SetPoint + ',' + item.Protected + ', ' + item.CustomImage + ');" data-i18n="Edit">Edit</a> ';
 									if (item.Timers == "true") {
 										xhtm += '<a class="btnsmall-sel" href="' + timerLink + '" data-i18n="Timers">Timers</a> ';
 									}
@@ -997,7 +998,7 @@ define(['app', 'livesocket'], function (app) {
 									var logLink = '#/Devices/'+item.idx+'/Log';
 
 									xhtm += '<a class="btnsmall" href="' + logLink +'" data-i18n="Log">Log</a> ';
-									xhtm += '<a class="btnsmall" onclick="EditSetPoint(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', ' + item.SetPoint + ',' + item.Protected + '\', ' + item.CustomImage + ');" data-i18n="Edit">Edit</a> ';
+									xhtm += '<a class="btnsmall" onclick="EditSetPoint(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', ' + item.SetPoint + ',' + item.Protected + ', ' + item.CustomImage + ');" data-i18n="Edit">Edit</a> ';
 									if (item.Timers == "true") {
 										xhtm += '<a class="btnsmall-sel" href="' + timerLink + '" data-i18n="Timers">Timers</a> ';
 									}
@@ -1007,7 +1008,7 @@ define(['app', 'livesocket'], function (app) {
 								}
 							}
 							else if (item.SubType == "Text") {
-                                var logLink = '#/Devices/'+item.idx+'/Log';
+								var logLink = '#/Devices/'+item.idx+'/Log';
 
 								xhtm += '<a class="btnsmall" href="' + logLink + '" data-i18n="Log">Log</a> ';
 								if (permissions.hasPermission("Admin")) {
@@ -1016,17 +1017,17 @@ define(['app', 'livesocket'], function (app) {
 							}
 							else if (item.SubType == "Thermostat Clock") {
 								if (permissions.hasPermission("Admin")) {
-									xhtm += '<a class="btnsmall" onclick="EditThermostatClock(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', \'' + item.DayTime + '\',' + item.Protected + '\', ' + item.CustomImage + ');" data-i18n="Edit">Edit</a> ';
+									xhtm += '<a class="btnsmall" onclick="EditThermostatClock(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', \'' + item.DayTime + '\',' + item.Protected + ', ' + item.CustomImage + ');" data-i18n="Edit">Edit</a> ';
 								}
 							}
 							else if (item.SubType == "Thermostat Mode") {
 								if (permissions.hasPermission("Admin")) {
-									xhtm += '<a class="btnsmall" onclick="EditThermostatMode(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', \'' + item.Mode + '\', \'' + item.Modes + '\',' + item.Protected + '\', ' + item.CustomImage + ');" data-i18n="Edit">Edit</a> ';
+									xhtm += '<a class="btnsmall" onclick="EditThermostatMode(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', \'' + item.Mode + '\', \'' + item.Modes + '\',' + item.Protected + ', ' + item.CustomImage + ');" data-i18n="Edit">Edit</a> ';
 								}
 							}
 							else if (item.SubType == "Thermostat Fan Mode") {
 								if (permissions.hasPermission("Admin")) {
-									xhtm += '<a class="btnsmall" onclick="EditThermostatFanMode(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', \'' + item.Mode + '\', \'' + item.Modes + '\',' + item.Protected + '\', ' + item.CustomImage + ');" data-i18n="Edit">Edit</a> ';
+									xhtm += '<a class="btnsmall" onclick="EditThermostatFanMode(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\', \'' + item.Mode + '\', \'' + item.Modes + '\',' + item.Protected + ', ' + item.CustomImage + ');" data-i18n="Edit">Edit</a> ';
 								}
 							}
 							else if ((item.Type == "General") && (item.SubType == "Voltage")) {
@@ -1038,7 +1039,7 @@ define(['app', 'livesocket'], function (app) {
 							else if ((item.Type == "General") && (item.SubType == "Distance")) {
 								xhtm += '<a class="btnsmall" href="' + graphLogLink + '" data-i18n="Log">Log</a> ';
 								if (permissions.hasPermission("Admin")) {
-									xhtm += '<a class="btnsmall" onclick="EditDistanceDevice(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\',' + item.SwitchTypeVal + '\', ' + item.CustomImage + ');" data-i18n="Edit">Edit</a> ';
+									xhtm += '<a class="btnsmall" onclick="EditDistanceDevice(' + item.idx + ',\'' + escape(item.Name) + '\',\'' + escape(item.Description) + '\',' + item.SwitchTypeVal + '\, ' + item.CustomImage + ');" data-i18n="Edit">Edit</a> ';
 								}
 							}
 							else if ((item.Type == "General") && (item.SubType == "Current")) {
@@ -1066,7 +1067,7 @@ define(['app', 'livesocket'], function (app) {
 								}
 							}
 							else if ((item.Type == "General") && (item.SubType == "Alert")) {
-                                var logLink = '#/Devices/'+item.idx+'/Log';
+								var logLink = '#/Devices/'+item.idx+'/Log';
 
 								xhtm += '<a class="btnsmall" href="' + logLink + '" data-i18n="Log">Log</a> ';
 								if (permissions.hasPermission("Admin")) {
@@ -1080,7 +1081,7 @@ define(['app', 'livesocket'], function (app) {
 							}
 							if (item.ShowNotifications == true) {
 								if (permissions.hasPermission("Admin")) {
-                                    var notificationLink = '#/Devices/'+item.idx+'/Notifications';
+										var notificationLink = '#/Devices/'+item.idx+'/Notifications';
 
 									if (item.Notifications == "true")
 										xhtm += '<a class="btnsmall-sel" href="' + notificationLink + '" data-i18n="Notifications">Notifications</a>';

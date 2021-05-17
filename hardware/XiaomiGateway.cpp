@@ -11,7 +11,6 @@
 #include "XiaomiGateway.h"
 #include <openssl/aes.h>
 #include <boost/asio.hpp>
-#include <boost/bind/bind.hpp>
 
 #ifndef WIN32
 #include <ifaddrs.h>
@@ -69,6 +68,7 @@ typedef enum
 // Xiaomi Wireless Dual Wall Switch | WXKG02LM
 #define MODEL_SELECTOR_WIRELESS_WALL_DUAL_1 "86sw2"
 #define MODEL_SELECTOR_WIRELESS_WALL_DUAL_2 "remote.b286acn01"
+#define MODEL_SELECTOR_WIRELESS_WALL_DUAL_3 "remote.b286acn02"
 #define NAME_SELECTOR_WIRELESS_WALL_DUAL "Xiaomi Wireless Dual Wall Switch"
 
 // Xiaomi Wired Single Wall Switch
@@ -868,7 +868,7 @@ bool XiaomiGateway::StartHardware()
 	}
 
 	// Start worker thread
-	m_thread = std::make_shared<std::thread>(&XiaomiGateway::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadNameInt(m_thread->native_handle());
 
 	return (m_thread != nullptr);
@@ -945,7 +945,7 @@ void XiaomiGateway::Do_Work()
 	XiaomiGateway::xiaomi_udp_server udp_server(io_service, m_HwdID, m_GatewayIp, m_LocalIp, m_ListenPort9898, m_OutputMessage, m_IncludeVoltage, this);
 	boost::thread bt;
 	if (m_ListenPort9898) {
-		bt = boost::thread(boost::bind(&boost::asio::io_service::run, &io_service));
+		bt = boost::thread([&io_service] { io_service.run(); });
 		SetThreadName(bt.native_handle(), "XiaomiGatewayIO");
 	}
 
@@ -962,6 +962,10 @@ void XiaomiGateway::Do_Work()
 		}
 	}
 	io_service.stop();
+	if (bt.joinable())
+	{
+		bt.join();
+	}
 	RemoveFromGatewayList();
 	_log.Log(LOG_STATUS, "XiaomiGateway (ID=%d): stopped", m_HwdID);
 }
@@ -1068,7 +1072,7 @@ void XiaomiGateway::xiaomi_udp_server::start_receive()
 {
 	//_log.Log(LOG_STATUS, "start_receive");
 	memset(&data_[0], 0, sizeof(data_));
-	socket_.async_receive_from(boost::asio::buffer(data_, max_length), remote_endpoint_, boost::bind(&xiaomi_udp_server::handle_receive, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
+	socket_.async_receive_from(boost::asio::buffer(data_, max_length), remote_endpoint_, [this](const auto &err, size_t bytes) { handle_receive(err, bytes); });
 }
 
 void XiaomiGateway::xiaomi_udp_server::handle_receive(const boost::system::error_code & error, std::size_t bytes_recvd)
@@ -1190,7 +1194,7 @@ void XiaomiGateway::xiaomi_udp_server::handle_receive(const boost::system::error
 					type = STYPE_Selector;
 					name = NAME_SELECTOR_WIRELESS_WALL_SINGLE;
 				}
-				else if (model == MODEL_SELECTOR_WIRELESS_WALL_DUAL_1 || model == MODEL_SELECTOR_WIRELESS_WALL_DUAL_2)
+				else if (model == MODEL_SELECTOR_WIRELESS_WALL_DUAL_1 || model == MODEL_SELECTOR_WIRELESS_WALL_DUAL_2 || model == MODEL_SELECTOR_WIRELESS_WALL_DUAL_3)
 				{
 					type = STYPE_Selector;
 					name = NAME_SELECTOR_WIRELESS_WALL_DUAL;
@@ -1405,26 +1409,26 @@ void XiaomiGateway::xiaomi_udp_server::handle_receive(const boost::system::error
 					if (name == NAME_SENSOR_TEMP_HUM_AQARA)
 					{
 						std::string szPressure = root2["pressure"].asString();
-						pressure = static_cast<float>(atof(szPressure.c_str())) / 100.0f;
+						pressure = static_cast<float>(atof(szPressure.c_str())) / 100.0F;
 					}
 
 					if ((!temperature.empty()) && (!humidity.empty()) && (pressure != 0))
 					{
 						// Temp+Hum+Baro
-						float temp = std::stof(temperature) / 100.0f;
+						float temp = std::stof(temperature) / 100.0F;
 						int hum = static_cast<int>((std::stof(humidity) / 100));
 						TrueGateway->InsertUpdateTempHumPressure(sid, "Xiaomi TempHumBaro", temp, hum, pressure, battery);
 					}
 					else if ((!temperature.empty()) && (!humidity.empty()))
 					{
 						// Temp+Hum
-						float temp = std::stof(temperature) / 100.0f;
+						float temp = std::stof(temperature) / 100.0F;
 						int hum = static_cast<int>((std::stof(humidity) / 100));
 						TrueGateway->InsertUpdateTempHum(sid, "Xiaomi TempHum", temp, hum, battery);
 					}
 					else if (!temperature.empty())
 					{
-						float temp = std::stof(temperature) / 100.0f;
+						float temp = std::stof(temperature) / 100.0F;
 						if (temp < 99)
 						{
 							TrueGateway->InsertUpdateTemperature(sid, "Xiaomi Temperature", temp, battery);

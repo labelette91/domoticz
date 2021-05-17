@@ -52,7 +52,7 @@ bool ZWaveBase::StartHardware()
 	m_bIsStarted = true;
 
 	//Start worker thread
-	m_thread = std::make_shared<std::thread>(&ZWaveBase::Do_Work, this);
+	m_thread = std::make_shared<std::thread>([this] { Do_Work(); });
 	SetThreadName(m_thread->native_handle(), "ZWaveBase");
 	return (m_thread != nullptr);
 }
@@ -412,7 +412,7 @@ void ZWaveBase::SendDevice2Domoticz(_tZWaveDevice* pDevice)
 		pEnergyDevice = FindDevice(pDevice->nodeID, pDevice->instanceID, COMMAND_CLASS_METER, ZDTYPE_SENSOR_POWERENERGYMETER);
 		if (pEnergyDevice == nullptr)
 		{
-			pEnergyDevice = FindDeviceEx(pDevice->nodeID, pDevice->orgInstanceID, ZDTYPE_SENSOR_POWERENERGYMETER);
+			pEnergyDevice = FindDevice(pDevice->nodeID, pDevice->orgInstanceID, ZDTYPE_SENSOR_POWERENERGYMETER);
 			if (pEnergyDevice == nullptr)
 			{
 				pEnergyDevice = FindDevice(pDevice->nodeID, -1, ZDTYPE_SENSOR_POWERENERGYMETER);
@@ -425,7 +425,7 @@ void ZWaveBase::SendDevice2Domoticz(_tZWaveDevice* pDevice)
 				SendKwhMeter(pEnergyDevice->nodeID, pEnergyDevice->instanceID, BatLevel, pDevice->floatValue, pEnergyDevice->floatValue / pEnergyDevice->scaleMultiply, "kWh Meter");
 			}
 		}
-		pEnergyDevice = FindDeviceEx(pDevice->nodeID, pDevice->orgInstanceID, ZDTYPE_SENSOR_KVAH);
+		pEnergyDevice = FindDevice(pDevice->nodeID, pDevice->orgInstanceID, ZDTYPE_SENSOR_KVAH);
 		if (pEnergyDevice)
 		{
 			if (pEnergyDevice->bValidValue)
@@ -433,7 +433,7 @@ void ZWaveBase::SendDevice2Domoticz(_tZWaveDevice* pDevice)
 				SendKwhMeter(pEnergyDevice->nodeID, 0x40 + pEnergyDevice->orgInstanceID, BatLevel, pDevice->floatValue, pEnergyDevice->floatValue / pEnergyDevice->scaleMultiply, "kVah Meter");
 			}
 		}
-		pEnergyDevice = FindDeviceEx(pDevice->nodeID, pDevice->orgInstanceID, ZDTYPE_SENSOR_KVAR);
+		pEnergyDevice = FindDevice(pDevice->nodeID, pDevice->orgInstanceID, ZDTYPE_SENSOR_KVAR);
 		if (pEnergyDevice)
 		{
 			if (pEnergyDevice->bValidValue)
@@ -441,7 +441,7 @@ void ZWaveBase::SendDevice2Domoticz(_tZWaveDevice* pDevice)
 				SendKwhMeter(pEnergyDevice->nodeID, 0x60 + pEnergyDevice->orgInstanceID, BatLevel, pDevice->floatValue, pEnergyDevice->floatValue / pEnergyDevice->scaleMultiply, "kVar Meter");
 			}
 		}
-		pEnergyDevice = FindDeviceEx(pDevice->nodeID, pDevice->orgInstanceID, ZDTYPE_SENSOR_KVARH);
+		pEnergyDevice = FindDevice(pDevice->nodeID, pDevice->orgInstanceID, ZDTYPE_SENSOR_KVARH);
 		if (pEnergyDevice)
 		{
 			if (pEnergyDevice->bValidValue)
@@ -498,7 +498,7 @@ void ZWaveBase::SendDevice2Domoticz(_tZWaveDevice* pDevice)
 		}
 		else
 		{
-			pPowerDevice = FindDeviceEx(pDevice->nodeID, pDevice->orgInstanceID, ZDTYPE_SENSOR_POWER);
+			pPowerDevice = FindDevice(pDevice->nodeID, pDevice->orgInstanceID, ZDTYPE_SENSOR_POWER);
 		}
 		if (pPowerDevice == nullptr)
 			pPowerDevice = FindDevice(pDevice->nodeID, pDevice->instanceID, COMMAND_CLASS_METER, ZDTYPE_SENSOR_POWER);
@@ -539,7 +539,7 @@ void ZWaveBase::SendDevice2Domoticz(_tZWaveDevice* pDevice)
 		tsen.CURRENT.packetlength = sizeof(tsen.CURRENT) - 1;
 		tsen.CURRENT.id1 = pDevice->nodeID;
 		tsen.CURRENT.id2 = pDevice->instanceID;
-		int amps = round(pDevice->floatValue * 10.0f);
+		int amps = round(pDevice->floatValue * 10.0F);
 		tsen.CURRENT.ch1h = amps / 256;
 		amps -= (tsen.CURRENT.ch1h * 256);
 		tsen.CURRENT.ch1l = (BYTE)amps;
@@ -632,7 +632,7 @@ void ZWaveBase::SendDevice2Domoticz(_tZWaveDevice* pDevice)
 		aw -= (tsen.WIND.directionh * 256);
 		tsen.WIND.directionl = (BYTE)(aw);
 
-		int sw = round(pDevice->floatValue * 10.0f);
+		int sw = round(pDevice->floatValue * 10.0F);
 		tsen.WIND.av_speedh = (BYTE)(sw / 256);
 		sw -= (tsen.WIND.av_speedh * 256);
 		tsen.WIND.av_speedl = (BYTE)(sw);
@@ -652,7 +652,7 @@ void ZWaveBase::SendDevice2Domoticz(_tZWaveDevice* pDevice)
 				return;
 			tsen.WIND.tempsign = (pTempDevice->floatValue >= 0) ? 0 : 1;
 			tsen.WIND.chillsign = (pTempDevice->floatValue >= 0) ? 0 : 1;
-			int at10 = round(std::abs(pTempDevice->floatValue * 10.0f));
+			int at10 = round(std::abs(pTempDevice->floatValue * 10.0F));
 			tsen.WIND.temperatureh = (BYTE)(at10 / 256);
 			tsen.WIND.chillh = (BYTE)(at10 / 256);
 			at10 -= (tsen.WIND.chillh * 256);
@@ -709,7 +709,7 @@ void ZWaveBase::SendDevice2Domoticz(_tZWaveDevice* pDevice)
 	else if (pDevice->devType == ZDTYPE_SENSOR_WATER)
 	{
 		uint16_t NodeID = (pDevice->nodeID << 8) | pDevice->instanceID;
-		SendRainSensor(NodeID, BatLevel, pDevice->floatValue * 1000.0f, "Water");
+		SendRainSensor(NodeID, BatLevel, pDevice->floatValue * 1000.0F, "Water");
 	}
 	else if (pDevice->devType == ZDTYPE_SENSOR_CO2)
 	{
@@ -793,34 +793,18 @@ void ZWaveBase::SendDevice2Domoticz(_tZWaveDevice* pDevice)
 	}
 }
 
-ZWaveBase::_tZWaveDevice* ZWaveBase::FindDevice(const uint8_t nodeID, const int instanceID, const int indexID)
-{
-	for (auto &m : m_devices)
-	{
-		if ((m.second.nodeID == nodeID) && (m.second.instanceID == instanceID) && (m.second.indexID == indexID))
-			return &m.second;
-	}
-	return nullptr;
-}
-
-//Used for power/energy devices
-ZWaveBase::_tZWaveDevice* ZWaveBase::FindDeviceEx(const uint8_t nodeID, const int instanceID, const _eZWaveDeviceType devType)
-{
-	for (auto &m : m_devices)
-	{
-		if ((m.second.nodeID == nodeID) && (m.second.instanceID == instanceID) && (m.second.devType == devType))
-			return &m.second;
-	}
-	return nullptr;
-}
-
 ZWaveBase::_tZWaveDevice* ZWaveBase::FindDevice(const uint8_t nodeID, const int instanceID, const _eZWaveDeviceType devType)
 {
 	for (auto &m : m_devices)
 	{
-		if ((m.second.nodeID == nodeID) && ((m.second.instanceID == instanceID) || (instanceID == -1))
-		    && (m.second.devType == devType))
+		if (
+			(m.second.nodeID == nodeID)
+			&& ((m.second.instanceID == instanceID) || (instanceID == -1))
+		    && (m.second.devType == devType)
+			)
+		{
 			return &m.second;
+		}
 	}
 	return nullptr;
 }
@@ -829,9 +813,15 @@ ZWaveBase::_tZWaveDevice *ZWaveBase::FindDevice(const uint8_t nodeID, const int 
 {
 	for (auto &m : m_devices)
 	{
-		if ((m.second.nodeID == nodeID) && ((m.second.instanceID == instanceID) || (instanceID == -1))
-		    && (m.second.commandClassID == CommandClassID) && (m.second.devType == devType))
+		if (
+			(m.second.nodeID == nodeID)
+			&& ((m.second.instanceID == instanceID) || (instanceID == -1))
+		    && (m.second.commandClassID == CommandClassID)
+			&& (m.second.devType == devType)
+			)
+		{
 			return &m.second;
+		}
 	}
 	return nullptr;
 }
@@ -1135,7 +1125,7 @@ bool ZWaveBase::WriteToHardware(const char* pdata, const unsigned char length)
 				if (pLed->command == Color_SetColorToWhite)
 				{
 					int Brightness = 100;
-					int wWhite = round((255.0f / 100.0f) * float(Brightness));
+					int wWhite = round((255.0F / 100.0F) * float(Brightness));
 					int cWhite = 0;
 					sstr << "#000000"
 						<< std::setw(2) << std::uppercase << std::hex << std::setfill('0') << std::hex << wWhite
