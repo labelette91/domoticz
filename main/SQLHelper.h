@@ -329,6 +329,7 @@ class CSQLHelper : public StoppableTask
 	~CSQLHelper();
 
 	void SetDatabaseName(const std::string &DBName);
+	void SetJournalMode(const std::string &mode);
 
 	bool OpenDatabase();
 	void CloseDatabase();
@@ -395,7 +396,6 @@ class CSQLHelper : public StoppableTask
 	void ClearShortLog();
 	void VacuumDatabase();
 	void OptimizeDatabase(sqlite3 *dbase);
-
 	void DeleteHardware(const std::string &idx);
 
 	void DeleteCamera(const std::string &idx);
@@ -493,6 +493,7 @@ class CSQLHelper : public StoppableTask
 	std::mutex m_sqlQueryMutex;
 	sqlite3 *m_dbase;
 	std::string m_dbase_name;
+	std::string m_journal_mode;
 	unsigned char m_sensortimeoutcounter;
 	std::map<uint64_t, int> m_timeoutlastsend;
 	std::map<uint64_t, int> m_batterylowlastsend;
