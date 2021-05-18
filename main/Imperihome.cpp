@@ -771,7 +771,7 @@ void ImperiHome::DeviceContent3(std::string &rep_content)
         
           break;
         case pTypeThermostat :
-          if (dSubType == sTypeThermSetpoint)
+//          if (dSubType == sTypeThermSetpoint)
           {
 //            DevThermostat :
           CDomoticzHardwareBase* pHardware  = m_mainworker.GetDeviceHardware((*row)[ID].c_str());
@@ -796,6 +796,19 @@ void ImperiHome::DeviceContent3(std::string &rep_content)
 						updateRoot( iroot++ , row , DevThermostat );
 
 					}
+					else
+					{
+						//temperature
+						SetKey(0,"curmode"     , "Confor"                      ) ;
+						SetKey(1,"curtemp"     , (*row)[sValue]  ,"°C" ,false );
+
+						SetKey(2,"cursetpoint" ,(*row)[sValue] );
+						SetKey(3,"step"        ,"0.5" );
+						SetKey(4,"availablemodes" , "Confor" );
+						updateRoot( iroot++ , row , DevThermostat );
+
+					}
+
 
           }
           break;
@@ -1726,8 +1739,8 @@ bool  ImperiHomeRequest( std::string &request_path , std::string &rep_content)
   if (ret)
 	
 //		if (!_log.IsDebugStringFiltered("IMPA"))
-			if (rep_content.length())
-				_log.Debug(DEBUG_NORM, "IMPA: IIS Answer %s", rep_content.c_str());
+//			if (rep_content.length())
+//				_log.Debug(DEBUG_NORM, "IMPA: IIS Answer %s", rep_content.c_str());
 
   return ret;
 }
