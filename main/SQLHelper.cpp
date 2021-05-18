@@ -27,6 +27,7 @@
 #include "../hardware/plugins/Plugins.h"
 #endif
 #include "../hardware/VirtualThermostat.h"
+#include "../hardware/enocean.h"
 
 #ifndef WIN32
 #include <sys/stat.h>
@@ -489,8 +490,10 @@ constexpr auto sqlCreateEnoceanSensors =
 "[HardwareID] INTEGER NOT NULL, "
 "[DeviceID] VARCHAR(25) NOT NULL, "
 "[Manufacturer] INTEGER NOT NULL, "
+"[Rorg]    INTEGER NOT NULL, "
 "[Profile] INTEGER NOT NULL, "
-"[Type] INTEGER NOT NULL);";
+"[Type] INTEGER NOT NULL, "
+"[Address] INTEGER DEFAULT 0);";
 
 constexpr auto sqlCreatePushLink =
 "CREATE TABLE IF NOT EXISTS [PushLink] ("
@@ -2199,6 +2202,12 @@ bool CSQLHelper::OpenDatabase()
 				UpdatePreferencesVar("EnableEventScriptSystem", !nValue);
 			}
 			DeletePreferencesVar("DisableEventScriptSystem");
+		}
+		if (dbversion < 120)
+		{
+			//Add Address in EnOcean table 
+			query("ALTER TABLE EnoceanSensors ADD COLUMN [Address] INTEGER DEFAULT 0");
+			query("ALTER TABLE EnoceanSensors ADD COLUMN [Rorg] INTEGER DEFAULT 0");
 		}
 		if (dbversion < 120)
 		{
@@ -7502,15 +7511,23 @@ void CSQLHelper::DeleteDevices(const std::string& idx)
 		}
 	}
 #endif
-	{
-		//Avoid mutex deadlock here
-		std::lock_guard<std::mutex> l(m_sqlQueryMutex);
-
-		char* errorMessage;
-		sqlite3_exec(m_dbase, "BEGIN TRANSACTION", nullptr, nullptr, &errorMessage);
+		{
+			char* errorMessage;
 
 		for (const auto &str : _idx)
 		{
+				//get the number of enocean devices with same DeviceId in order to delete from EnoceanSensors
+				std::string DeviceID;
+				std::vector<std::vector<std::string> > result;
+				result = m_sql.safe_query("SELECT DeviceID  FROM DeviceStatus   WHERE (ID==%s) ", (str).c_str());
+				if (result.size()>0)	DeviceID = result[0][0];
+				result = m_sql.safe_query("SELECT DeviceID FROM DeviceStatus  WHERE (DeviceID=='%s') ", DeviceID.c_str());
+				int NbDeviceId = result.size();
+				ToSensorsId(DeviceID);
+
+				//Avoid mutex deadlock here
+				std::lock_guard<std::mutex> l(m_sqlQueryMutex);
+				sqlite3_exec(m_dbase, "BEGIN TRANSACTION", NULL, NULL, &errorMessage);
 			safe_exec_no_return("DELETE FROM LightingLog WHERE (DeviceRowID == '%q')", str.c_str());
 			safe_exec_no_return("DELETE FROM LightSubDevices WHERE (ParentID == '%q')", str.c_str());
 			safe_exec_no_return("DELETE FROM LightSubDevices WHERE (DeviceRowID == '%q')", str.c_str());
@@ -7539,13 +7556,15 @@ void CSQLHelper::DeleteDevices(const std::string& idx)
 						str.c_str());
 			safe_exec_no_return("DELETE FROM SharedDevices WHERE (DeviceRowID== '%q')", str.c_str());
 			safe_exec_no_return("DELETE FROM PushLink WHERE (DeviceRowID== '%q')", str.c_str());
+				if (NbDeviceId==1)
+					safe_exec_no_return("DELETE FROM EnoceanSensors WHERE (DeviceID == '%q')", DeviceID.c_str() );
 			//notify eventsystem device is no longer present
 			uint64_t ullidx = std::stoull(str);
 			m_mainworker.m_eventsystem.RemoveSingleState(ullidx, m_mainworker.m_eventsystem.REASON_DEVICE);
 			//and now delete all records in the DeviceStatus table itself
 			safe_exec_no_return("DELETE FROM DeviceStatus WHERE (ID == '%q')", str.c_str());
+			sqlite3_exec(m_dbase, "COMMIT TRANSACTION", nullptr, nullptr, &errorMessage);
 		}
-		sqlite3_exec(m_dbase, "COMMIT TRANSACTION", nullptr, nullptr, &errorMessage);
 	}
 #ifdef ENABLE_PYTHON
 	for (const auto& it : removeddevices)

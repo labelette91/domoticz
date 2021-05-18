@@ -126,6 +126,8 @@
 		<script data-main="app/main" src="js/require.min.js"></script>
 <script charset="utf-8" id="init-code">
 
+		<script type="text/javascript" charset="utf-8" src="app/enOceanNode.js"></script>
+
 function NotifyCacheRefresh()
 {
 	$.cachenoty=generate_noty('information', '<b>' + ($.t !== undefined ?  $.t('Browser Cache is being refreshed') : 'Browser Cache is being refreshed') + '...</b><br>' + ($.t !== undefined ? $.t('Please standby') : 'Please standby') + '...', false);

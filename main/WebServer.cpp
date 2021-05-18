@@ -678,6 +678,7 @@ namespace http
 			// pollpost.html
 			RegisterRType("openzwavenodes", [this](auto &&session, auto &&req, auto &&root) { RType_OpenZWaveNodes(session, req, root); });
 #endif
+			RegisterRType("enocean",[this](auto &&session, auto &&req, auto &&root) { RType_OpenEnOcean(session, req, root); });  
 			RegisterCommandCode("tellstickApplySettings", [this](auto &&session, auto &&req, auto &&root) { Cmd_TellstickApplySettings(session, req, root); });
 
 			m_pWebEm->RegisterWhitelistURLString("/html5.appcache");
@@ -4922,6 +4923,8 @@ namespace http
 							return;
 						}
 						rID = pEnoceanHardware->m_id_base + iUnitTest;
+						pEnoceanHardware->AddSensors(rID, 0xF6, 0x7ff, 02, 01, iUnitTest);
+
 					}
 					else if (pBaseHardware->HwdType == HTYPE_USBtinGateway)
 					{

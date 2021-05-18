@@ -334,7 +334,49 @@ const _t4BSLookup T4BSTable[] = {
 	// A5-3F: Universal
 	{ 0xA5, 0x3F, 0x00, "Radio Link Test (BI-DIR)", "Universal.01" },
 
-	// End of table
+	//D2-01-01
+	{ 0xD2, 0x01, 0x01, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x02, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x03, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x04, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x05, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x06, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x07, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x08, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x09, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x0A, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x0B, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x0C, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x0D, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x0E, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x0F, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x10, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x11, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x12, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x13, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x14, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x15, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x16, "Electronic switch with Local Control",																	"Switch" },
+	{ 0xD2, 0x01, 0x17, "Electronic switch with Local Control",																	"Switch" },
+
+	{ 0xD2, 0x03, 0x0A , "Push Button – Single Button"          ,																"Switch" },
+	{ 0xD2, 0x05, 0x00 , "Blinds Control for Position and Angle",																"Switch" },
+	{ 0xF6, 0x01, 0x01 , "Push Button"                          ,																"Switch" },
+	{ 0xF6, 0x02, 0x01 , "Rocker Switch, 2 Button"              ,																"Switch" },
+	{ 0xF6, 0x02, 0x02 , "Rocker Switch, 2 Button"              ,																"Switch" },
+	{ 0xF6, 0x02, 0x03 , "Rocker Switch, 2 Button"              ,																"Switch" },
+	{ 0xF6, 0x02, 0x04 , "Rocker Switch, 2 Button"              ,																"Switch" },
+	{ 0xF6, 0x03, 0x01 , "Rocker Switch, 4 Button"              ,																"Switch" },
+	{ 0xF6, 0x03, 0x02 , "Rocker Switch, 4 Button"              ,																"Switch" },
+	{ 0xF6, 0x04, 0x01 , "Position switch "                     ,																"Switch" },
+	{ 0xF6, 0x04, 0x02 , "Position switch "                     ,																"Switch" },
+	{ 0xF6, 0x05, 0x00 , "Detectors"                            ,																"Switch" },
+	{ 0xF6, 0x05, 0x01 , "Detectors"                            ,																"Switch" },
+	{ 0xF6, 0x05, 0x02 , "Detectors"                            ,																"Switch" },
+	{ 0xF6, 0x10, 0x00 , "Mechanical Handle"                    ,																"Switch" },
+	{ 0xF6, 0x10, 0x01 , "Mechanical Handle"                    ,																"Switch" },
+
+		  // End of table
 	{ 0, 0, 0, nullptr, nullptr },
 };
 
