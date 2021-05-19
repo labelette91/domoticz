@@ -2,11 +2,20 @@
 
 #include "ASyncSerial.h"
 #include "DomoticzHardware.h"
+#include "EnOceanRMCC.h"
 #include <map>
 
-#define ENOCEAN3_READ_BUFFER_SIZE 65 * 1024
+#define ENOCEAN3_READ_BUFFER_SIZE 65*1024
 
-class CEnOceanESP3 : public AsyncSerial, public CDomoticzHardwareBase
+typedef struct _tVLDNode
+{
+	int idx;
+	int manufacturer;
+	uint8_t profile;
+	uint8_t type;
+}_tVLDNode;
+
+class CEnOceanESP3: public CEnOceanRMCC
 {
 	enum _eEnOcean_Receive_State
 	{
@@ -15,20 +24,11 @@ class CEnOceanESP3 : public AsyncSerial, public CDomoticzHardwareBase
 		ERS_DATA,
 		ERS_CHECKSUM
 	};
-	struct _tVLDNode
-	{
-		int idx;
-		int manufacturer;
-		uint8_t profile;
-		uint8_t type;
-	};
-
       public:
 	CEnOceanESP3(int ID, const std::string &devname, int type);
 	~CEnOceanESP3() override = default;
 	bool WriteToHardware(const char *pdata, unsigned char length) override;
 	void SendDimmerTeachIn(const char *pdata, unsigned char length);
-	unsigned long m_id_base;
 
       private:
 	void Init();
@@ -47,6 +47,7 @@ class CEnOceanESP3 : public AsyncSerial, public CDomoticzHardwareBase
 	void readCallback(const char *data, size_t len);
 
 	void ReloadVLDNodes();
+	_tVLDNode * FindVLDNodes(unsigned int id);
 
       private:
 	_eEnOcean_Receive_State m_receivestate;
@@ -70,4 +71,11 @@ class CEnOceanESP3 : public AsyncSerial, public CDomoticzHardwareBase
 
 	std::mutex m_sendMutex;
 	std::vector<std::string> m_sendqueue;
+	int LastPosition = -1;
+
+
+	void TestData(ESP3_RORG rorg, unsigned sID, unsigned char status, T_DATAFIELD * OffsetDes, ...);
+		void TestData(char * sdata);
+	void TestData(char * sdata, char * optData);
+	void testParsingData(int sec_counter);
 };

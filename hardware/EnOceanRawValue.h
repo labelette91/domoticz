@@ -5,7 +5,8 @@
 #include <vector>
 
 //Profile descriptor from eep.xml
-typedef struct {
+class T_DATAFIELD  {
+      public:
 	int Offset;
 	int Size;
 	double  RangeMin;
@@ -35,7 +36,7 @@ typedef struct {
 
 	}
 
-}T_DATAFIELD;
+};
 
 //Profile descriptor from eep.xml
 
@@ -46,7 +47,8 @@ typedef struct {
 	std::string Desc ;
 }T_EEP_CASE_ ; 
 
-typedef struct {
+class  T_PROFIL_LIST{
+      public:
   int Profil ; 
   int Rorg;
   int Func;
@@ -71,7 +73,7 @@ typedef struct {
    return buf;
 
   }
-}T_PROFIL_LIST  ;
+}  ;
 
 
 //descriptor for a eep case

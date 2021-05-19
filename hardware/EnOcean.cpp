@@ -66,7 +66,7 @@ uint64_t CEnOcean::CreateDevice(const int HardwareID, const char* ID, const int 
 			HardwareID, ID, unitCode, devType, subType);
 		if (result.size() == 0)
 		{
-			_log.Log(LOG_ERROR, "Serious database error, problem getting ID from DeviceStatus!");
+			Log(LOG_ERROR, "Serious database error, problem getting ID from DeviceStatus!");
 			return -1;
 		}
 		std::stringstream s_str(result[0][0]);
@@ -223,7 +223,7 @@ int CEnOcean::SensorExist(char * szDeviceID)
 void CEnOcean::CreateSensors(char * szDeviceID, int rorg , int manufacturer, int profile, int ttype,  int OffsetAddr )
 {
 	m_sql.safe_query("INSERT INTO EnoceanSensors (HardwareID, DeviceID, Manufacturer, Rorg,Profile, [Type],Address) VALUES (%d,'%q',%d,%d,%d,%d,%d)", m_HwdID, szDeviceID, manufacturer, rorg,profile, ttype, OffsetAddr);
-	_log.Log(LOG_NORM, "EnOcean: Sender_ID %s inserted in the database", szDeviceID);
+	Log(LOG_NORM, "EnOcean: Sender_ID %s inserted in the database Rorg:%02X Manuf:%02X Prof:%02X Type:%02X ", szDeviceID, rorg ,  manufacturer,  profile,  ttype);
 
 }
 void CEnOcean::CreateSensors(unsigned int DeviceID, int rorg, int manufacturer, int profile, int ttype, int OffsetAddr)
@@ -434,7 +434,7 @@ uint32_t CEnOcean::sendVld(unsigned int unitBaseAddr, T_DATAFIELD * OffsetDes,  
 	if (DataSize)
 		sendVld(unitBaseAddr, data, DataSize);
 	else
-		_log.Log(LOG_ERROR, "EnOcean: Error argument number in sendVld : cmd :%s :%s ", OffsetDes->ShortCut.c_str(), OffsetDes->description.c_str());
+		Log(LOG_ERROR, "EnOcean: Error argument number in sendVld : cmd :%s :%s ", OffsetDes->ShortCut.c_str(), OffsetDes->description.c_str());
 
 
 	va_end(value);
@@ -452,7 +452,7 @@ uint32_t CEnOcean::senDatadVld(unsigned int unitBaseAddr, T_DATAFIELD* OffsetDes
 	if (DataSize)
 		sendVld(unitBaseAddr, data, DataSize);
 	else
-		_log.Log(LOG_ERROR, "EnOcean: Error argument number in sendVld : cmd :%s :%s ", OffsetDes->ShortCut.c_str(), OffsetDes->description.c_str());
+		Log(LOG_ERROR, "EnOcean: Error argument number in sendVld : cmd :%s :%s ", OffsetDes->ShortCut.c_str(), OffsetDes->description.c_str());
 
 
 	return  DataSize;
