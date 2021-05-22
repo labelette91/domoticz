@@ -729,11 +729,18 @@ bool CEnOceanESP3::WriteToHardware(const char *pdata, const unsigned char /*leng
 	if (!isOpen())
 		return false;
 	RBUF *tsen=(RBUF*)pdata;
-	if (tsen->LIGHTING2.packettype!=pTypeLighting2)
+    const _tGeneralSwitch* xcmd = reinterpret_cast<const _tGeneralSwitch*>(pdata);
+
+	if (   (tsen->LIGHTING2.packettype!=pTypeLighting2)
+        && (tsen->LIGHTING2.packettype!=pTypeGeneralSwitch)
+        )
 		return false; //only allowed to control switches
 
 	unsigned long sID=(tsen->LIGHTING2.id1<<24)|(tsen->LIGHTING2.id2<<16)|(tsen->LIGHTING2.id3<<8)|tsen->LIGHTING2.id4;
-
+    // id for general switch are incersed
+	if  (tsen->LIGHTING2.packettype==pTypeGeneralSwitch)
+	    sID=xcmd->id ;
+    
 	//to in range GateWay baseAdress..baseAdress+127 
 	//test if is not a swicyh manually created
 	if (!CheckIsGatewayAdress(sID) )
@@ -753,8 +760,11 @@ bool CEnOceanESP3::WriteToHardware(const char *pdata, const unsigned char /*leng
 			Log(LOG_NORM, "EnOcean: Need Teach-In for %08X", sID);
 			return false;
 		}
-		//D2-05
-		if ((Rorg == 0xd2) && (Func == 0x05))
+        const std::string  deviceType = Get_Enocean4BSType(Rorg,Func,iType) ;
+
+		//D2-05 : BlindsControl 
+//		if ((Rorg == 0xd2) && (Func == 0x05))
+        if (deviceType == "BlindsControl" )
 		{
 			//build CMD 1 - Go to Position and Angle
 			int channel = tsen->LIGHTING2.unitcode - 1;
@@ -769,11 +779,21 @@ bool CEnOceanESP3::WriteToHardware(const char *pdata, const unsigned char /*leng
 				 LastPosition = pos;
 			}
 		}
-		//D2-01
-		else	if ((Rorg == 0xd2) && (Func == 0x01))
+		//D2-01 : switch
+        else if (deviceType == "Switch" )
+//		else	if ((Rorg == 0xd2) && (Func == 0x01))
 			sendVld(unitBaseAddr, D20100_CMD1, 1,0, tsen->LIGHTING2.unitcode - 1, tsen->LIGHTING2.cmnd * 64 , END_ARG_DATA);
 
-//			sendVld(unitBaseAddr, tsen->LIGHTING2.unitcode-1,  tsen->LIGHTING2.cmnd*64);
+        else if (deviceType == "PilotWire" ){
+            uint8_t level = 0;
+            if (tsen->LIGHTING2.packettype == pTypeGeneralSwitch)
+                level=xcmd->level;
+            else
+                level = tsen->LIGHTING2.level ;
+            sendVld(unitBaseAddr, D20100_CMD8, 8 ,level/10 , END_ARG_DATA);
+        }
+        else
+            Log(LOG_ERROR,"write command for %s : %02X%02X%02X Manufacturer:%s deviceId %08X not managed",deviceType.c_str(), Rorg, Func, iType ,Get_EnoceanManufacturer(Manufacturer),  sID );
 		return true ;
 
 	}
@@ -2025,6 +2045,10 @@ void CEnOceanESP3::ParseRadioDatagram()
 					unsigned char teach_in_request = (m_buffer[1] >> 4) & 3;								// 0= request, 1= deletion request, 2=request or deletion request, 3=not used
 					unsigned char cmd = m_buffer[1] & 0x0F;
 
+					long id = DeviceArrayToInt(&m_buffer[8]);
+
+                    Log(LOG_NORM, "teach-in request received from %08lX \n%s ",id, printRawDataValues(&m_buffer[1] ,TEACHIN_UTE ).c_str() );
+
 					if(cmd == 0x0)
 					{
 						// EEP Teach-In Query (UTE Message / CMD 0x0)
@@ -2035,9 +2059,9 @@ void CEnOceanESP3::ParseRadioDatagram()
 						unsigned char func = m_buffer[6];
 						unsigned char rorg = m_buffer[7];
 
-						long id = DeviceArrayToInt(&m_buffer[8]);
-
-						Log(LOG_NORM, "teach-in request received from %08lX (manufacturer: %03X). number of channels: %d, device profile: %02X-%02X-%02X", id, manID, nb_channel, rorg,func,type);
+                        const std::string  deviceType = Get_Enocean4BSType(rorg,func,type) ;
+						Log(LOG_NORM, "teach-in request received from %08lX (manufacturer: %03X). number of channels: %d, device profile: %02X-%02X-%02X = %s:%s", id, manID, nb_channel, rorg,func,type,
+                            deviceType.c_str() , Get_Enocean4BSDesc(rorg,func,type)  );
 
 						//if accept new hardware 
 						if (m_sql.m_bAcceptNewHardware)
@@ -2088,6 +2112,13 @@ void CEnOceanESP3::ParseRadioDatagram()
 									}
 									return;
 								}
+
+                                if (deviceType == "PilotWire" ){
+									Log(LOG_NORM, "TEACH %s  : 0xD2 Node 0x%08x UnitID: %02X ",deviceType.c_str(), id, 1 );
+                                //	SendSelectorSwitch(int NodeID, uint8_t ChildID, std::string &sValue, std::string &defaultname,  int customImage,  bool bDropdown,  std::string &LevelNames,  std::string &LevelActions,  bool bHideOff,  std::string &userName)
+	                                SendSelectorSwitch( id       , 1              ,"0"                 ,deviceType.c_str()       ,  0              ,  false         ,  "Off|Conf|Eco|Freeze|Conf-1|Conf-2" ,  "00|10|20|30|40|50|60"      ,  false         , ""  );
+                                
+                                }
 
 							}
 							else
@@ -2780,7 +2811,10 @@ void CEnOceanESP3::TestData(char * sdata, PACKET_TYPE pType,  char * optData)
 
 void CEnOceanESP3::testParsingData(int sec_counter)
 {
-	//			if (sec_counter == 5)	TestData("D5 0 01 02 03 04 00 ");
+
+				if (sec_counter == 1)	TestData("P2 00 10 00 00 00 00 "); // base adresse 
+    
+    //			if (sec_counter == 5)	TestData("D5 0 01 02 03 04 00 ");
 	//			if (sec_counter == 25)	TestData("D5 1 01 02 03 04 00 ");
 
 	//			if (sec_counter == 5)	TestData("D2 04 60 80 01 A6 54 28 00 "); //vld ch 0
@@ -2790,7 +2824,8 @@ void CEnOceanESP3::testParsingData(int sec_counter)
 	//			if (sec_counter == 15)	TestData("D2 04 61 E4 01 A6 54 28 00 "); // vld ch1
 
 
-	//			if (sec_counter == 6)	TestData("D4 A0 02 46 00 12 01 D2 01 A6 54 28 00 "); // ute 
+//				if (sec_counter == 2)	TestData("D4 A0 02 46 00 12 01 D2 01 A6 54 28 00 "); // ute D2 01 12 RoolerShutter
+				if (sec_counter == 2)	TestData("D4 A0 02 46 00 0C 01 D2 01 A6 54 29 00 "); // ute D2 01 0C PilotWire
 
 	//			if (sec_counter == 6)	TestData("D4 A0 02 46 00 12 01 D2 01 A6 54 28 00 ", "01 FF FF FF FF 2D 00");// ute opt data
 

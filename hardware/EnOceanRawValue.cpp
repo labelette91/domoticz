@@ -294,6 +294,40 @@ uint32_t setRawDataValues(uint8_t* data, T_DATAFIELD* OffsetDes, int value[], in
 	return total_bytes;
 }
 
+uint32_t getRawDataValues(uint8_t* data, T_DATAFIELD* OffsetDes, int value[], int NbData)
+{
+
+	int i = 0;
+	while (OffsetDes->Size != 0)
+	{
+
+		if (i >= NbData)
+			return i;
+        value[i++] = GetRawValue( data ,   OffsetDes  );
+
+		OffsetDes++;
+	}
+    return i ;
+}
+
+std::string printRawDataValues(uint8_t* data, T_DATAFIELD* OffsetDes )
+{
+
+    std::string message ="";
+    char line[256];
+	int i = 0;
+	while (OffsetDes->Size != 0)
+	{
+
+        uint32_t value  = GetRawValue( data ,   OffsetDes  );
+        snprintf(line,sizeof(line)-1, "offset:%2d = %5d (%02X) : %s : %s \n",OffsetDes->Offset, value,value,OffsetDes->ShortCut.c_str(),OffsetDes->description.c_str() );
+        message += line ;
+		OffsetDes++;
+	}
+    return message ;
+}
+
+
 uint32_t SetRawValues(uint8_t * data, T_DATAFIELD * OffsetDes,  va_list value)
 {
 
@@ -378,6 +412,24 @@ T_DATAFIELD TEACHIN_4BS[] = {
 { 28 , 1   , 0,0,0,0, "LRNB","  learn bite " }, //  0 TeachIn telegram 1 DataLelegram
 { 0  , 0  , 0      , 0,0,0,"",""}  //
 };
+
+
+T_DATAFIELD TEACHIN_UTE[] = {
+{ 0  , 1   , 0,0,0,0, "EEPO"    ,"EEP operation" },
+{ 1  , 1   , 0,0,0,0, "EEPTEACH","    " }, //
+{ 2  , 2   , 0,0,0,0, "TEACHREQ","TeachIn request" }, //
+{ 4  , 4   , 0,0,0,0, "CMDID"   ,"Command Identifier" }, //
+{ 8  , 8   , 0,0,0,0, "NBCHAN"  ,"Nimber of channel to be taught in" }, //
+{ 16  , 8  , 0,0,0,0, "MANIDLSB","MAn ID lsb" }, //
+{ 29  , 3  , 0,0,0,0, "MANIFMSB","Man Id Msb" }, //
+{ 32  , 8  , 0,0,0,0, "TYPE"    ,"" }, //
+{ 40  , 8  , 0,0,0,0, "FUNC"    ,"" }, //
+{ 48  , 8  , 0,0,0,0, "RORG"    ,"" }, //
+
+
+{ 0  , 0  , 0      , 0,0,0,"",""}  //
+};
+
 
 extern T_PROFIL_LIST Profillist [];
 
