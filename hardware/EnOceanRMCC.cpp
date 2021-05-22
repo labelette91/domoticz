@@ -73,7 +73,7 @@ void CEnOceanRMCC::parse_PACKET_REMOTE_MAN_COMMAND( unsigned char m_buffer[] , i
 		Sensors.addSensorProfile(senderId, profile);
 		AddSensors(senderId, rorg, Sensors.Find(senderId)->Manufacturer, func, type, 0);
 
-		Log(LOG_NORM, "EnOcean: Ping Answer SenderId: %08X Profile:%06X ", senderId, profile);
+		Log(LOG_NORM, "EnOcean: Ping Answer SenderId: %08X Profile:%06X : %s : %s", senderId, profile , Get_Enocean4BSType(rorg,func,type), Get_Enocean4BSDesc(rorg,func,type)  );
 	}
 	//query  response
 	else if ( (fct == QUERYID_ANSWER) || (fct == QUERYID_ANSWER_EXT) )

@@ -240,6 +240,9 @@ public:
 	void Send1BSTeachIn(unsigned int sID);
 	void Send4BSTeachIn(unsigned int sID);
 
+    virtual void TestData(char * sdata, PACKET_TYPE pType = PACKET_RADIO , char * optData="")
+	    {};
+
 public:	unsigned long m_id_base;
 
 };

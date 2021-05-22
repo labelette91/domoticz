@@ -527,6 +527,7 @@ void CEnOceanESP3::Do_Work()
 			{
 				m_LastHeartbeat = mytime(nullptr);
 			}
+			testParsingData( sec_counter);
 		}
 
 		if (!isOpen())
@@ -1033,7 +1034,7 @@ bool CEnOceanESP3::ParseData()
 		else {
 			sprintf(szTmp, "Opt Size: %i", m_OptionalDataSize);
 		}
-		Log(LOG_STATUS,"EnOcean: recv %s %s ",sstr.str().c_str() , szTmp );
+	Log(LOG_STATUS,"%s",sstr.str().c_str());
 	}
 
 	if (m_ReceivedPacketType==PACKET_RESPONSE)
@@ -1262,12 +1263,12 @@ void CEnOceanESP3::ParseRadioDatagram()
 	else {
 		sprintf(szTmp, "Optional data size: %i",m_OptionalDataSize);
 	}
-	Log(LOG_NORM, "%s", szTmp);
+//	Log(LOG_NORM, "%s", szTmp);
 	switch (m_buffer[0])
 	{
 		case RORG_1BS: // 1 byte communication (Contacts/Switches)
 			{
-				Log(LOG_NORM, "EnOcean: 1BS data: Sender id: 0x%02x%02x%02x%02x Data: %02x",
+				Log(LOG_NORM, "1BS data: Sender id: 0x%02x%02x%02x%02x Data: %02x",
 					m_buffer[2],m_buffer[3],m_buffer[4],m_buffer[5],m_buffer[0]		);
 
 				int UpDown=(m_buffer[1] &1)==0;
@@ -1281,7 +1282,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 			break;
 		case RORG_4BS: // 4 byte communication
 			{
-				Log(LOG_NORM, "EnOcean: 4BS data: Sender id: 0x%02x%02x%02x%02x Status: %02x Data: %02x %02x %02x %02x ",
+				Log(LOG_NORM, "4BS data: Sender id: 0x%02x%02x%02x%02x Status: %02x Data: %02x %02x %02x %02x ",
 					m_buffer[5],m_buffer[6],m_buffer[7],m_buffer[8],m_buffer[9],  m_buffer[1], m_buffer[2], m_buffer[3], m_buffer[4]	);
 
 				unsigned char DATA_BYTE3 = m_buffer[1];
@@ -1329,7 +1330,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 						profile = DATA_BYTE3 >> 2;
 						ttype = ((DATA_BYTE3 & 3) << 5) | (DATA_BYTE2 >> 3);
 
-						Log(LOG_NORM,"EnOcean: 4BS, Variant 2 Teach-in diagram: Sender_ID: 0x%08X Manufacturer: 0x%02x (%s) Profile: 0x%02X Type: 0x%02X (%s)", 
+						Log(LOG_NORM,"4BS, Variant 2 Teach-in diagram: Sender_ID: 0x%08X Manufacturer: 0x%02x (%s) Profile: 0x%02X Type: 0x%02X (%s)", 
 							id, manufacturer,Get_EnoceanManufacturer(manufacturer),	profile,ttype,Get_Enocean4BSType(0xA5,profile,ttype));
  					}
 
@@ -1780,7 +1781,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 			break;
 		case RORG_RPS: // repeated switch communication
 			{
-				Log(LOG_NORM, "EnOcean: RPS data: Sender id: 0x%02x%02x%02x%02x Status: %02x Data: %02x T21:%d",
+				Log(LOG_NORM, "RPS data: Sender id: 0x%02x%02x%02x%02x Status: %02x Data: %02x T21:%d",
 					m_buffer[2],m_buffer[3],m_buffer[4],m_buffer[5],m_buffer[6],m_buffer[1], (m_buffer[6] & (1 << 2)));
 
 				unsigned char STATUS=m_buffer[6];
@@ -1850,7 +1851,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 						unsigned char SecondAction=(DATA_BYTE3 & DB3_RPS_NU_SA)>>DB3_RPS_NU_SA_SHIFT;
 
 					    Log(LOG_NORM,
-						"EnOcean: RPS N-Message message: 0x%02X Node 0x%08x RockerID: %i ButtonID: %i Pressed: %i UD: %i Second Rocker ID: %i SecondButtonID: %i SUD: %i Second Action: %i",
+						"RPS N-Message message: 0x%02X Node 0x%08x RockerID: %i ButtonID: %i Pressed: %i UD: %i Second Rocker ID: %i SecondButtonID: %i SUD: %i Second Action: %i",
 						DATA_BYTE3,	id,	RockerID,ButtonID,UpDown,Pressed,SecondRockerID,SecondButtonID,	SecondUpDown,SecondAction);
 
 						//We distinguish 3 types of buttons from a switch: Left/Right/Left+Right
@@ -2051,9 +2052,9 @@ void CEnOceanESP3::ParseRadioDatagram()
 								int OffsetId = UpdateDeviceAddress(id);
 								unsigned int senderBaseAddr = GetAdress(OffsetId);
 								if (OffsetId != 0)
-									Log(LOG_NORM, "EnOcean: Sender_ID 0x%08X inserted in the database with base address 0x%08X : ", id, senderBaseAddr );
+									Log(LOG_NORM, "Sender_ID 0x%08X inserted in the database with base address 0x%08X : ", id, senderBaseAddr );
 								else
-									Log(LOG_ERROR, "EnOcean: could not find base empty base address for Sender_ID 0x%08X : maximum 127 address", id );
+									Log(LOG_ERROR, "could not find base empty base address for Sender_ID 0x%08X : maximum 127 address", id );
 								ReloadVLDNodes();
 
 								//if automatic teach in request 
@@ -2070,7 +2071,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 								{
 									for (int nbc = 0; nbc < nb_channel; nbc++)
 									{
-										Log(LOG_NORM, "EnOcean: TEACH Switch : 0xD2 Node 0x%08x UnitID: %02X cmd: %02X ", id, nbc + 1, light2_sOff);
+										Log(LOG_NORM, "TEACH Switch : 0xD2 Node 0x%08x UnitID: %02X cmd: %02X ", id, nbc + 1, light2_sOff);
 //										SendSwitch(id, nbc + 1, -1, light2_sOff, 0, DeviceIDToString(senderBaseAddr).c_str());
 										CreateDevice(m_HwdID, GetLighting2StringId(id).c_str(), nbc + 1, pTypeLighting2, sTypeAC, 0, -1, light2_sOff, "0", DeviceIDToString(id), STYPE_OnOff, "" , 0 );
 									}
@@ -2081,7 +2082,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 								{
 									for (int nbc = 0; nbc < nb_channel; nbc++)
 									{
-										Log(LOG_NORM, "EnOcean: TEACH Blinds Switch : 0xD2 Node 0x%08x UnitID: %02X cmd: %02X ", id, nbc + 1, light2_sOff);
+										Log(LOG_NORM, "TEACH Blinds Switch : 0xD2 Node 0x%08x UnitID: %02X cmd: %02X ", id, nbc + 1, light2_sOff);
 //										SendSwitch(id, nbc + 1, -1, light2_sOff, 0, DeviceIDToString(senderBaseAddr).c_str());
 										CreateDevice(m_HwdID, GetLighting2StringId(id).c_str(), nbc + 1, pTypeLighting2, sTypeAC, 0, -1, light2_sOff, "0", DeviceIDToString(id), STYPE_BlindsPercentage , "" , 0 );
 									}
@@ -2090,10 +2091,10 @@ void CEnOceanESP3::ParseRadioDatagram()
 
 							}
 							else
-								Log(LOG_NORM, "EnOcean: Sender_ID 0x%08X already in the database", id);
+								Log(LOG_NORM, "Sender_ID 0x%08X already in the database", id);
 						}
 						else
-							Log(LOG_NORM, "EnOcean: New hardware is not allowed. Turn on AcceptNewHardware in settings" );
+							Log(LOG_NORM, "New hardware is not allowed. Turn on AcceptNewHardware in settings" );
 
 						break;
 					}
@@ -2117,7 +2118,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 				int Manufacturer,Rorg, Func, iType;
 				if (!getProfileFromDb(senderId, Manufacturer,Rorg, Func, iType))
 				{
-					Log(LOG_NORM, "EnOcean: Need Teach-In for %08X", senderId );
+					Log(LOG_NORM, "Need Teach-In for %08X", senderId );
 					return;
 				}
 
@@ -2135,7 +2136,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 					{
 						//get position
 						int pos = GetRawValue( data,D20500_CMD1 ,  D20500_CMD1_POS  ) ;
-					    Log(LOG_NORM, "EnOcean: VLD: senderID: %08X EEP:D2-05  Reply Position Position:%d%", senderId, pos);
+					    Log(LOG_NORM, "VLD: senderID: %08X EEP:D2-05  Reply Position Position:%d%", senderId, pos);
 						bool bon = (pos > 0 ? 1 : 0 );
 						if (pos >= 100)	pos = 0;
 
@@ -2147,7 +2148,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 				//Electonics switch
 				if ( (Func == 0x01))
 				{
-					Log(LOG_NORM, "EnOcean: VLD: senderID: %08X Func:%02X  Type:%02X", senderId, Func, iType);
+					Log(LOG_NORM, "VLD: senderID: %08X Func:%02X  Type:%02X", senderId, Func, iType);
 					//get command 
 					int CMD = m_buffer[1] & 0xF;
 					// D2-01
@@ -2163,7 +2164,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 										int unitcode = channel + 1;
 										bool cmnd     = (dim_power>0) ? true : false;								
 
-										Log(LOG_NORM, "EnOcean: VLD : 0x%02X Node 0x%08x UnitID: %02X cmd: %02X ",
+										Log(LOG_NORM, "VLD : 0x%02X Node 0x%08x UnitID: %02X cmd: %02X ",
 											DATA_BYTE3, senderId,unitcode,cmnd	);
 
 										SendSwitch(senderId, unitcode, -1 , cmnd , 0, "", m_Name.c_str(),rssi);
@@ -2358,7 +2359,7 @@ namespace http {
 		else {
 			root["message"] = "Communication Timeout";
 //			Log(LOG_ERROR, "EnOcean: Server Error: %s  cmd:%s Hwid:%s arg:%s  Entry=%s", root["message"].asString().c_str(), cmd.c_str(), hwid.c_str(), arg.c_str(), request::findValue(&req, "entry").c_str());
-			pEnocean->Log(LOG_ERROR, "EnOcean: Server Error: %s  cmd:%s ", root["message"].asString().c_str(), root["cmd"].asString().c_str());
+			pEnocean->Log(LOG_ERROR, "Server Error: %s  cmd:%s ", root["message"].asString().c_str(), root["cmd"].asString().c_str());
 			pEnocean->setCommStatus(COM_OK);
 		}
 		}
@@ -2397,7 +2398,7 @@ namespace http {
 				arg += http::server::request::findValue(&req, std::to_string(i).c_str())+"-";
 			}
 
-			pEnocean->Log(LOG_NORM, "EnOcean: Server received cmd:%s Hwid:%s arg:%s Entry=%s ", cmd.c_str(),hwid.c_str(),arg.c_str(), request::findValue(&req, "entry").c_str() );
+			pEnocean->Log(LOG_NORM, "Server received cmd:%s Hwid:%s arg:%s Entry=%s ", cmd.c_str(),hwid.c_str(),arg.c_str(), request::findValue(&req, "entry").c_str() );
 
 			//retrieve the list od Device Id
 			if (cmd == "GetNodeList") {
@@ -2590,7 +2591,7 @@ namespace http {
 				}
 				int senderEEP = pEnocean->Sensors.getEEP(deviceIdSender);
 				pEnocean->setLinkEntryTable(deviceIdReceiver, emptyEntry, deviceIdSender, senderEEP , receiverChannel-1);
-				pEnocean->Log(LOG_NORM, "EnOcean: Link receiver %08X channel %d to sender %08X(%06X) ", deviceIdReceiver, receiverChannel, deviceIdSender, senderEEP);
+				pEnocean->Log(LOG_NORM, "Link receiver %08X channel %d to sender %08X(%06X) ", deviceIdReceiver, receiverChannel, deviceIdSender, senderEEP);
 				checkComStatus(pEnocean, root);
 
 			}
@@ -2743,27 +2744,36 @@ void CEnOceanESP3::TestData(ESP3_RORG rorg, unsigned int sID,  unsigned char sta
 	*buff++ = status ; //status
 
 
-	m_ReceivedPacketType = 0x01;
+	m_ReceivedPacketType = PACKET_RADIO;
 	m_OptionalDataSize = 0;
 	m_DataSize=m_bufferpos = 1+total_bytes+4+1 ;
 	ParseData();
 }
 
 
-void CEnOceanESP3::TestData(char * sdata)
+void CEnOceanESP3::TestData(char * sdata, PACKET_TYPE pType,  char * optData)
 {
-	TypFnAToB(sdata, m_buffer, &m_DataSize);
-	m_ReceivedPacketType = 0x01;
-	m_OptionalDataSize = 0;
-	m_bufferpos = m_DataSize;
-	ParseData();
-}
-
-void CEnOceanESP3::TestData(char * sdata, char * optData)
-{
+    char lBuffer[2014];
+    //copy to ram 
+    strncpy(lBuffer,sdata,sizeof(lBuffer)-1 );
+    sdata=lBuffer;
+    //optionnal is separated by : P1 XX XX XX : OO OO OO
+    //get packet type : P1 --> PACKET_RADIO
+    
+    if (sdata[0] == 'P')
+    {
+        pType = (PACKET_TYPE)(sdata[1] - '0');
+        sdata +=2 ;
+    }
+    char* pPoint = strchr(sdata,':');
+    if(pPoint)
+    {
+        *pPoint = 0 ;
+        optData = pPoint+1;
+    }
 	TypFnAToB(sdata, m_buffer, &m_DataSize);
 	TypFnAToB(optData, &m_buffer[m_DataSize], &m_OptionalDataSize);
-	m_ReceivedPacketType = 0x01;
+	m_ReceivedPacketType = pType ;
 	m_bufferpos = m_DataSize + m_OptionalDataSize;
 	ParseData();
 }
@@ -2806,7 +2816,7 @@ void CEnOceanESP3::testParsingData(int sec_counter)
 //	if (sec_counter == 2)	TestData("A5 b00001100 b01010000 46 b10000000 00 00 00 01 30 "); //4BS teach in variation 2 :  eep func D2-03-0A
 //												         | manufactuer ID nodon = 46
 //														        | eep
-
+	/*
 	if (sec_counter == 1) {
 
 		//send command stop si rappuie
@@ -2816,8 +2826,10 @@ void CEnOceanESP3::testParsingData(int sec_counter)
 		sendVld(0x1234, D20500_CMD2, 1, 2,  3 , END_ARG_DATA);
 		sendVld(0x1234, D20500_CMD2, 1,  END_ARG_DATA);
 	}
+	*/
 
 //ESP3_RORG rorg, unsigned sID,  unsigned char status , T_DATAFIELD * OffsetDes, ...
+/*
 	if (sec_counter == 2) {
 
 		//4BS teachin D2-03-0A 
@@ -2827,7 +2839,7 @@ void CEnOceanESP3::testParsingData(int sec_counter)
 		//data bat=50 button=1
 		TestData(RORG_VLD, 0x12345678, 0, D2030A, 50, 1, END_ARG_DATA);
 	}
-
+*/
 
 //	if (sec_counter == 2)	TestData("D2 32 01 00 00 00 01 30 "); //VLD D2  eep func D2-03-0A baterie 50% button 1
 
@@ -2861,6 +2873,10 @@ void CEnOceanESP3::testParsingData(int sec_counter)
 	char * button_right_up_released = "F6 00 00 34 F8 FE 20";
 	char * button_right_do_pressed  = "F6 50 00 34 F8 FE 30";
 	char * button_right_do_released = "F6 00 00 34 F8 FE 20";
+
+	if (sec_counter == 1)
+//	  SendSelectorSwitch(int NodeID, uint8_t ChildID, std::string &sValue, std::string &defaultname,  int customImage,  bool bDropdown,  std::string &LevelNames,  std::string &LevelActions,  bool bHideOff,  std::string &userName)
+	  SendSelectorSwitch( 0x1234   , 1              ,"0"                 ,"Select1"                ,  0              ,  false         ,  "Off|Eco|Confor|Frost" ,  "00|10|20|30|40|50"      ,  true         , ""  );
 
 	// 
 // button gauche Up
@@ -2941,6 +2957,51 @@ void CEnOceanESP3::testParsingData(int sec_counter)
 	 char * VLD_switch_B2_OFF = "D2 04 61 80 01 A6 54 28 00";
 
 
+// ping
+//	55 00 0F 07 01 2B         C5 80 00 7F F0 06 00 00 00 00 00 00 00 00 8F        03 01 A6 54 28 FF 00 83
+//response
+char *pingAnswer = "P7 06 06 07 FF D2 01 12 2D : 05 01 33 BE 01 A6 54 28 2D 00 34";
+
+//if (sec_counter == 2 )	TestData(pingAnswer );
+
+// queryId 
+//		    queryid send cmd EEP : 00000000 Mask : 0
+//			Send :                                  : 55 00 0F 07 01 2B C5 80 01 FF F0 04 00 00 00 00 00 00 00 00 8F 03 FF FF FF FF FF 00 EE
+char* queryIdAnswer = "P7 06 04 07 FF D2 05 00 : FF FF FF FF 05 85 87 4A 3D 00 ";
+//if (sec_counter == 2 )	    TestData(queryIdAnswer );
+
+//get product id  cmd 227 
+//55 00 0F 07 01 2B         C5 80 00 7F F2 27 00 00 00 00 00 00 00 00 8F        03 FF FF FF FF FF 00             55
+//reponse  manu 46 procuct ref 00010003
+char* getproductidAnswer =  "P7 08 27 07 FF 00 46 00 01 00 03 : FF FF FF FF 01 A6 54 28 2C 00     B3 ";
+//if (sec_counter == 2 )	    TestData(getproductidAnswer );
+
+//get link table medatadate cmd 0210 : taille current/ max  table
+//55 00 0F 07 01 2B         C5 40 00 7F F2 10 00 00 00 00 00 00 00 00 8F        03 01 A6 54 28 FF 00  AD
+//response curren size 03 max x18=24
+char* getlinktablemedatadateAnswer = "P7 08 10 07 FF 50 00 00 03 18 : FF FF FF FF 01 A6 54 28 2D 00 08";
+//if (sec_counter == 2 )	    TestData(getlinktablemedatadateAnswer );
+
+
+//get all link table
+//55 00 0F 07 01 2B         C5 40 01 FF F2 11 00 00 17 00 00 00 00 00 8F        03 01 A6 54 28 FF 00 56
+//response                                        ID DEVICE ID   PROFILE  CHN
+//                          0  1    2  3     4    5  6  7  8  9  10 11 12 13
+char* getalllinktableAnswer[] = {
+"P7 08 11   07 FF    00   00 FF 99 DF 01 D5 00 01 00   01 FF 99 DF 02 F6 02 01 00   02 FF 99 DF 02 F6 02 01 01    :   FF FF FF FF 01 A6 54 28 2E 00 FB",
+"P7 08 11   07 FF    00   03 00 00 00 00 FF FF FF 00   04 00 00 00 00 FF FF FF 00   05 00 00 00 00 FF FF FF 00    :   FF FF FF FF 01 A6 54 28 2E 00 8F",
+"P7 08 11   07 FF    00   06 00 00 00 00 FF FF FF 00   07 00 00 00 00 FF FF FF 00   08 00 00 00 00 FF FF FF 00    :   FF FF FF FF 01 A6 54 28 2E 00 DE",
+"P7 08 11   07 FF    00   09 00 00 00 00 FF FF FF 00   0A 00 00 00 00 FF FF FF 00   0B 00 00 00 00 FF FF FF 00    :   FF FF FF FF 01 A6 54 28 2E 00 F4",
+"P7 08 11   07 FF    00   0C 00 00 00 00 FF FF FF 00   0D 00 00 00 00 FF FF FF 00   0E 00 00 00 00 FF FF FF 00    :   FF FF FF FF 01 A6 54 28 2E 00 E1",
+"P7 08 11   07 FF    00   0F 00 00 00 00 FF FF FF 00   10 00 00 00 00 FF FF FF 00   11 00 00 00 00 FF FF FF 00    :   FF FF FF FF 01 A6 54 28 2E 00 BC",
+"P7 08 11   07 FF    00   15 00 00 00 00 FF FF FF 00   16 00 00 00 00 FF FF FF 00   17 00 00 00 00 FF FF FF 00    :   FF FF FF FF 01 A6 54 28 2E 00 66",
+};
+//if (sec_counter == 2 )	    for (int i=0;i< 7;i++) TestData(getalllinktableAnswer[i] );
+
+//query function
+//55 00 0F 07 01 2B	C5 80 00 7F F0 07 00 00 00 00 00 00 00 00 8F 				03 01 A6 54 28 FF 00     8D  opt 7
+char* queryfunctionAnswer = "P7 06 07 07 FF 02 24 07 FF 02 27 07 FF 02 20 07 FF 02 10 07 FF 02 11 07 FF 02 12 07 FF 02 30 07 FF 02 31 07 FF 02 32 07 FF 02 33 07 FF 02 26 07 FF 00 00 00 00    :  FF FF FF FF 01 A6 54 28 2C 00     2E ";
+//if (sec_counter == 2 )	    TestData( queryfunctionAnswer);
 
 }
 

@@ -64,7 +64,7 @@ class CEnOceanESP3: public CEnOceanRMCC
 	int m_DataSize;
 	int m_OptionalDataSize;
 	unsigned char m_buffer[ENOCEAN3_READ_BUFFER_SIZE];
-	int m_bufferpos;
+	int m_bufferpos;   //nb data received
 	int m_retrycntr;
 
 	std::map<uint32_t, _tVLDNode> m_VLDNodes;
@@ -75,7 +75,6 @@ class CEnOceanESP3: public CEnOceanRMCC
 
 
 	void TestData(ESP3_RORG rorg, unsigned sID, unsigned char status, T_DATAFIELD * OffsetDes, ...);
-		void TestData(char * sdata);
-	void TestData(char * sdata, char * optData);
+	void TestData(char * sdata, PACKET_TYPE pType = PACKET_RADIO , char * optData="");
 	void testParsingData(int sec_counter);
 };

@@ -642,36 +642,38 @@ bool TypFnAToB(const char * st, unsigned char bin[], int  *trame_len)
 
 	while (st[index] != 0)
 	{
+		if (st[index] != ' '){
 
-		if (st[index] == 'b') {
-			index++;
-			h = 0;
-			while ((st[index] == '0') || (st[index] == '1'))
-			{
-				h = h << 1;
-				if ((st[index] == '1'))
-					h = h + 1;
-				index++;
-			}
+		    if (st[index] == 'b') {
+			    index++;
+			    h = 0;
+			    while ((st[index] == '0') || (st[index] == '1'))
+			    {
+				    h = h << 1;
+				    if ((st[index] == '1'))
+					    h = h + 1;
+				    index++;
+			    }
 
-			bin[i++] = (unsigned char)(h);
-		}
+			    bin[i++] = (unsigned char)(h);
+		    }
 
-		else
-		{
-			h = HexToBin(st[index]);
+		    else
+		    {
+			    h = HexToBin(st[index]);
 
-			index++;
-			if (st[index] != ' ')
-			{
+			    index++;
+			    if (st[index] != ' ')
+			    {
 
-				l = HexToBin(st[index]);
-				bin[i++] = (unsigned char)((h << 4) + l);
-			}
-			else
-				bin[i++] = (unsigned char)(h);
-			index++;
-		}
+				    l = HexToBin(st[index]);
+				    bin[i++] = (unsigned char)((h << 4) + l);
+			    }
+			    else
+				    bin[i++] = (unsigned char)(h);
+			    index++;
+		    }
+        }
 
 		if (st[index] == ' ')
 			index++;
