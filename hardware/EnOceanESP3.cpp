@@ -2137,8 +2137,6 @@ void CEnOceanESP3::ParseRadioDatagram()
 		case RORG_VLD:
 			{
 				unsigned char DATA_BYTE3=m_buffer[1];
-				unsigned char func = (m_buffer[1] >> 2) & 0x3F;
-				unsigned char type = ((m_buffer[2] >> 3) & 0x1F) | ((m_buffer[1] & 0x03) << 5);
 
 				//compute senderId offese : 4byte for senderId and 1 for status
 				int senderOfs = m_DataSize - 4 - 1;
@@ -2146,8 +2144,12 @@ void CEnOceanESP3::ParseRadioDatagram()
 					return;
 				//conpute sender ID
 				unsigned int senderId = DeviceArrayToInt(&m_buffer[senderOfs]);
-				int Manufacturer,Rorg, Func, iType;
-				if (!getProfileFromDb(senderId, Manufacturer,Rorg, Func, iType))
+                unsigned int id = senderId ;
+				char szDeviceID[20];
+				sprintf(szDeviceID, "%08X", (unsigned int)id);
+
+				int Manufacturer,Rorg ,func,type ;
+				if (!getProfileFromDb(senderId, Manufacturer,Rorg, func, type))
 				{
 					Log(LOG_NORM, "Need Teach-In for %08X", senderId );
 					return;
@@ -2155,7 +2157,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 
 				//D2-05 
 				//{ 0xD2 , 0x05 , 0x00 , "Blinds Control for Position and Angle                                            ",  "Type 0x00           
-				if ( (Func==0x05)) 
+				if ( (func==0x05)) 
 				{
 					//get command
 					unsigned char * data =&m_buffer[1];
@@ -2176,166 +2178,47 @@ void CEnOceanESP3::ParseRadioDatagram()
 					}
 				}
 
-				//Electonics switch
-				if ( (Func == 0x01))
-				{
-					Log(LOG_NORM, "VLD: senderID: %08X Func:%02X  Type:%02X", senderId, Func, iType);
-					//get command 
-					int CMD = m_buffer[1] & 0xF;
-					// D2-01
-					switch(CMD)
-					{
-						//! <b>Actuator Status Response</b> 4
-						case 0x04:	// D2-01-xx
-									{
-										unsigned char channel = m_buffer[2] & 0x7;
-
-										unsigned char dim_power = m_buffer[3] & 0x7F;		// 0=off, 0x64=100%
-
-										int unitcode = channel + 1;
-										bool cmnd     = (dim_power>0) ? true : false;								
-
-										Log(LOG_NORM, "VLD : 0x%02X Node 0x%08x UnitID: %02X cmd: %02X ",
-											DATA_BYTE3, senderId,unitcode,cmnd	);
-
-										SendSwitch(senderId, unitcode, -1 , cmnd , 0, "", m_Name.c_str(),rssi);
-
-
-										// Note: if a device uses simultaneously RPS and VLD (ex: nodon inwall module), it can be partially initialized.
-										//			Domoticz will show device status but some functions may not work because EnoceanSensors table has no info on this device (until teach-in is performed)
-										//       If a device has local control (ex: nodon inwall module with physically attached switched), domoticz will record the local control as unit 0.
-										//       Ex: nodon inwall 2 channels will show 3 entries. Unit 0 is the local switch, 1 is the first channel, 2 is the second channel.
-										//			(I only have attached a switch on the first channel, I have no idea which unit number a switch on the 2nd channel will have)
-										return;
-									}
-									break;
-					}
-				}
-
-				//vld D2-03-0A : len=2 offset 0 battery level 1= action : //1 = simple press, 2=double press, 3=long press, 4=press release
-				if (m_DataSize > 7)
-				{
-					unsigned char ID_BYTE3 = m_buffer[m_DataSize - 5];
-					unsigned char ID_BYTE2 = m_buffer[m_DataSize - 4];
-					unsigned char ID_BYTE1 = m_buffer[m_DataSize - 3];
-					unsigned char ID_BYTE0 = m_buffer[m_DataSize - 2];
-					unsigned long id = (ID_BYTE3 << 24) + (ID_BYTE2 << 16) + (ID_BYTE1 << 8) + ID_BYTE0;
-
-					id = DeviceArrayToInt(&m_buffer[m_DataSize - 5]);
-
-					_tVLDNode* VLDNode = FindVLDNodes(id);
-					if (VLDNode != 0 )
-					{
-						uint8_t Profile = VLDNode->profile;
-						uint8_t iType = VLDNode->type;
-
-						// D2-03-0A Push Button – Single Button
-						Log(LOG_NORM, "EnOcean message VLD: Profile: %02X Type: %02X", Profile, iType);
-
-						switch (Profile)
-						{
-						case 0x03:
-							//Light, Switching + Blind Control
-							if (iType == 0x0A)
-							{
-								int battery = (int)double((255.0 / 100.0)*m_buffer[1]);
-								unsigned char DATA_BYTE0 = m_buffer[2]; //1 = simple press, 2=double press, 3=long press, 4=press release
-								SendGeneralSwitch(id, DATA_BYTE0, battery, 1, 0, "Switch", m_Name, rssi);
-								return;
-							}
-							break;
-						}
-					}
-				}
-				Log(LOG_NORM, "EnOcean message VLD: func: %02X Type: %02X", func, type);
 				if (func == 0x01)
-				{
-					// D2-01 Electr. switches/dimmers, Energy Meas. / Local Ctrl
-					switch (type)
+				{ // D2-01-XX, Electronic Switches and Dimmers with Local Control
+					uint8_t CMD = m_buffer[1] & 0x0F;			// Command ID
+					if (CMD != 0x04)
 					{
-					case 0x0C:	// D2-01-0C
-					{
-						unsigned char channel = m_buffer[2] & 0x7;
-
-						unsigned char dim_power = m_buffer[3] & 0x7F;		// 0=off, 0x64=100%
-
-						unsigned char ID_BYTE3 = m_buffer[4];
-						unsigned char ID_BYTE2 = m_buffer[5];
-						unsigned char ID_BYTE1 = m_buffer[6];
-						unsigned char ID_BYTE0 = m_buffer[7];
-						long id = (ID_BYTE3 << 24) + (ID_BYTE2 << 16) + (ID_BYTE1 << 8) + ID_BYTE0;
-
-						// report status only if it is a known device else we may have an incorrect profile
-						char szDeviceID[20];
-						std::vector<std::vector<std::string> > result;
-						sprintf(szDeviceID, "%08X", (unsigned int)id);
-
-						result = m_sql.safe_query("SELECT ID, Manufacturer, Profile, [Type] FROM EnoceanSensors WHERE (HardwareID==%d) AND (DeviceID=='%q')", m_HwdID, szDeviceID);
-						if (result.empty())
-						{
-							Log(LOG_NORM, "Need Teach-In for %s", szDeviceID);
-							return;
-						}
-
-						RBUF tsen;
-						memset(&tsen, 0, sizeof(RBUF));
-						tsen.LIGHTING2.packetlength = sizeof(tsen.LIGHTING2) - 1;
-						tsen.LIGHTING2.packettype = pTypeLighting2;
-						tsen.LIGHTING2.subtype = sTypeAC;
-						tsen.LIGHTING2.seqnbr = 0;
-
-						tsen.LIGHTING2.id1 = (BYTE)ID_BYTE3;
-						tsen.LIGHTING2.id2 = (BYTE)ID_BYTE2;
-						tsen.LIGHTING2.id3 = (BYTE)ID_BYTE1;
-						tsen.LIGHTING2.id4 = (BYTE)ID_BYTE0;
-						tsen.LIGHTING2.level = dim_power;
-						tsen.LIGHTING2.rssi = rssi;
-
-						tsen.LIGHTING2.unitcode = channel + 1;
-						tsen.LIGHTING2.cmnd = (dim_power > 0) ? light2_sOn : light2_sOff;
-
-#ifdef ENOCEAN_BUTTON_DEBUG
-						Log(LOG_NORM, "EnOcean message: 0x%02X Node 0x%08x UnitID: %02X cmd: %02X ",
-							DATA_BYTE3,
-							id,
-							tsen.LIGHTING2.unitcode,
-							tsen.LIGHTING2.cmnd
-						);
-#endif //ENOCEAN_BUTTON_DEBUG
-
-						// Never learn device from D2-01-0C because subtype may be incorrect
-						sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, nullptr, 255, m_Name.c_str());
-
-						// Note: if a device uses simultaneously RPS and VLD (ex: nodon inwall module), it can be partially initialized.
-						//			Domoticz will show device status but some functions may not work because EnoceanSensors table has no info on this device (until teach-in is performed)
-						//       If a device has local control (ex: nodon inwall module with physically attached switched), domoticz will record the local control as unit 0.
-						//       Ex: nodon inwall 2 channels will show 3 entries. Unit 0 is the local switch, 1 is the first channel, 2 is the second channel.
-						//			(I only have attached a switch on the first channel, I have no idea which unit number a switch on the 2nd channel will have)
+						Log(LOG_NORM, "EnOcean: VLD msg: Node %s, Unhandled CMD (%02X)", szDeviceID, CMD);
 						return;
 					}
-					break;
-					}
+					// CMD 0x4 - Actuator Status Response
+
+					uint8_t IO = m_buffer[2] & 0x1F;	 		// I/O Channel
+					uint8_t OV = m_buffer[3] & 0x7F;			// Output Value : 0x00 = OFF, 0x01...0x64: Output value 1% to 100% or ON
+
+					int unitcode = IO + 1;
+					bool cmnd     = (OV>0) ? true : false;								
+
+#ifdef ENOCEAN_BUTTON_DEBUG
+					Log(LOG_NORM, "EnOcean: VLD->RX msg: Node %s CMD: 0x%X IO: 0x%02X (UnitID: %d) OV: 0x%02X (Cmnd: %d Level: %d)",
+						szDeviceID, CMD, IO, unitcode, OV, cmnd, OV );
+#endif //ENOCEAN_BUTTON_DEBUG
+
+					SendSwitch(senderId, unitcode, -1 , cmnd , OV, "", m_Name.c_str(),rssi);
+
+					// Note: if a device uses simultaneously RPS and VLD (ex: nodon inwall module), it can be partially initialized.
+					//			Domoticz will show device status but some functions may not work because EnoceanSensors table has no info on this device (until teach-in is performed)
+					//       If a device has local control (ex: nodon inwall module with physically attached switched), domoticz will record the local control as unit 0.
+					//       Ex: nodon inwall 2 channels will show 3 entries. Unit 0 is the local switch, 1 is the first channel, 2 is the second channel.
+					//			(I only have attached a switch on the first channel, I have no idea which unit number a switch on the 2nd channel will have)
+					return;
 				}
-				else if (func == 0x02)
-				{
-					// D2-02 Temp. Sensor, Light, Occupancy, SmokeType
+				if (func == 0x03 && type == 0x0A)
+				{ // D2-03-0A Push Button – Single Button
+					int battery = (int)double((255.0 / 100.0)*m_buffer[1]);
+					unsigned char DATA_BYTE0 = m_buffer[2]; //1 = simple press, 2=double press, 3=long press, 4=press release
+					SendGeneralSwitch(id, DATA_BYTE0, battery, 1, 0, "Switch", m_Name, 12);
+					return;
 				}
-				else if (func == 0x03)
-				{
-					// D2-03
-					switch (type)
-					{
-					case 0x00:	// D2-03-00 Light, Switching and Blind Control Type
-						break;
-					case 0x0A:	// D2-03-0A Push Button – Single Button
-						break;
-					case 0x10:	// D2-03-10 Mechanical Handle
-						break;
-					case 0x20:	// D2-03-20 Beacon with Vibration Detection
-						break;
-					}
-				}
+				Log(LOG_NORM, "EnOcean: Node %s, Unhandled EEP (%02X-%02X-%02X)", szDeviceID, RORG_VLD, func, type);
+
 			}
+			break;
 		default:
 			Log(LOG_NORM, "Unhandled RORG (%02x)", m_buffer[0]);
 			break;
@@ -2817,15 +2700,15 @@ void CEnOceanESP3::testParsingData(int sec_counter)
     //			if (sec_counter == 5)	TestData("D5 0 01 02 03 04 00 ");
 	//			if (sec_counter == 25)	TestData("D5 1 01 02 03 04 00 ");
 
-	//			if (sec_counter == 5)	TestData("D2 04 60 80 01 A6 54 28 00 "); //vld ch 0
-	//			if (sec_counter == 15)	TestData("D2 04 60 E4 01 A6 54 28 00 "); //vld ch 0
+//				if (sec_counter == 5)	TestData("D2 04 60 80 01 A6 54 28 00 "); //vld ch 0
+//				if (sec_counter == 15)	TestData("D2 04 60 E4 01 A6 54 28 00 "); //vld ch 0
 
 	//			if (sec_counter == 5)	TestData("D2 04 61 80 01 A6 54 28 00 "); // vld ch1
 	//			if (sec_counter == 15)	TestData("D2 04 61 E4 01 A6 54 28 00 "); // vld ch1
 
 
 //				if (sec_counter == 2)	TestData("D4 A0 02 46 00 12 01 D2 01 A6 54 28 00 "); // ute D2 01 12 RoolerShutter
-				if (sec_counter == 2)	TestData("D4 A0 02 46 00 0C 01 D2 01 A6 54 29 00 "); // ute D2 01 0C PilotWire
+//				if (sec_counter == 2)	TestData("D4 A0 02 46 00 0C 01 D2 01 A6 54 29 00 "); // ute D2 01 0C PilotWire
 
 	//			if (sec_counter == 6)	TestData("D4 A0 02 46 00 12 01 D2 01 A6 54 28 00 ", "01 FF FF FF FF 2D 00");// ute opt data
 
@@ -2891,10 +2774,9 @@ void CEnOceanESP3::testParsingData(int sec_counter)
 //			if (sec_counter == 12)	getallLinkTable(0x01A65428,0,3);
 //			if (sec_counter == 4)	queryFunction(0x01A65428);
 
-	char * VLD_BLINDS_D2_05_00_position = "D2 00 00 00 04 05 85 87 4A 00 "; //         01 FF FF FF FF 2E";
 	char * VLD_switch_uti				= "D4 A0 02 46 00 12 01 D2 01 A6 54 28 00 ""; //01 FF FF FF FF 33"; //teach-in request received from 01A65428 (manufacturer: 046). number of channels: 2, device profile: D2-01-12
 	char * VLD_switch_status            = "D2 04 60 80 01 A6 54 28 00 "; // 01 FF FF FF FF 31";
-
+   
 
 	char * VLD_BLINDS_D2_05_00_uti = "D4 A0 01 46 00 00 05 D2 05 85 87 4A 00 ";//  -01 FF FF FF FF 30 "; // 09.031 EnOcean : teach - in request received from 0585874A(manufacturer: 046).number of channels : 1, device profile : D2 - 05 - 00
 
@@ -2971,6 +2853,23 @@ void CEnOceanESP3::testParsingData(int sec_counter)
 // recv 01 PACKET_RADIO (0A/07) D2 5A 00 00 04 05 85 87 4A 00 - 01 FF FF FF FF 30 00 Dest: 0xffffffff RSSI: 52
 // recv 01 PACKET_RADIO (0A/07) D2 64 00 00 04 05 85 87 4A 00 - 01 FF FF FF FF 30 00 Dest: 0xffffffff RSSI: 52
 
+char * VLD_BLINDS_D2_05_00_position [] ={
+
+"D2 00 00 00 04 05 85 87 4A 00 ",
+"D2 0A 00 00 04 05 85 87 4A 00 ",
+"D2 14 00 00 04 05 85 87 4A 00 ",
+"D2 1E 00 00 04 05 85 87 4A 00 ",
+"D2 28 00 00 04 05 85 87 4A 00 ",
+"D2 32 00 00 04 05 85 87 4A 00 ",
+"D2 3C 00 00 04 05 85 87 4A 00 ",
+"D2 46 00 00 04 05 85 87 4A 00 ",
+"D2 50 00 00 04 05 85 87 4A 00 ",
+"D2 5A 00 00 04 05 85 87 4A 00 ",
+"D2 64 00 00 04 05 85 87 4A 00 ",
+};
+
+if ( (sec_counter >= 2) && (sec_counter <= 12) )	 
+    TestData(VLD_BLINDS_D2_05_00_position[sec_counter-2]); 
 
 
 //VLD: senderID: 01A65428 Func : 01 Type : 12
