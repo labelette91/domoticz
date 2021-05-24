@@ -293,8 +293,15 @@ void getCommand(std::string &Cmd, std::string &OutCmd, int &level)
 		std::vector<std::string> results;
 		StringSplit(Cmd, " ", results);
 		if (results[0] == "Set") {
-			OutCmd = "Set Level"; level = atoi(results[2].c_str()) ;
+            if (results.size()==2){
+			    OutCmd = "Set Level"; level = atoi(results[1].c_str()) ;
+            }
+            else
+ 				_log.Log(LOG_ERROR,"Invalid Switch command : %s ", Cmd.c_str() );
+
 		}
+        else
+ 		    _log.Log(LOG_ERROR,"Invalid Switch command : %s ", Cmd.c_str() );
 	}
 
 }
