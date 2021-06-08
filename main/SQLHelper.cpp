@@ -7556,8 +7556,10 @@ void CSQLHelper::DeleteDevices(const std::string& idx)
 						str.c_str());
 			safe_exec_no_return("DELETE FROM SharedDevices WHERE (DeviceRowID== '%q')", str.c_str());
 			safe_exec_no_return("DELETE FROM PushLink WHERE (DeviceRowID== '%q')", str.c_str());
-				if (NbDeviceId==1)
+				if (NbDeviceId==1){
 					safe_exec_no_return("DELETE FROM EnoceanSensors WHERE (DeviceID == '%q')", DeviceID.c_str() );
+                    		_log.Debug(DEBUG_NORM, "CSQLHelper::DeleteDevices: EnoceanSensors  ID: %s", DeviceID.c_str());
+                }
 			//notify eventsystem device is no longer present
 			uint64_t ullidx = std::stoull(str);
 			m_mainworker.m_eventsystem.RemoveSingleState(ullidx, m_mainworker.m_eventsystem.REASON_DEVICE);
