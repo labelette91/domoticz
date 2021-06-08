@@ -526,8 +526,13 @@ void CEnOceanESP3::Do_Work()
 			if (sec_counter % 12 == 0)
 			{
 				m_LastHeartbeat = mytime(nullptr);
+                //if base id    as not been received , retry open serial
+                if (m_bBaseIDRequested==true){
+				    Log(LOG_ERROR,"Base Id not received from controler" );
+                    close();
+                }
 			}
-			testParsingData( sec_counter);
+//			testParsingData( sec_counter);
 		}
 
 		if (!isOpen())
@@ -620,21 +625,6 @@ bool CEnOceanESP3::OpenSerialDevice()
 	buf[0] = CO_RD_IDBASE;
 	sendFrameQueue(PACKET_COMMON_COMMAND, buf, 1, nullptr, 0);
 
-	//Request Version
-	buf[0] = CO_RD_VERSION;
-	sendFrameQueue(PACKET_COMMON_COMMAND, buf, 1, nullptr, 0);
-
-	//Request CO_RD_REPEATER
-	buf[0] = CO_RD_REPEATER;
-	sendFrameQueue(PACKET_COMMON_COMMAND,buf,1,NULL,0);
-
-	//Request CO_WR_REPEATER : set repeater ON level 1
-	buf[0] = CO_WR_REPEATER; buf[1] = ON; buf[2] = LEVEL1;
-	sendFrameQueue(PACKET_COMMON_COMMAND,buf,3,NULL,0);
-
-	//Request CO_RD_REPEATER
-	buf[0] = CO_RD_REPEATER;
-	sendFrameQueue(PACKET_COMMON_COMMAND,buf,1,NULL,0);
 
 
 	return true;
@@ -651,10 +641,11 @@ void CEnOceanESP3::readCallback(const char *data, size_t len)
 		switch (m_receivestate)
 		{
 		case ERS_SYNCBYTE:
-			if (c!=0x55)
-				return;
-			m_receivestate = ERS_HEADER;
-			m_bufferpos=0;
+			if (c==0x55)
+            {
+                m_receivestate = ERS_HEADER;
+			    m_bufferpos=0;
+            }
 			break;
 		case ERS_HEADER:
 			m_buffer[m_bufferpos++]=c;
@@ -1088,6 +1079,12 @@ bool CEnOceanESP3::ParseData()
 			m_id_base = (m_buffer[1] << 24) + (m_buffer[2] << 16) + (m_buffer[3] << 8) + m_buffer[4];
 			//unsigned char changes_left=m_buffer[5];
 			Log(LOG_STATUS,"Transceiver ID_Base: 0x%08lx",m_id_base);
+
+            //Request Version
+            uint8_t buf[4];
+	        buf[0] = CO_RD_VERSION;
+	        sendFrameQueue(PACKET_COMMON_COMMAND, buf, 1, nullptr, 0);
+
 		}
 		else if (m_bufferpos == 33)
 		{
@@ -1099,6 +1096,15 @@ bool CEnOceanESP3::ParseData()
 				m_buffer[13],m_buffer[14],m_buffer[15],m_buffer[16],
 				(const char*)&m_buffer+17
 				);
+	        //Request CO_WR_REPEATER : set repeater ON level 1
+            uint8_t buf[4];
+	        buf[0] = CO_WR_REPEATER; buf[1] = ON; buf[2] = LEVEL1;
+	        sendFrameQueue(PACKET_COMMON_COMMAND,buf,3,NULL,0);
+
+            //Request CO_RD_REPEATER
+            buf[0] = CO_RD_REPEATER;
+            sendFrameQueue(PACKET_COMMON_COMMAND,buf,1,NULL,0);
+
 		}
 		//CO_RD_REPEATER response
 		else if (m_DataSize == 3)
@@ -2047,7 +2053,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 
 					long id = DeviceArrayToInt(&m_buffer[8]);
 
-                    Log(LOG_NORM, "teach-in request received from %08lX \n%s ",id, printRawDataValues(&m_buffer[1] ,TEACHIN_UTE ).c_str() );
+                    Log(LOG_NORM, "teach-in request received from %08lX ",id  );
 
 					if(cmd == 0x0)
 					{
