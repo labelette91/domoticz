@@ -680,7 +680,7 @@ void CDomoticzHardwareBase::SendSwitchUnchecked(int NodeID, uint8_t ChildID, int
 void CDomoticzHardwareBase::SendSwitch(const int NodeID, const uint8_t ChildID, const int BatteryLevel, const bool bOn, const double Level, const std::string &defaultname, const std::string &userName,
 				       const int RssiLevel /* =12 */)
 {
-	double rlevel = (16.0 / 100.0) * Level;
+	double rlevel = (15.0 / 100.0) * Level;
 	int level = int(rlevel);
 
 	//make device ID
