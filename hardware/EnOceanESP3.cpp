@@ -529,7 +529,10 @@ void CEnOceanESP3::Do_Work()
                 //if base id    as not been received , retry open serial
                 if (m_bBaseIDRequested==true){
 				    Log(LOG_ERROR,"Base Id not received from controler" );
-                    close();
+//                    close();
+	unsigned char buf[16];
+                    buf[0] = CO_RD_IDBASE;
+	sendFrameQueue(PACKET_COMMON_COMMAND, buf, 1, nullptr, 0);
                 }
 			}
 //			testParsingData( sec_counter);
@@ -1852,7 +1855,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 				}
 
 				// Whether we use the ButtonID reporting with ON/OFF
-				bool useButtonIDs = true;
+				bool useButtonIDs = false;
 
 				// Profile F6-02-01
 				// Rocker switch, 2 Rocker (Light and blind control, Application style 1)
@@ -1978,11 +1981,13 @@ void CEnOceanESP3::ParseRadioDatagram()
 								// It's the release message of any button pressed before
 								tsen.LIGHTING2.unitcode = 0; // does not matter, since we are using a group command
 								tsen.LIGHTING2.cmnd = (Pressed == 1) ? light2_sGroupOn : light2_sGroupOff;
+							    sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, nullptr, 255, m_Name.c_str());
+
 							}
 							else
 							{
-								tsen.LIGHTING2.unitcode = 1;
-								tsen.LIGHTING2.cmnd = (UpDown == 1) ? light2_sOn : light2_sOff;
+								//tsen.LIGHTING2.unitcode = 1;
+								//tsen.LIGHTING2.cmnd = (UpDown == 1) ? light2_sOn : light2_sOff;
 							}
 
 							Log(LOG_NORM, "EnOcean message: 0x%02X Node 0x%08x UnitID: %02X cmd: %02X ",
@@ -1993,7 +1998,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 
 
 
-							sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, nullptr, 255, m_Name.c_str());
+//							sDecodeRXMessage(this, (const unsigned char *)&tsen.LIGHTING2, nullptr, 255, m_Name.c_str());
 							AddSensors(id, 0xF6, 0x7ff, 02, 01, 0);
 						}
 					}
@@ -2046,6 +2051,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 		case RORG_UTI:
 				// Universal teach-in (0xD4)
 				{
+                    static int UteStateCounter ;
 					unsigned char uni_bi_directional_communication = (m_buffer[1] >> 7) & 1;		// 0=mono, 1= bi
 					unsigned char eep_teach_in_response_expected = (m_buffer[1] >> 6) & 1;			// 0=yes, 1=no
 					unsigned char teach_in_request = (m_buffer[1] >> 4) & 3;								// 0= request, 1= deletion request, 2=request or deletion request, 3=not used
@@ -2053,12 +2059,14 @@ void CEnOceanESP3::ParseRadioDatagram()
 
 					long id = DeviceArrayToInt(&m_buffer[8]);
 
-                    Log(LOG_NORM, "teach-in request received from %08lX ",id  );
+//                    Log(LOG_NORM, "teach-in request received from %08lX ",id  );
 
 					if(cmd == 0x0)
 					{
 						// EEP Teach-In Query (UTE Message / CMD 0x0)
-
+                        UteStateCounter++;
+                        if(UteStateCounter>=2)
+                        {
 						unsigned char nb_channel = m_buffer[2];
 						unsigned int manID = ((unsigned int)(m_buffer[4] & 0x7)) << 8 | (m_buffer[3]);
 						unsigned char type = m_buffer[5];
@@ -2073,6 +2081,8 @@ void CEnOceanESP3::ParseRadioDatagram()
 						if (m_sql.m_bAcceptNewHardware)
 						// Record EnOcean device profile
 						{
+                            UteStateCounter=0;
+
 							// If device as not been already teachin 
 							if (getUnitFromDeviceId(id)==0)
 							{
@@ -2132,7 +2142,8 @@ void CEnOceanESP3::ParseRadioDatagram()
 						}
 						else
 							Log(LOG_NORM, "New hardware is not allowed. Turn on AcceptNewHardware in settings" );
-
+                        UteStateCounter=0;
+                        }
 						break;
 					}
 
