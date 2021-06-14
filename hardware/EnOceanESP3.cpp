@@ -1844,7 +1844,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 				else
 				{
 					// hardware device was already teached-in
-					Debug(DEBUG_HARDWARE, "Sender_ID 0x%08lX found in the database with profile F6-%02x-%02x", id, Profile, iType);
+					Debug(DEBUG_HARDWARE, "Sender_ID 0x%08lX found in the database with profile %02x-%02x-%02x", id, Rorg,Profile, iType);
 					if( (Profile == 0x01) &&						// profile 1 (D2-01) is Electronic switches and dimmers with Energy Measurement and Local Control
 						 ((iType == 0x0F) || (iType == 0x12))	// type 0F and 12 have external switch/push button control, it means they also act as rocker
 						)
@@ -2210,7 +2210,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 
 					int unitcode = IO + 1;
 					bool cmnd     = (OV>0) ? true : false;								
-
+                    if (OV >= 100)	OV = 0;
 #ifdef ENOCEAN_BUTTON_DEBUG
 					Log(LOG_NORM, "EnOcean: VLD->RX msg: Node %s CMD: 0x%X IO: 0x%02X (UnitID: %d) OV: 0x%02X (Cmnd: %d Level: %d)",
 						szDeviceID, CMD, IO, unitcode, OV, cmnd, OV );
