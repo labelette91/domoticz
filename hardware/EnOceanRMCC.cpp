@@ -662,8 +662,9 @@ void CEnOceanRMCC::TeachIn(std::string& deviceId, std::string& unit, T_LEARN_MOD
 		unlock(SenderAdress, GetLockCode() );
 		remoteLearning(SenderAdress, channel - 1, Device_LRN_Mode);
 }
-void CEnOceanRMCC::GetNodeList(Json::Value &root)
+void CEnOceanRMCC::GetNodeList(std::string & HardwareID, Json::Value &root)
 {
+   
 	root["status"] = "OK";
 	root["title"] = "EnOceanNodes";
 
@@ -672,7 +673,7 @@ void CEnOceanRMCC::GetNodeList(Json::Value &root)
 //	result = m_sql.safe_query("SELECT D.Name, D.Type, d.SubType, d.SwitchType, d.Unit, d.DeviceId, E.Rorg, E.Profile, E.Type, E.Manufacturer, E.Address FROM EnoceanSensors AS E LEFT OUTER JOIN DeviceStatus   as d ON(instr(E.DeviceID, D.DeviceId) <> 0) and (D.HardwareID == E.HardwareID) ");
 
 //	result = m_sql.safe_query("SELECT * FROM  EnoceanSensors as e LEFT OUTER JOIN DeviceStatus as d ON(instr(E.DeviceID, D.DeviceId) <> 0) and (D.HardwareID == E.HardwareID)");
-	result = m_sql.safe_query("SELECT e.DeviceId, E.Rorg, E.Profile, E.Type, E.Manufacturer, E.Address , D.Name, D.Type, d.SubType, d.SwitchType, d.Unit FROM EnoceanSensors AS E LEFT OUTER JOIN DeviceStatus   as d ON(instr(E.DeviceID, D.DeviceId) <> 0) and (D.HardwareID == E.HardwareID) ");
+	result = m_sql.safe_query("SELECT e.DeviceId, E.Rorg, E.Profile, E.Type, E.Manufacturer, E.Address , D.Name, D.Type, d.SubType, d.SwitchType, d.Unit FROM EnoceanSensors AS E LEFT OUTER JOIN DeviceStatus   as d ON( instr(E.DeviceID, D.DeviceId) == 1 or instr(E.DeviceID, D.DeviceId) == 2 ) and (D.HardwareID == E.HardwareID) ");
 	//                                 0          1         2        3        4              5            6       7         8        9            10
 	if (result.size() > 0)
 	{
@@ -703,6 +704,40 @@ void CEnOceanRMCC::GetNodeList(Json::Value &root)
 				root["result"][ii]["EnoTypeName"] = typ;
 
 				root["result"][ii]["Description"] = Get_Enocean4BSDesc(rorg, func, type);
+
+                if (sd[6].empty())
+                {
+                	std::vector<std::vector<std::string> > result2;
+                    unsigned int eDeviceId = std::stoi( sd[00].c_str(),0, 16) ;
+                    //for temp --> deviceId = BYTE2 BYTE1 Unit=BYTE0 
+                    int devId   = (eDeviceId >>8 ) & 0xFFFF ;
+                    int devUnit = (eDeviceId     ) & 0xFF ;
+
+                    result2 = m_sql.safe_query("SELECT  Name, Type, SubType, SwitchType, Unit FROM DeviceStatus    where ( DeviceId ==  %d) and ( Unit ==  %d ) and (HardwareID == %s ) ", devId, devUnit, HardwareID.c_str() );
+                    if (result2.size() > 0)
+                    {
+                        sd[6]  = result2[0][0] ;
+                        sd[7]  = result2[0][1] ;
+                        sd[8]  = result2[0][2] ;
+                        sd[9]  = result2[0][3] ;
+                    }
+                    else
+                    {
+                        //for tempHum   --> deviceId = BYTE2 BYTE1 Unit=0 
+                        int devId   = (eDeviceId >>8 ) & 0xFFFF ;
+                        int devUnit = 0 ;
+
+                        result2 = m_sql.safe_query("SELECT  Name, Type, SubType, SwitchType, Unit FROM DeviceStatus    where ( DeviceId ==  %d) and ( Unit ==  %d ) and (HardwareID == %s ) ", devId, devUnit, HardwareID.c_str() );
+                        if (result2.size() > 0)
+                        {
+                            sd[6]  = result2[0][0] ;
+                            sd[7]  = result2[0][1] ;
+                            sd[8]  = result2[0][2] ;
+                            sd[9]  = result2[0][3] ;
+                        }
+
+                    }
+                }
 
 				root["result"][ii]["Name"] = sd[6];
 				root["result"][ii]["Type"] = sd[7];

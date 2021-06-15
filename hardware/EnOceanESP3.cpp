@@ -1544,7 +1544,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 							tsen.RFXSENSOR.subtype=sTypeRFXSensorVolt;
 							tsen.RFXSENSOR.id=ID_BYTE1;
 							tsen.RFXSENSOR.filler=ID_BYTE0&0x0F;
-							tsen.RFXSENSOR.rssi=rssi;
+							tsen.RFXSENSOR.rssi=(ID_BYTE0&0xF0)>>4;
 							tsen.RFXSENSOR.msg1 = (BYTE)(voltage/256);
 							tsen.RFXSENSOR.msg2 = (BYTE)(voltage-(tsen.RFXSENSOR.msg1*256));
 							sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXSENSOR, nullptr, 255, nullptr);
@@ -1610,7 +1610,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 						tsen.TEMP.id1=ID_BYTE2;
 						tsen.TEMP.id2=ID_BYTE1;
 						tsen.TEMP.battery_level=ID_BYTE0&0x0F;
-						tsen.TEMP.rssi=rssi;
+						tsen.TEMP.rssi         =(ID_BYTE0&0xF0)>>4;
 
 						tsen.TEMP.tempsign=(temp>=0)?0:1;
 						int at10 = round(std::abs(temp * 10.0F));
@@ -1635,7 +1635,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 						tsen.TEMP_HUM.packetlength=sizeof(tsen.TEMP_HUM)-1;
 						tsen.TEMP_HUM.packettype=pTypeTEMP_HUM;
 						tsen.TEMP_HUM.subtype=sTypeTH5;
-						tsen.TEMP_HUM.rssi=rssi;
+						tsen.TEMP_HUM.rssi=12;
 						tsen.TEMP_HUM.id1=ID_BYTE2;
 						tsen.TEMP_HUM.id2=ID_BYTE1;
 						tsen.TEMP_HUM.battery_level=9;
@@ -1665,7 +1665,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 								tsen.RFXSENSOR.subtype = sTypeRFXSensorVolt;
 								tsen.RFXSENSOR.id = ID_BYTE1;
 								tsen.RFXSENSOR.filler = ID_BYTE0 & 0x0F;
-								tsen.RFXSENSOR.rssi = rssi;
+								tsen.RFXSENSOR.rssi = (ID_BYTE0 & 0xF0) >> 4;
 								tsen.RFXSENSOR.msg1 = (BYTE)(voltage / 256);
 								tsen.RFXSENSOR.msg2 = (BYTE)(voltage - (tsen.RFXSENSOR.msg1 * 256));
 								sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXSENSOR, nullptr, 255, nullptr);
@@ -1706,7 +1706,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 							tsen.RFXSENSOR.subtype = sTypeRFXSensorVolt;
 							tsen.RFXSENSOR.id = ID_BYTE1;
 							tsen.RFXSENSOR.filler = ID_BYTE0 & 0x0F;
-							tsen.RFXSENSOR.rssi = rssi;
+							tsen.RFXSENSOR.rssi = (ID_BYTE0 & 0xF0) >> 4;
 							tsen.RFXSENSOR.msg1 = (BYTE)(voltage / 256);
 							tsen.RFXSENSOR.msg2 = (BYTE)(voltage - (tsen.RFXSENSOR.msg1 * 256));
 							sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXSENSOR, nullptr, 255, nullptr);
@@ -1746,7 +1746,7 @@ void CEnOceanESP3::ParseRadioDatagram()
 							tsen.RFXSENSOR.subtype = sTypeRFXSensorVolt;
 							tsen.RFXSENSOR.id = ID_BYTE1;
 							tsen.RFXSENSOR.filler = ID_BYTE0 & 0x0F;
-							tsen.RFXSENSOR.rssi = rssi;
+							tsen.RFXSENSOR.rssi = (ID_BYTE0 & 0xF0) >> 4;
 							tsen.RFXSENSOR.msg1 = (BYTE)(voltage / 256);
 							tsen.RFXSENSOR.msg2 = (BYTE)(voltage - (tsen.RFXSENSOR.msg1 * 256));
 							sDecodeRXMessage(this, (const unsigned char *)&tsen.RFXSENSOR, nullptr, 255, nullptr);
@@ -2333,7 +2333,7 @@ namespace http {
 
 			//retrieve the list od Device Id
 			if (cmd == "GetNodeList") {
-				pEnocean->GetNodeList(root);
+				pEnocean->GetNodeList(hwid, root);
 			}
 			else if (cmd == "SendCode") {
 
@@ -2776,6 +2776,26 @@ void CEnOceanESP3::testParsingData(int sec_counter)
 	}
 */
 
+       if (sec_counter == 2) {
+
+		//4BS teachin A5-02-01 : temperature
+
+        TestData(RORG_4BS, 0x123401 , 0, TEACHIN_4BS, 0x02,0x01, 0x46, WITH_EEP, TEACHIN , END_ARG_DATA);
+
+		TestData(RORG_4BS, 0x123401, 0, A50201_CMD1, 1 , 20 , END_ARG_DATA);
+
+		//4BS teachin A5-04-01 : temperature hum
+
+        TestData(RORG_4BS, 0x123501 , 0, TEACHIN_4BS, 0x04,0x01, 0x46, WITH_EEP, TEACHIN , END_ARG_DATA);
+		TestData(RORG_4BS, 0x123501, 0, A50401_CMD1, 1 , 20 , 50 , 1,  END_ARG_DATA);
+
+        //{ 0xA5, 0x07, 0x01, "Occupancy Sensor                                                                " , "Occupancy with Supply voltage monitor                                           " },
+
+        TestData(RORG_4BS, 0x123601 , 0, TEACHIN_4BS, 0x07,0x01, 0x46, WITH_EEP, TEACHIN , END_ARG_DATA);
+		TestData(RORG_4BS, 0x123601, 0, A50701_CMD1 , 1 , 10 , 20 , 1,  END_ARG_DATA);
+
+
+	}
 //	if (sec_counter == 2)	TestData("D2 32 01 00 00 00 01 30 "); //VLD D2  eep func D2-03-0A baterie 50% button 1
 
 //			if (sec_counter == 3)	remoteLearning(0x01A65428 , true ,LEARN_IN ); //4BS data  :  eep func A-02-01
@@ -2884,10 +2904,10 @@ char * VLD_BLINDS_D2_05_00_position [] ={
 "D2 5A 00 00 04 05 85 87 4A 00 ",
 "D2 64 00 00 04 05 85 87 4A 00 ",
 };
-
+/*
 if ( (sec_counter >= 2) && (sec_counter <= 12) )	 
     TestData(VLD_BLINDS_D2_05_00_position[sec_counter-2]); 
-
+*/
 
 //VLD: senderID: 01A65428 Func : 01 Type : 12
 // 
