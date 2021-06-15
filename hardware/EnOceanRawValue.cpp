@@ -202,7 +202,7 @@ uint32_t GetRawValue(uint8_t * data ,  char *  OffsetName , T_DATAFIELD * Offset
 //0 if rror
 uint32_t SetRawValuesNb(uint8_t * data , T_DATAFIELD * OffsetDes ,int NbParameter , va_list value )
 {
-
+   uint32_t total_bits  = 0;
    for ( int i=0;i<NbParameter;i++)
    {
       if  ( OffsetDes->Size == 0 )
@@ -210,15 +210,16 @@ uint32_t SetRawValuesNb(uint8_t * data , T_DATAFIELD * OffsetDes ,int NbParamete
 
       uint32_t par = va_arg(value,int);       /*   va_arg() donne le paramètre courant    */
       SetRawValue( data, par  , OffsetDes ) ;
+        //compute total bit
+        if(OffsetDes->Offset + OffsetDes->Size > total_bits)
+            total_bits = OffsetDes->Offset + OffsetDes->Size;
       OffsetDes++;
    }
 
    //test if all variable are sets
    if (OffsetDes->Size != 0)
 	   return 0; //erreur
-   //last bit offser
-   OffsetDes--;
-   uint32_t total_bits  = OffsetDes->Offset + OffsetDes->Size;
+
    uint32_t total_bytes = (total_bits + 7) / 8;
 
    return total_bytes ;
@@ -273,6 +274,7 @@ uint32_t setRawDataValues(uint8_t* data, T_DATAFIELD* OffsetDes, int value[], in
 {
 
 	int i = 0;
+    uint32_t total_bits =0 ; 
 	while (OffsetDes->Size != 0)
 	{
 
@@ -281,14 +283,14 @@ uint32_t setRawDataValues(uint8_t* data, T_DATAFIELD* OffsetDes, int value[], in
 		int par = value[i++];
 		//not enough argument
 		SetRawValue(data, par, OffsetDes);
+        //compute total bit
+        if(OffsetDes->Offset + OffsetDes->Size > total_bits)
+            total_bits = OffsetDes->Offset + OffsetDes->Size;
 		OffsetDes++;
 	}
 	if (i != NbData)
 		return 0;
 
-	//last bit offset
-	OffsetDes--;
-	uint32_t total_bits = OffsetDes->Offset + OffsetDes->Size;
 	uint32_t total_bytes = (total_bits + 7) / 8;
 
 	return total_bytes;
@@ -371,14 +373,16 @@ uint32_t SetRawValues(uint8_t * data, _T_EEP_CASE * EEP_case ,  ...)
 
   for (int i=0;i<EEP_case->size();i++)
 	{
-    OffsetDes = & (EEP_case->at(i)) ;
+        OffsetDes = & (EEP_case->at(i)) ;
 
 		int par = va_arg(value, int);       /*   va_arg() donne le paramètre courant    */
 		//not enough argument
 		if (par == END_ARG_DATA)
 			return 0;
 		SetRawValue(data, par, OffsetDes);
-	  total_bits = OffsetDes->Offset + OffsetDes->Size;
+        //compute total bit
+        if(OffsetDes->Offset + OffsetDes->Size > total_bits)
+	        total_bits = OffsetDes->Offset + OffsetDes->Size;
 	}
 
 	int par = va_arg(value, int);       
