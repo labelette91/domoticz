@@ -535,7 +535,7 @@ void CEnOceanESP3::Do_Work()
 	sendFrameQueue(PACKET_COMMON_COMMAND, buf, 1, nullptr, 0);
                 }
 			}
-//			testParsingData( sec_counter);
+			testParsingData( sec_counter);
 		}
 
 		if (!isOpen())
@@ -2644,6 +2644,17 @@ namespace http {
 				}
 				checkComStatus(pEnocean, root);
 			}
+			else if (cmd == "Delete") {
+				for (int i = 0; i < nbSelectedDevice; i++) {
+					deviceId = getDeviceId(req, i);    if (deviceId.empty())	return;
+					unit     = getDeviceUnit(req, i);  
+
+                    m_sql.safe_query("DELETE FROM EnoceanSensors WHERE (DeviceID == '%q')", deviceId.c_str() );
+                    		_log.Debug(DEBUG_NORM, "CSQLHelper::DeleteDevices: EnoceanSensors  ID: %s", deviceId.c_str());
+
+				}
+				checkComStatus(pEnocean, root);
+			}
 
 			else
 				return;
@@ -2779,20 +2790,24 @@ void CEnOceanESP3::testParsingData(int sec_counter)
        if (sec_counter == 2) {
 
 		//4BS teachin A5-02-01 : temperature
-
         TestData(RORG_4BS, 0x123401 , 0, TEACHIN_4BS, 0x02,0x01, 0x46, WITH_EEP, TEACHIN , END_ARG_DATA);
-
 		TestData(RORG_4BS, 0x123401, 0, A50201_CMD1, 1 , 20 , END_ARG_DATA);
 
 		//4BS teachin A5-04-01 : temperature hum
-
         TestData(RORG_4BS, 0x123501 , 0, TEACHIN_4BS, 0x04,0x01, 0x46, WITH_EEP, TEACHIN , END_ARG_DATA);
 		TestData(RORG_4BS, 0x123501, 0, A50401_CMD1, 1 , 20 , 50 , 1,  END_ARG_DATA);
 
         //{ 0xA5, 0x07, 0x01, "Occupancy Sensor                                                                " , "Occupancy with Supply voltage monitor                                           " },
-
         TestData(RORG_4BS, 0x123601 , 0, TEACHIN_4BS, 0x07,0x01, 0x46, WITH_EEP, TEACHIN , END_ARG_DATA);
 		TestData(RORG_4BS, 0x123601, 0, A50701_CMD1 , 1 , 10 , 20 , 1,  END_ARG_DATA);
+
+        //{ 0xA5, 0x07, 0x02, "Occupancy Sensor  02                                                              " , "Occupancy with Supply voltage monitor                                           " },
+        TestData(RORG_4BS, 0x123701 , 0, TEACHIN_4BS, 0x07,0x02, 0x46, WITH_EEP, TEACHIN , END_ARG_DATA);
+		TestData(RORG_4BS, 0x123701, 0, A50702_CMD1 , 1 , 10 ,  1,  END_ARG_DATA);
+
+        //{ 0xA5, 0x07, 0x03, "Occupancy Sensor  03                                                              " , "Occupancy with Supply voltage monitor                                           " }
+        TestData(RORG_4BS, 0x123801 , 0, TEACHIN_4BS, 0x07,0x03, 0x46, WITH_EEP, TEACHIN , END_ARG_DATA);
+		TestData(RORG_4BS, 0x123801, 0, A50703_CMD1 , 1 , 10 , 20,  1,  END_ARG_DATA);
 
 
 	}
